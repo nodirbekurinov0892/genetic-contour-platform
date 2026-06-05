@@ -1,0 +1,182 @@
+services:
+
+  - type: web
+
+    name: genetic-contour-api
+
+    runtime: python
+
+    rootDir: apps/api
+
+    buildCommand: pip install -r requirements.txt
+
+    startCommand: sh -c "alembic upgrade head && uvicorn app.main:app --host 0.0.0.0 --port $PORT"
+
+    healthCheckPath: /health/ready
+
+    envVars:
+
+      - key: DATABASE_URL
+
+        fromDatabase:
+
+          name: genetic-contour-db
+
+          property: connectionString
+
+      - key: REDIS_URL
+
+        sync: false
+
+      - key: API_PUBLIC_URL
+
+        sync: false
+
+      - key: CORS_ORIGINS
+
+        sync: false
+
+      - key: SECRET_KEY
+
+        generateValue: true
+
+      - key: JWT_SECRET
+
+        generateValue: true
+
+      - key: TRUSTED_HOSTS
+
+        sync: false
+
+      - key: API_DEBUG
+
+        value: "false"
+
+      - key: STORAGE_BACKEND
+
+        value: "s3"
+
+      - key: S3_ENDPOINT_URL
+
+        sync: false
+
+      - key: S3_ACCESS_KEY_ID
+
+        sync: false
+
+      - key: S3_SECRET_ACCESS_KEY
+
+        sync: false
+
+      - key: S3_BUCKET_NAME
+
+        sync: false
+
+      - key: S3_REGION
+
+        value: "auto"
+
+      - key: S3_PUBLIC_BASE_URL
+
+        sync: false
+
+      - key: SENTRY_DSN
+
+        sync: false
+
+      - key: SENTRY_ENVIRONMENT
+
+        value: "production"
+
+
+
+  - type: worker
+
+    name: genetic-contour-worker
+
+    runtime: python
+
+    rootDir: apps/api
+
+    buildCommand: pip install -r requirements.txt
+
+    startCommand: sh -c "alembic upgrade head && celery -A app.jobs.celery_app worker --loglevel=info --queues=experiments"
+
+    envVars:
+
+      - key: DATABASE_URL
+
+        fromDatabase:
+
+          name: genetic-contour-db
+
+          property: connectionString
+
+      - key: REDIS_URL
+
+        sync: false
+
+      - key: SECRET_KEY
+
+        fromService:
+
+          name: genetic-contour-api
+
+          type: web
+
+          envVarKey: SECRET_KEY
+
+      - key: JWT_SECRET
+
+        fromService:
+
+          name: genetic-contour-api
+
+          type: web
+
+          envVarKey: JWT_SECRET
+
+      - key: API_DEBUG
+
+        value: "false"
+
+      - key: STORAGE_BACKEND
+
+        value: "s3"
+
+      - key: S3_ENDPOINT_URL
+
+        sync: false
+
+      - key: S3_ACCESS_KEY_ID
+
+        sync: false
+
+      - key: S3_SECRET_ACCESS_KEY
+
+        sync: false
+
+      - key: S3_BUCKET_NAME
+
+        sync: false
+
+      - key: S3_REGION
+
+        value: "auto"
+
+      - key: S3_PUBLIC_BASE_URL
+
+        sync: false
+
+
+
+databases:
+
+  - name: genetic-contour-db
+
+    plan: free
+
+    databaseName: genetic_contour
+
+    user: genetic_contour
+

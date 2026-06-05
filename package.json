@@ -1,0 +1,19 @@
+{
+  "name": "genetic-contour-platform",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Genetic algorithm based contour detection research platform",
+  "workspaces": [
+    "apps/web",
+    "packages/*"
+  ],
+  "scripts": {
+    "dev:web": "npm run dev --workspace=@genetic-contour/web",
+    "build:web": "npm run build --workspace=@genetic-contour/web",
+    "dev:api": "cd apps/api && uvicorn app.main:app --reload --host 0.0.0.0 --port 8000",
+    "db:up": "docker compose up -d postgres",
+    "db:down": "docker compose down",
+    "db:migrate": "cd apps/api && alembic upgrade head",
+    "test:api": "cd apps/api && pytest -v"
+  }
+}
