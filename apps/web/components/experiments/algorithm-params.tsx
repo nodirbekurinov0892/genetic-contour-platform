@@ -46,13 +46,13 @@ export function AlgorithmParamsForm({
     <div className="space-y-6">
       <div>
         <SectionHeader
-          title="Preprocessing & Classical Parameters"
-          description="Applied to grayscale conversion, blur, resize, and classical edge detectors"
-          badge="Shared"
+          title="Oldindan qayta ishlash va klassik parametrlar"
+          description="Kulrangga o'tkazish, xiralashtirish, o'lchamni o'zgartirish va klassik chekka detektorlariga qo'llanadi"
+          badge="Umumiy"
           className="mb-4"
         />
         <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
-          <ParamField id="threshold" label="Threshold" hint="Edge binarization (0–1)">
+          <ParamField id="threshold" label="Chegara (Threshold)" hint="Chekka binarizatsiyasi (0–1)">
             <Input
               id="threshold"
               type="number"
@@ -63,7 +63,7 @@ export function AlgorithmParamsForm({
               onChange={(e) => onParamsChange({ ...params, threshold: parseFloat(e.target.value) })}
             />
           </ParamField>
-          <ParamField id="blur_kernel" label="Blur Kernel" hint="Gaussian blur size (odd)">
+          <ParamField id="blur_kernel" label="Xiralashtirish yadrosi" hint="Gauss xiralashtirish hajmi (toq son)">
             <Input
               id="blur_kernel"
               type="number"
@@ -73,7 +73,7 @@ export function AlgorithmParamsForm({
               onChange={(e) => onParamsChange({ ...params, blur_kernel: parseInt(e.target.value) })}
             />
           </ParamField>
-          <ParamField id="resize_width" label="Resize Width" hint="Target width in pixels">
+          <ParamField id="resize_width" label="Kenglik o'lchami" hint="Maqsad kengligi (piksel)">
             <Input
               id="resize_width"
               type="number"
@@ -83,7 +83,7 @@ export function AlgorithmParamsForm({
               onChange={(e) => onParamsChange({ ...params, resize_width: parseInt(e.target.value) })}
             />
           </ParamField>
-          <ParamField id="canny_low" label="Canny Low" hint="Lower hysteresis threshold">
+          <ParamField id="canny_low" label="Canny Low" hint="Past gisteresis chegarasi">
             <Input
               id="canny_low"
               type="number"
@@ -91,7 +91,7 @@ export function AlgorithmParamsForm({
               onChange={(e) => onParamsChange({ ...params, canny_low: parseFloat(e.target.value) })}
             />
           </ParamField>
-          <ParamField id="canny_high" label="Canny High" hint="Upper hysteresis threshold">
+          <ParamField id="canny_high" label="Canny High" hint="Yuqori gisteresis chegarasi">
             <Input
               id="canny_high"
               type="number"
@@ -105,13 +105,13 @@ export function AlgorithmParamsForm({
       {showGA && (
         <div>
           <SectionHeader
-            title="Genetic Algorithm Parameters"
-            description="Population evolution settings for multi-criteria contour optimization"
+            title="Genetic Algorithm parametrlari"
+            description="Ko'p mezonli kontur optimallashtirish uchun populyatsiya evolyutsiyasi sozlamalari"
             badge="GA"
             className="mb-4"
           />
           <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
-            <ParamField id="population_size" label="Population Size" hint="Number of chromosomes">
+            <ParamField id="population_size" label="Populyatsiya hajmi" hint="Xromosomalar soni">
               <Input
                 id="population_size"
                 type="number"
@@ -119,7 +119,7 @@ export function AlgorithmParamsForm({
                 onChange={(e) => onGAParamsChange({ ...gaParams, population_size: parseInt(e.target.value) })}
               />
             </ParamField>
-            <ParamField id="generations" label="Generations" hint="Evolution iterations">
+            <ParamField id="generations" label="Avlodlar" hint="Evolyutsiya iteratsiyalari">
               <Input
                 id="generations"
                 type="number"
@@ -127,7 +127,7 @@ export function AlgorithmParamsForm({
                 onChange={(e) => onGAParamsChange({ ...gaParams, generations: parseInt(e.target.value) })}
               />
             </ParamField>
-            <ParamField id="mutation_rate" label="Mutation Rate" hint="Probability of gene mutation">
+            <ParamField id="mutation_rate" label="Mutatsiya darajasi" hint="Gen mutatsiyasi ehtimoli">
               <Input
                 id="mutation_rate"
                 type="number"
@@ -136,7 +136,7 @@ export function AlgorithmParamsForm({
                 onChange={(e) => onGAParamsChange({ ...gaParams, mutation_rate: parseFloat(e.target.value) })}
               />
             </ParamField>
-            <ParamField id="crossover_rate" label="Crossover Rate" hint="Probability of crossover">
+            <ParamField id="crossover_rate" label="Krossover darajasi" hint="Krossover ehtimoli">
               <Input
                 id="crossover_rate"
                 type="number"
@@ -145,7 +145,7 @@ export function AlgorithmParamsForm({
                 onChange={(e) => onGAParamsChange({ ...gaParams, crossover_rate: parseFloat(e.target.value) })}
               />
             </ParamField>
-            <ParamField id="elitism_count" label="Elitism Count" hint="Top chromosomes preserved">
+            <ParamField id="elitism_count" label="Elitizm soni" hint="Saqlanadigan eng yaxshi xromosomalar">
               <Input
                 id="elitism_count"
                 type="number"

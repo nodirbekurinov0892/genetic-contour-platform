@@ -31,7 +31,7 @@ export function ExportButtons({ experimentId, disabled, className }: ExportButto
         await experimentService.downloadCsv(experimentId);
       }
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Export failed");
+      setError(err instanceof Error ? err.message : "Eksport muvaffaqiyatsiz");
     } finally {
       setLoading(null);
     }
@@ -52,7 +52,7 @@ export function ExportButtons({ experimentId, disabled, className }: ExportButto
           ) : (
             <FileText className="h-4 w-4" />
           )}
-          Download PDF Report
+          PDF hisobotni yuklab olish
         </Button>
         <Button
           variant="outline"
@@ -66,7 +66,7 @@ export function ExportButtons({ experimentId, disabled, className }: ExportButto
           ) : (
             <FileJson className="h-4 w-4" />
           )}
-          Download JSON
+          JSON yuklab olish
         </Button>
         <Button
           variant="outline"
@@ -80,7 +80,7 @@ export function ExportButtons({ experimentId, disabled, className }: ExportButto
           ) : (
             <FileSpreadsheet className="h-4 w-4" />
           )}
-          Download CSV
+          CSV yuklab olish
         </Button>
       </div>
       {error && <p className="text-xs text-destructive">{error}</p>}

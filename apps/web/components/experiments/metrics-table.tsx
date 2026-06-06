@@ -29,7 +29,7 @@ export function MetricsTable({ rows, className, highlightBest = true }: MetricsT
   if (rows.length === 0) {
     return (
       <p className="py-8 text-center text-sm text-muted-foreground">
-        No metrics data available.
+        Metrika ma&apos;lumotlari mavjud emas.
       </p>
     );
   }
@@ -44,12 +44,12 @@ export function MetricsTable({ rows, className, highlightBest = true }: MetricsT
       <table className="metrics-table w-full">
         <thead>
           <tr>
-            <th>Algorithm</th>
-            <th className="text-right">Edge Density</th>
-            <th className="text-right">Continuity</th>
-            <th className="text-right">Noise</th>
+            <th>Algoritm</th>
+            <th className="text-right">Chekka zichligi</th>
+            <th className="text-right">Uzluksizlik</th>
+            <th className="text-right">Shovqin</th>
             <th className="text-right">Fitness</th>
-            <th className="text-right">Runtime</th>
+            <th className="text-right">Ishlash vaqti</th>
           </tr>
         </thead>
         <tbody>

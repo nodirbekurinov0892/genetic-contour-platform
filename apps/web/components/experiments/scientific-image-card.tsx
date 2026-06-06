@@ -51,7 +51,7 @@ export function ScientificImageCard({
         {error || !src ? (
           <div className="flex h-full flex-col items-center justify-center gap-2 text-muted-foreground">
             <ImageOff className="h-8 w-8 opacity-40" />
-            <span className="text-xs">Image unavailable</span>
+            <span className="text-xs">Rasm mavjud emas</span>
           </div>
         ) : (
           <>

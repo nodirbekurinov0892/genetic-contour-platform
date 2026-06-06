@@ -27,9 +27,9 @@ export function ImageCard({ image }: ImageCardProps) {
           />
         </div>
         <dl className="grid grid-cols-2 gap-1 text-xs text-muted-foreground">
-          <dt>Size</dt>
+          <dt>O&apos;lcham</dt>
           <dd>{image.width}×{image.height}</dd>
-          <dt>File</dt>
+          <dt>Fayl</dt>
           <dd>{formatBytes(image.size)}</dd>
         </dl>
       </CardContent>

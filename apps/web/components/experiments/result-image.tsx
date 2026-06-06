@@ -25,7 +25,7 @@ export function ResultImageView({ filePath, url, alt, label, className }: Result
         {error || !src ? (
           <div className="flex h-full flex-col items-center justify-center gap-2 text-muted-foreground">
             <ImageOff className="h-6 w-6" />
-            <span className="text-xs">Image unavailable</span>
+            <span className="text-xs">Rasm mavjud emas</span>
           </div>
         ) : (
           <Image

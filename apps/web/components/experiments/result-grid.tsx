@@ -22,8 +22,8 @@ export function ResultGrid({ runs }: ResultGridProps) {
   if (edgeRuns.length === 0) {
     return (
       <EmptyState
-        title="No results yet"
-        description="Run an experiment to see algorithm outputs."
+        title="Hali natijalar yo'q"
+        description="Algoritm natijalarini ko'rish uchun tajriba ishga tushiring."
       />
     );
   }
@@ -47,25 +47,25 @@ export function ResultGrid({ runs }: ResultGridProps) {
                 <ResultImageView
                   filePath={edgeImage.file_path}
                   url={edgeImage.url}
-                  alt={`${run.algorithm_name} result`}
-                  label="Edges"
+                  alt={`${run.algorithm_name} natijasi`}
+                  label="Chekkalar"
                 />
               ) : (
-                <p className="text-xs text-muted-foreground">No edge image</p>
+                <p className="text-xs text-muted-foreground">Chekka rasmi yo&apos;q</p>
               )}
               {overlay && (
                 <ResultImageView
                   filePath={overlay.file_path}
                   url={overlay.url}
-                  alt={`${run.algorithm_name} overlay`}
-                  label="Overlay"
+                  alt={`${run.algorithm_name} qoplamasi`}
+                  label="Qoplama"
                 />
               )}
               {run.metrics[0] && (
                 <dl className="grid grid-cols-2 gap-1 text-xs text-muted-foreground">
-                  <dt>Edge density</dt>
+                  <dt>Chekka zichligi</dt>
                   <dd>{(run.metrics[0].edge_density ?? 0).toFixed(4)}</dd>
-                  <dt>Runtime</dt>
+                  <dt>Ishlash vaqti</dt>
                   <dd>{run.metrics[0].runtime_ms ?? 0} ms</dd>
                   {run.metrics[0].fitness_score != null && (
                     <>

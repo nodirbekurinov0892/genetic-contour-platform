@@ -16,8 +16,8 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Genetic Contour Detection Platform",
-  description: "Scientific platform for genetic algorithm based contour detection in images",
+  title: "Genetik kontur aniqlash platformasi",
+  description: "Rasmlarda genetik algoritm asosida kontur aniqlash uchun ilmiy platforma",
 };
 
 export default function RootLayout({
@@ -26,7 +26,7 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en" suppressHydrationWarning>
+    <html lang="uz" suppressHydrationWarning>
       <body className={`${geistSans.variable} ${geistMono.variable} font-sans antialiased`}>
         <ThemeProvider attribute="class" defaultTheme="system" enableSystem>
           <AuthProvider>

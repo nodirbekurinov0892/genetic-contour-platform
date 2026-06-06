@@ -75,7 +75,7 @@ export default function ExperimentDetailPage() {
         }
       }
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Failed to load experiment");
+      setError(err instanceof Error ? err.message : "Tajribani yuklab bo'lmadi");
     } finally {
       setLoading(false);
     }
@@ -108,11 +108,11 @@ export default function ExperimentDetailPage() {
 
         pollFailuresRef.current += 1;
         const message =
-          err instanceof Error ? err.message : "Failed to refresh experiment status";
+          err instanceof Error ? err.message : "Tajriba holatini yangilab bo'lmadi";
 
         if (pollFailuresRef.current >= MAX_POLL_FAILURES) {
           setPollError(
-            `${message} (after ${MAX_POLL_FAILURES} attempts). Check API connectivity at ${API_BASE}.`,
+            `${message} (${MAX_POLL_FAILURES} urinishdan keyin). API ulanishini ${API_BASE} manzilida tekshiring.`,
           );
         }
       }
@@ -130,22 +130,22 @@ export default function ExperimentDetailPage() {
         await refreshAfterTerminal();
       }
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Cancel failed");
+      setError(err instanceof Error ? err.message : "Bekor qilish muvaffaqiyatsiz");
     } finally {
       setCancelling(false);
     }
   };
 
   if (loading) {
-    return <LoadingState message="Loading experiment..." />;
+    return <LoadingState message="Tajriba yuklanmoqda..." />;
   }
 
   if (error && !jobStatus) {
     return (
       <ErrorState
-        title="Failed to load experiment"
+        title="Tajribani yuklab bo'lmadi"
         message={error}
-        hint={`Ensure the API is running at ${API_BASE}`}
+        hint={`API ${API_BASE} manzilida ishlayotganini tekshiring`}
         onRetry={load}
       />
     );
@@ -163,7 +163,7 @@ export default function ExperimentDetailPage() {
             <Button variant="ghost" size="sm" asChild className="mb-3 -ml-2">
               <Link href="/experiments">
                 <ArrowLeft className="mr-2 h-4 w-4" />
-                Back to Experiments
+                Tajribalarga qaytish
               </Link>
             </Button>
             <div className="flex items-center gap-3">
@@ -172,12 +172,12 @@ export default function ExperimentDetailPage() {
               </div>
               <div>
                 <h1 className="text-2xl font-bold tracking-tight lg:text-3xl">
-                  {experiment?.title ?? "Experiment"}
+                  {experiment?.title ?? "Tajriba"}
                 </h1>
                 {experiment && (
                   <p className="text-sm text-muted-foreground">
-                    Created {formatDate(experiment.created_at)}
-                    {experiment.completed_at && ` · Completed ${formatDate(experiment.completed_at)}`}
+                    Yaratildi {formatDate(experiment.created_at)}
+                    {experiment.completed_at && ` · Yakunlandi ${formatDate(experiment.completed_at)}`}
                   </p>
                 )}
               </div>
@@ -194,7 +194,7 @@ export default function ExperimentDetailPage() {
                 onClick={handleCancel}
               >
                 <XCircle className="h-4 w-4" />
-                {cancelling ? "Cancelling..." : "Cancel"}
+                {cancelling ? "Bekor qilinmoqda..." : "Bekor qilish"}
               </Button>
             )}
             {experiment && (
@@ -223,7 +223,7 @@ export default function ExperimentDetailPage() {
 
       {displayStatus === "cancelled" && (
         <div className="rounded-lg border bg-muted/40 p-4 text-sm text-muted-foreground">
-          Experiment was cancelled before completion.
+          Tajriba yakunlanishidan oldin bekor qilindi.
         </div>
       )}
 

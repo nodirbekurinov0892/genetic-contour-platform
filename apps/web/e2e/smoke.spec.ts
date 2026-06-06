@@ -23,7 +23,7 @@ test.describe("app smoke", () => {
 
   test("login page loads", async ({ page }) => {
     await page.goto("/login");
-    await expect(page.getByRole("heading", { name: "Sign in" })).toBeVisible();
+    await expect(page.getByRole("heading", { name: "Kirish" })).toBeVisible();
   });
 
   test("protected route redirects to login without session cookie", async ({ page }) => {

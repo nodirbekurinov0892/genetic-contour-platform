@@ -2,12 +2,12 @@ import { Badge } from "@/components/ui/badge";
 import type { ExperimentStatus } from "@shared/types";
 
 const STATUS_LABELS: Record<ExperimentStatus, string> = {
-  pending: "Pending",
-  queued: "Queued",
-  running: "Running",
-  completed: "Completed",
-  failed: "Failed",
-  cancelled: "Cancelled",
+  pending: "Kutilmoqda",
+  queued: "Navbatda",
+  running: "Bajarilmoqda",
+  completed: "Yakunlandi",
+  failed: "Muvaffaqiyatsiz",
+  cancelled: "Bekor qilindi",
 };
 
 const STATUS_VARIANTS: Record<

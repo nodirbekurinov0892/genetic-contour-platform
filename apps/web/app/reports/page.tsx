@@ -27,17 +27,17 @@ export default function ReportsPage() {
   return (
     <div className="space-y-8">
       <SectionHeader
-        title="Scientific Reports"
-        description="Export experiment results as PDF, JSON, or CSV for dissertation and research documentation"
-        badge="Export"
+        title="Ilmiy hisobotlar"
+        description="Dissertatsiya va ilmiy hujjatlar uchun tajriba natijalarini PDF, JSON yoki CSV formatida eksport qiling"
+        badge="Eksport"
       />
 
       {loading ? (
-        <LoadingState message="Loading reports..." />
+        <LoadingState message="Hisobotlar yuklanmoqda..." />
       ) : completed.length === 0 ? (
         <EmptyState
-          title="No completed experiments"
-          description="Complete an experiment first to generate scientific reports."
+          title="Yakunlangan tajribalar yo'q"
+          description="Ilmiy hisobot yaratish uchun avval tajribani yakunlang."
         />
       ) : (
         <div className="space-y-4">
@@ -57,11 +57,11 @@ export default function ReportsPage() {
                     </Link>
                     <p className="text-xs text-muted-foreground">
                       {formatDate(exp.created_at)}
-                      {exp.completed_at && ` · Completed ${formatDate(exp.completed_at)}`}
+                      {exp.completed_at && ` · Yakunlandi ${formatDate(exp.completed_at)}`}
                     </p>
                   </div>
                 </div>
-                <Badge variant="success">completed</Badge>
+                <Badge variant="success">Yakunlandi</Badge>
               </div>
               <ExportButtons experimentId={exp.id} />
             </div>

@@ -30,7 +30,7 @@ function formatDetail(detail: unknown): string {
   if (detail && typeof detail === "object" && "message" in detail) {
     return String((detail as { message: unknown }).message);
   }
-  return "Request failed";
+  return "So'rov bajarilmadi";
 }
 
 type ApiFetchOptions = RequestInit & {

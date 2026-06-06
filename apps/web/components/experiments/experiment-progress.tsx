@@ -16,7 +16,7 @@ export function ExperimentProgress({ status }: ExperimentProgressProps) {
   return (
     <div className="scientific-card space-y-3 p-5">
       <div className="flex items-center justify-between text-sm">
-        <span className="font-medium">Execution progress</span>
+        <span className="font-medium">Bajarilish jarayoni</span>
         <span className="tabular-nums text-muted-foreground">
           {status.progress_percent.toFixed(1)}%
         </span>
@@ -29,11 +29,11 @@ export function ExperimentProgress({ status }: ExperimentProgressProps) {
       </div>
       {status.status === "running" && status.current_generation != null && (
         <p className="text-xs text-muted-foreground">
-          GA generation {status.current_generation}
+          GA avlodi {status.current_generation}
         </p>
       )}
       {status.status === "queued" && (
-        <p className="text-xs text-muted-foreground">Waiting for worker to start...</p>
+        <p className="text-xs text-muted-foreground">Worker ishga tushishi kutilmoqda...</p>
       )}
     </div>
   );

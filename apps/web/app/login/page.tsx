@@ -35,7 +35,7 @@ function LoginForm() {
       await login(email, password);
       router.replace(next);
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Login failed");
+      setError(err instanceof Error ? err.message : "Kirish muvaffaqiyatsiz");
     } finally {
       setSubmitting(false);
     }
@@ -46,8 +46,8 @@ function LoginForm() {
       <div className="mb-6 flex items-center gap-2">
         <Dna className="h-6 w-6 text-primary" />
         <div>
-          <h1 className="text-2xl font-bold">Sign in</h1>
-          <p className="text-sm text-muted-foreground">Access your contour detection workspace</p>
+          <h1 className="text-2xl font-bold">Kirish</h1>
+          <p className="text-sm text-muted-foreground">Kontur aniqlash ish maydoningizga kiring</p>
         </div>
       </div>
 
@@ -64,7 +64,7 @@ function LoginForm() {
           />
         </div>
         <div className="space-y-2">
-          <Label htmlFor="password">Password</Label>
+          <Label htmlFor="password">Parol</Label>
           <Input
             id="password"
             type="password"
@@ -79,14 +79,14 @@ function LoginForm() {
         {error && <p className="text-sm text-destructive">{error}</p>}
 
         <Button type="submit" className="w-full" disabled={submitting}>
-          {submitting ? "Signing in..." : "Sign in"}
+          {submitting ? "Kirilmoqda..." : "Kirish"}
         </Button>
       </form>
 
       <p className="mt-6 text-center text-sm text-muted-foreground">
-        No account?{" "}
+        Hisobingiz yo&apos;qmi?{" "}
         <Link href="/register" className="font-medium text-primary hover:underline">
-          Register
+          Ro&apos;yxatdan o&apos;tish
         </Link>
       </p>
     </div>
@@ -96,7 +96,7 @@ function LoginForm() {
 export default function LoginPage() {
   return (
     <div className="mx-auto flex min-h-[70vh] max-w-md flex-col justify-center">
-      <Suspense fallback={<LoadingState message="Loading..." className="h-32" />}>
+      <Suspense fallback={<LoadingState message="Yuklanmoqda..." className="h-32" />}>
         <LoginForm />
       </Suspense>
     </div>

@@ -23,11 +23,11 @@ export default function UploadPage() {
 
   const validateAndSetFile = useCallback((selected: File) => {
     if (!ALLOWED_TYPES.includes(selected.type)) {
-      setError("Only JPG, PNG, and WebP files are allowed");
+      setError("Faqat JPG, PNG va WebP fayllar qabul qilinadi");
       return;
     }
     if (selected.size > MAX_SIZE) {
-      setError("File size must be under 10MB");
+      setError("Fayl hajmi 10 MB dan oshmasligi kerak");
       return;
     }
     setError(null);
@@ -78,7 +78,7 @@ export default function UploadPage() {
       const res = await imageService.upload(file);
       setResult(res.image);
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Upload failed");
+      setError(err instanceof Error ? err.message : "Yuklash muvaffaqiyatsiz");
     } finally {
       setUploading(false);
     }
@@ -87,9 +87,9 @@ export default function UploadPage() {
   return (
     <div className="mx-auto max-w-3xl space-y-8">
       <SectionHeader
-        title="Upload Image"
-        description="Upload test images for contour detection experiments. Supported: JPG, PNG, WebP — max 10MB."
-        badge="Input Data"
+        title="Rasm yuklash"
+        description="Kontur aniqlash tajribalari uchun test rasmlarini yuklang. Qo'llab-quvvatlanadi: JPG, PNG, WebP — maks. 10 MB."
+        badge="Kirish ma'lumoti"
       />
 
       <div className="scientific-card overflow-hidden">
@@ -108,13 +108,13 @@ export default function UploadPage() {
             <Upload className="h-8 w-8 text-primary" />
           </div>
           <p className="text-base font-semibold">
-            {dragActive ? "Drop image here" : "Drag & drop your image"}
+            {dragActive ? "Rasmni shu yerga tashlang" : "Rasmni sudrab olib keling"}
           </p>
           <p className="mt-1 text-sm text-muted-foreground">
-            or click to browse files
+            yoki fayl tanlash uchun bosing
           </p>
           <p className="mt-3 text-xs text-muted-foreground">
-            JPG · PNG · WebP · up to 10 MB
+            JPG · PNG · WebP · 10 MB gacha
           </p>
           <input
             id="file-upload"
@@ -130,7 +130,7 @@ export default function UploadPage() {
             <div className="flex items-start gap-4">
               <div className="relative shrink-0 overflow-hidden rounded-lg border bg-background">
                 {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img src={preview} alt="Preview" className="h-32 w-32 object-contain p-1" />
+                <img src={preview} alt="Ko'rib chiqish" className="h-32 w-32 object-contain p-1" />
               </div>
               <div className="flex-1 space-y-3">
                 <div className="flex items-start justify-between">
@@ -147,13 +147,13 @@ export default function UploadPage() {
                   </button>
                 </div>
                 <dl className="grid grid-cols-2 gap-x-4 gap-y-1 text-sm">
-                  <dt className="text-muted-foreground">Size</dt>
+                  <dt className="text-muted-foreground">Hajm</dt>
                   <dd>{formatBytes(file.size)}</dd>
-                  <dt className="text-muted-foreground">Type</dt>
+                  <dt className="text-muted-foreground">Turi</dt>
                   <dd>{file.type}</dd>
                 </dl>
                 <Button onClick={handleUpload} disabled={uploading} className="w-full sm:w-auto">
-                  {uploading ? "Uploading..." : "Upload Image"}
+                  {uploading ? "Yuklanmoqda..." : "Rasm yuklash"}
                 </Button>
               </div>
             </div>
@@ -171,10 +171,10 @@ export default function UploadPage() {
           <div className="mx-4 mb-4 flex items-center justify-between gap-2 rounded-lg bg-emerald-500/10 p-3 text-sm text-emerald-700 dark:text-emerald-400">
             <div className="flex items-center gap-2">
               <CheckCircle className="h-4 w-4" />
-              Uploaded successfully
+              Muvaffaqiyatli yuklandi
             </div>
             <Button size="sm" variant="outline" asChild>
-              <Link href="/experiments">Run Experiment</Link>
+              <Link href="/experiments">Tajriba ishga tushirish</Link>
             </Button>
           </div>
         )}
@@ -182,7 +182,7 @@ export default function UploadPage() {
 
       {result && (
         <section>
-          <SectionHeader title="Uploaded Image" />
+          <SectionHeader title="Yuklangan rasm" />
           <ImageCard image={result} />
         </section>
       )}

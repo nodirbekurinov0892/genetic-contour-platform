@@ -18,10 +18,10 @@ import { useAuth } from "@/components/providers/auth-provider";
 import { Button } from "@/components/ui/button";
 
 const navItems = [
-  { href: "/", label: "Dashboard", icon: Home },
-  { href: "/upload", label: "Upload", icon: ImagePlus },
-  { href: "/experiments", label: "Experiments", icon: FlaskConical },
-  { href: "/reports", label: "Reports", icon: FileText },
+  { href: "/", label: "Boshqaruv paneli", icon: Home },
+  { href: "/upload", label: "Rasm yuklash", icon: ImagePlus },
+  { href: "/experiments", label: "Tajribalar", icon: FlaskConical },
+  { href: "/reports", label: "Hisobotlar", icon: FileText },
 ];
 
 export function Sidebar() {
@@ -33,8 +33,8 @@ export function Sidebar() {
       <div className="flex h-16 items-center gap-2 border-b px-6">
         <Dna className="h-6 w-6 text-primary" />
         <div>
-          <p className="text-sm font-semibold">Genetic Contour</p>
-          <p className="text-xs text-muted-foreground">Detection Platform</p>
+          <p className="text-sm font-semibold">Genetik kontur</p>
+          <p className="text-xs text-muted-foreground">Aniqlash platformasi</p>
         </div>
       </div>
 
@@ -70,14 +70,14 @@ export function Sidebar() {
               onClick={() => logout()}
             >
               <LogOut className="h-3.5 w-3.5" />
-              Sign out
+              Chiqish
             </Button>
           </div>
         ) : (
           <Button variant="outline" size="sm" className="w-full gap-2" asChild>
             <Link href="/login">
               <LogIn className="h-3.5 w-3.5" />
-              Sign in
+              Kirish
             </Link>
           </Button>
         )}

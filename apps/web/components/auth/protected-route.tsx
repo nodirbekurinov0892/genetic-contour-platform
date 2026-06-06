@@ -17,7 +17,7 @@ export function ProtectedRoute({ children }: { children: React.ReactNode }) {
   }, [user, loading, router, pathname]);
 
   if (loading) {
-    return <LoadingState message="Checking authentication..." />;
+    return <LoadingState message="Autentifikatsiya tekshirilmoqda..." />;
   }
 
   if (!user) {

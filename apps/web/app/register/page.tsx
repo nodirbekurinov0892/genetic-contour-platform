@@ -32,7 +32,7 @@ export default function RegisterPage() {
       await register(email, password, name.trim() || undefined);
       router.replace("/");
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Registration failed");
+      setError(err instanceof Error ? err.message : "Ro'yxatdan o'tish muvaffaqiyatsiz");
     } finally {
       setSubmitting(false);
     }
@@ -44,14 +44,16 @@ export default function RegisterPage() {
         <div className="mb-6 flex items-center gap-2">
           <Dna className="h-6 w-6 text-primary" />
           <div>
-            <h1 className="text-2xl font-bold">Create account</h1>
-            <p className="text-sm text-muted-foreground">Start running contour detection experiments</p>
+            <h1 className="text-2xl font-bold">Hisob yaratish</h1>
+            <p className="text-sm text-muted-foreground">
+              Kontur aniqlash tajribalarini boshlash
+            </p>
           </div>
         </div>
 
         <form onSubmit={handleSubmit} className="space-y-4">
           <div className="space-y-2">
-            <Label htmlFor="name">Name (optional)</Label>
+            <Label htmlFor="name">Ism (ixtiyoriy)</Label>
             <Input
               id="name"
               value={name}
@@ -70,7 +72,7 @@ export default function RegisterPage() {
             />
           </div>
           <div className="space-y-2">
-            <Label htmlFor="password">Password</Label>
+            <Label htmlFor="password">Parol</Label>
             <Input
               id="password"
               type="password"
@@ -85,14 +87,14 @@ export default function RegisterPage() {
           {error && <p className="text-sm text-destructive">{error}</p>}
 
           <Button type="submit" className="w-full" disabled={submitting}>
-            {submitting ? "Creating account..." : "Register"}
+            {submitting ? "Hisob yaratilmoqda..." : "Ro'yxatdan o'tish"}
           </Button>
         </form>
 
         <p className="mt-6 text-center text-sm text-muted-foreground">
-          Already have an account?{" "}
+          Allaqachon hisobingiz bormi?{" "}
           <Link href="/login" className="font-medium text-primary hover:underline">
-            Sign in
+            Kirish
           </Link>
         </p>
       </div>

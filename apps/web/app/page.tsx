@@ -7,7 +7,6 @@ import { ExperimentStatusBadge } from "@/components/experiments/experiment-statu
 import { Button } from "@/components/ui/button";
 import { StatCard } from "@/components/ui/stat-card";
 import { SectionHeader } from "@/components/ui/section-header";
-import { ImageCard } from "@/components/experiments/image-card";
 import { useAuth } from "@/components/providers/auth-provider";
 import { experimentService } from "@/services/experimentService";
 import { statsService, type PlatformStats } from "@/services/statsService";
@@ -39,22 +38,23 @@ export default function DashboardPage() {
   }, [user, authLoading]);
 
   if (authLoading || loading) {
-    return <LoadingState message="Loading dashboard..." />;
+    return <LoadingState message="Boshqaruv paneli yuklanmoqda..." />;
   }
 
   if (!user) {
     return (
       <div className="mx-auto max-w-lg space-y-4 py-16 text-center">
-        <h1 className="text-3xl font-bold">Genetic Contour Detection Platform</h1>
+        <h1 className="text-3xl font-bold">Genetik kontur aniqlash platformasi</h1>
         <p className="text-muted-foreground">
-          Sign in to upload images, run experiments, and export scientific reports.
+          Rasmlarni yuklash, tajribalarni ishga tushirish va ilmiy hisobotlarni eksport qilish uchun
+          tizimga kiring.
         </p>
         <div className="flex justify-center gap-3">
           <Button asChild>
-            <Link href="/login">Sign in</Link>
+            <Link href="/login">Kirish</Link>
           </Button>
           <Button variant="outline" asChild>
-            <Link href="/register">Register</Link>
+            <Link href="/register">Ro&apos;yxatdan o&apos;tish</Link>
           </Button>
         </div>
       </div>
@@ -64,9 +64,9 @@ export default function DashboardPage() {
   if (error) {
     return (
       <ErrorState
-        title="Failed to load dashboard"
+        title="Boshqaruv panelini yuklab bo'lmadi"
         message={error}
-        hint={`Ensure the API is running at ${API_BASE}`}
+        hint={`API ${API_BASE} manzilida ishlayotganini tekshiring`}
       />
     );
   }
@@ -82,52 +82,52 @@ export default function DashboardPage() {
         <div>
           <div className="mb-1 flex items-center gap-2">
             <Dna className="h-5 w-5 text-primary" />
-            <span className="scientific-badge">Research Platform</span>
+            <span className="scientific-badge">Ilmiy platforma</span>
           </div>
-          <h1 className="text-3xl font-bold tracking-tight">Dashboard</h1>
+          <h1 className="text-3xl font-bold tracking-tight">Boshqaruv paneli</h1>
           <p className="text-muted-foreground">
-            Genetic algorithm based contour detection — scientific analysis center
+            Genetik algoritm asosida kontur aniqlash — ilmiy tahlil markazi
           </p>
         </div>
         <div className="flex gap-2">
           <Button variant="outline" asChild>
-            <Link href="/experiments">New Experiment</Link>
+            <Link href="/experiments">Yangi tajriba</Link>
           </Button>
           <Button asChild>
-            <Link href="/upload">Upload Image</Link>
+            <Link href="/upload">Rasm yuklash</Link>
           </Button>
         </div>
       </div>
 
       <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
         <StatCard
-          title="Total Experiments"
+          title="Jami tajribalar"
           value={stats?.total_experiments ?? 0}
-          subtitle={`${stats?.completed_experiments ?? 0} completed successfully`}
+          subtitle={`${stats?.completed_experiments ?? 0} ta muvaffaqiyatli yakunlandi`}
           icon={FlaskConical}
           accent="blue"
-          trend={{ label: `${successRate}% success rate`, positive: successRate >= 50 }}
+          trend={{ label: `${successRate}% muvaffaqiyat darajasi`, positive: successRate >= 50 }}
         />
         <StatCard
-          title="Uploaded Images"
+          title="Yuklangan rasmlar"
           value={stats?.total_images ?? 0}
-          subtitle="Available for analysis"
+          subtitle="Tahlil uchun mavjud"
           icon={ImageIcon}
           accent="green"
         />
         <StatCard
-          title="Best GA Fitness"
+          title="Eng yaxshi GA fitness"
           value={
             stats?.best_ga_fitness != null
               ? stats.best_ga_fitness.toFixed(4)
               : "—"
           }
-          subtitle="Across all genetic algorithm runs"
+          subtitle="Barcha Genetic Algorithm ishlarida"
           icon={TrendingUp}
           accent="amber"
         />
         <StatCard
-          title="Algorithms"
+          title="Algoritmlar"
           value={stats?.algorithms_count ?? 4}
           subtitle="Sobel · Prewitt · Canny · GA"
           icon={CheckCircle2}
@@ -136,13 +136,16 @@ export default function DashboardPage() {
       </div>
 
       <section>
-        <SectionHeader title="Recent Experiments" description="Latest contour detection analyses" />
+        <SectionHeader
+          title="So'nggi tajribalar"
+          description="Eng so'nggi kontur aniqlash tahlillari"
+        />
         {experiments.length === 0 ? (
           <EmptyState
-            title="No experiments yet"
+            title="Hali tajribalar yo'q"
             action={
               <Button asChild variant="outline" size="sm">
-                <Link href="/experiments">Create experiment</Link>
+                <Link href="/experiments">Tajriba yaratish</Link>
               </Button>
             }
           />
@@ -167,7 +170,10 @@ export default function DashboardPage() {
 
       {experiments.length > 0 && (
         <section>
-          <SectionHeader title="Quick Access" description="Jump to completed experiment reports" />
+          <SectionHeader
+            title="Tezkor kirish"
+            description="Yakunlangan tajriba hisobotlariga o'tish"
+          />
           <div className="flex flex-wrap gap-2">
             {experiments
               .filter((e) => e.status === "completed")

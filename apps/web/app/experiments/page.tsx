@@ -44,7 +44,7 @@ export default function ExperimentsPage() {
       setExperiments(exps);
       if (imgs.length > 0) setSelectedImage(imgs[0].id);
     } catch (err) {
-      setLoadError(err instanceof Error ? err.message : "Failed to load data");
+      setLoadError(err instanceof Error ? err.message : "Ma'lumotlarni yuklab bo'lmadi");
     } finally {
       setLoading(false);
     }
@@ -56,7 +56,7 @@ export default function ExperimentsPage() {
 
   const handleRun = async () => {
     if (!selectedImage || !title.trim()) {
-      setFormError("Select an image and enter a title");
+      setFormError("Rasm tanlang va sarlavha kiriting");
       return;
     }
     setRunning(true);
@@ -73,7 +73,7 @@ export default function ExperimentsPage() {
       });
       router.push(`/experiments/${job.job_id}`);
     } catch (err) {
-      setFormError(err instanceof Error ? err.message : "Experiment failed");
+      setFormError(err instanceof Error ? err.message : "Tajriba muvaffaqiyatsiz");
     } finally {
       setRunning(false);
     }
@@ -82,15 +82,15 @@ export default function ExperimentsPage() {
   const showGA = algorithm === "genetic" || algorithm === "compare_all";
 
   if (loading) {
-    return <LoadingState message="Loading experiments..." />;
+    return <LoadingState message="Tajribalar yuklanmoqda..." />;
   }
 
   if (loadError) {
     return (
       <ErrorState
-        title="Failed to load experiments"
+        title="Tajribalarni yuklab bo'lmadi"
         message={loadError}
-        hint={`Ensure the API is running at ${API_BASE}`}
+        hint={`API ${API_BASE} manzilida ishlayotganini tekshiring`}
         onRetry={loadData}
       />
     );
@@ -99,9 +99,9 @@ export default function ExperimentsPage() {
   return (
     <div className="space-y-8">
       <SectionHeader
-        title="Experiments"
-        description="Configure preprocessing, classical edge detectors, and genetic algorithm parameters"
-        badge="Analysis"
+        title="Tajribalar"
+        description="Oldindan qayta ishlash, klassik chekka detektorlari va Genetic Algorithm parametrlarini sozlang"
+        badge="Tahlil"
       />
 
       <div className="scientific-card overflow-hidden">
@@ -109,19 +109,21 @@ export default function ExperimentsPage() {
           <div className="flex items-center gap-2">
             <Plus className="h-5 w-5 text-primary" />
             <div>
-              <h2 className="font-semibold">New Experiment</h2>
-              <p className="text-sm text-muted-foreground">Configure algorithm parameters and run analysis</p>
+              <h2 className="font-semibold">Yangi tajriba</h2>
+              <p className="text-sm text-muted-foreground">
+                Algoritm parametrlarini sozlang va tahlilni ishga tushiring
+              </p>
             </div>
           </div>
         </div>
         <div className="space-y-6 p-6">
           {images.length === 0 ? (
             <EmptyState
-              title="No images uploaded"
-              description="Upload an image first before running an experiment."
+              title="Rasmlar yuklanmagan"
+              description="Tajriba ishga tushirishdan oldin rasm yuklang."
               action={
                 <Button asChild>
-                  <Link href="/upload">Go to Upload</Link>
+                  <Link href="/upload">Rasm yuklashga o&apos;tish</Link>
                 </Button>
               }
             />
@@ -129,16 +131,16 @@ export default function ExperimentsPage() {
             <>
               <div className="grid gap-4 sm:grid-cols-2">
                 <div className="space-y-2">
-                  <Label htmlFor="title">Experiment Title</Label>
+                  <Label htmlFor="title">Tajriba sarlavhasi</Label>
                   <Input
                     id="title"
-                    placeholder="e.g. Coin contour detection"
+                    placeholder="masalan, Tanga kontur aniqlash"
                     value={title}
                     onChange={(e) => setTitle(e.target.value)}
                   />
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="image">Image</Label>
+                  <Label htmlFor="image">Rasm</Label>
                   <select
                     id="image"
                     className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
@@ -155,7 +157,7 @@ export default function ExperimentsPage() {
               </div>
 
               <div className="space-y-2">
-                <Label>Algorithm</Label>
+                <Label>Algoritm</Label>
                 <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-3">
                   {ALGORITHMS.map((algo) => (
                     <button
@@ -187,7 +189,7 @@ export default function ExperimentsPage() {
 
               <Button onClick={handleRun} disabled={running} className="gap-2">
                 <Play className="h-4 w-4" />
-                {running ? "Queueing experiment..." : "Run Experiment"}
+                {running ? "Tajriba navbatga qo'yilmoqda..." : "Tajribani ishga tushirish"}
               </Button>
             </>
           )}
@@ -195,9 +197,16 @@ export default function ExperimentsPage() {
       </div>
 
       <section>
-        <SectionHeader title="Experiment History" description="Previously run analyses" className="mb-4" />
+        <SectionHeader
+          title="Tajribalar tarixi"
+          description="Ilgari bajarilgan tahlillar"
+          className="mb-4"
+        />
         {experiments.length === 0 ? (
-          <EmptyState title="No experiments yet" description="Create your first experiment above." />
+          <EmptyState
+            title="Hali tajribalar yo'q"
+            description="Birinchi tajribangizni yuqorida yarating."
+          />
         ) : (
           <div className="space-y-2">
             {experiments.map((exp) => (

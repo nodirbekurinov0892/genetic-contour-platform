@@ -7,7 +7,7 @@ interface LoadingStateProps {
   className?: string;
 }
 
-export function LoadingState({ message = "Loading...", className }: LoadingStateProps) {
+export function LoadingState({ message = "Yuklanmoqda...", className }: LoadingStateProps) {
   return (
     <div className={cn("flex h-64 flex-col items-center justify-center gap-3 text-muted-foreground", className)}>
       <Loader2 className="h-8 w-8 animate-spin text-primary" />
@@ -25,7 +25,7 @@ interface ErrorStateProps {
 }
 
 export function ErrorState({
-  title = "Something went wrong",
+  title = "Nimadir noto'g'ri ketdi",
   message,
   onRetry,
   hint,
@@ -42,7 +42,7 @@ export function ErrorState({
           {onRetry && (
             <Button variant="outline" size="sm" onClick={onRetry} className="mt-2 gap-2">
               <RefreshCw className="h-3.5 w-3.5" />
-              Retry
+              Qayta urinish
             </Button>
           )}
         </div>

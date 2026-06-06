@@ -12,5 +12,5 @@ export function formatBytes(bytes: number): string {
 }
 
 export function formatDate(date: string): string {
-  return new Date(date).toLocaleString();
+  return new Date(date).toLocaleString("uz-UZ");
 }

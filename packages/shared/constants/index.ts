@@ -1,9 +1,9 @@
 export const ALGORITHMS = [
-  { id: "sobel", label: "Sobel", description: "Gradient-based edge detection" },
-  { id: "prewitt", label: "Prewitt", description: "Convolution-based edge detection" },
-  { id: "canny", label: "Canny", description: "Multi-stage optimal edge detection" },
-  { id: "genetic", label: "Genetic Algorithm", description: "GA-based contour optimization" },
-  { id: "compare_all", label: "Compare All", description: "Run all algorithms" },
+  { id: "sobel", label: "Sobel", description: "Gradient asosidagi chekka aniqlash" },
+  { id: "prewitt", label: "Prewitt", description: "Konvolyutsiya asosidagi chekka aniqlash" },
+  { id: "canny", label: "Canny", description: "Ko'p bosqichli optimal chekka aniqlash" },
+  { id: "genetic", label: "Genetic Algorithm", description: "GA asosidagi kontur optimallashtirish" },
+  { id: "compare_all", label: "Barchasini solishtirish", description: "Barcha algoritmlarni ishga tushirish" },
 ] as const;
 
 export const DEFAULT_ALGORITHM_PARAMS = {

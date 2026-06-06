@@ -50,11 +50,11 @@ export function ExperimentResultsView({ data, sourceImage, conclusion }: Experim
   ) {
     return (
       <EmptyState
-        title={experiment.status === "queued" ? "Experiment queued" : "Experiment not run yet"}
+        title={experiment.status === "queued" ? "Tajriba navbatda" : "Tajriba hali ishga tushirilmagan"}
         description={
           experiment.status === "queued"
-            ? "Waiting for background worker to start processing."
-            : "Go to Experiments and run an algorithm on this experiment."
+            ? "Fon worker ishni boshlashini kutmoqda."
+            : "Tajribalar bo'limiga o'ting va ushbu tajribada algoritm ishga tushiring."
         }
       />
     );
@@ -63,8 +63,8 @@ export function ExperimentResultsView({ data, sourceImage, conclusion }: Experim
   if (experiment.status === "running" && edgeRuns.length === 0 && !pipelineRun) {
     return (
       <EmptyState
-        title="Experiment running"
-        description="Preprocessing and algorithms are executing in the background."
+        title="Tajriba bajarilmoqda"
+        description="Oldindan qayta ishlash va algoritmlar fon rejimida ishlamoqda."
       />
     );
   }
@@ -72,8 +72,8 @@ export function ExperimentResultsView({ data, sourceImage, conclusion }: Experim
   if (experiment.status === "cancelled" && edgeRuns.length === 0 && !pipelineRun) {
     return (
       <EmptyState
-        title="Experiment cancelled"
-        description="Execution was stopped before results were produced."
+        title="Tajriba bekor qilindi"
+        description="Natijalar hosil bo'lishidan oldin bajarish to'xtatildi."
       />
     );
   }
@@ -81,8 +81,8 @@ export function ExperimentResultsView({ data, sourceImage, conclusion }: Experim
   if (experiment.status === "failed" && edgeRuns.length === 0) {
     return (
       <EmptyState
-        title="Experiment failed"
-        description="Processing did not complete. Try running again with different parameters."
+        title="Tajriba muvaffaqiyatsiz"
+        description="Qayta ishlash yakunlanmadi. Boshqa parametrlar bilan qayta urinib ko'ring."
       />
     );
   }
@@ -105,11 +105,10 @@ export function ExperimentResultsView({ data, sourceImage, conclusion }: Experim
 
   return (
     <div className="space-y-10">
-      {/* Preprocessing */}
       <section>
         <SectionHeader
-          title="Input & Preprocessing"
-          description="Original image and preprocessing pipeline outputs used for all algorithms"
+          title="Kirish va oldindan qayta ishlash"
+          description="Asl rasm va barcha algoritmlar uchun ishlatilgan oldindan qayta ishlash natijalari"
           badge="Pipeline"
         />
         <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
@@ -117,52 +116,54 @@ export function ExperimentResultsView({ data, sourceImage, conclusion }: Experim
             <ScientificImageCard
               filePath={sourceImage.file_path}
               url={sourceImage.url}
-              alt="Original uploaded"
-              title="Original"
+              alt="Yuklangan asl rasm"
+              title="Asl rasm"
               subtitle={`${sourceImage.width}×${sourceImage.height} px`}
-              badge="Upload"
+              badge="Yuklash"
             />
           )}
           {originalFromPipeline && (
             <ScientificImageCard
               filePath={originalFromPipeline.file_path}
               url={originalFromPipeline.url}
-              alt="Resized original"
-              title="Resized"
-              subtitle="Aspect-ratio preserved"
+              alt="O'lchami o'zgartirilgan asl rasm"
+              title="O'lcham o'zgartirilgan"
+              subtitle="Nisbat saqlangan"
             />
           )}
           {grayscale && (
             <ScientificImageCard
               filePath={grayscale.file_path}
               url={grayscale.url}
-              alt="Grayscale"
-              title="Grayscale"
-              subtitle="Luminance channel"
+              alt="Kulrang"
+              title="Kulrang"
+              subtitle="Yorqinlik kanali"
             />
           )}
           {gradient && (
             <ScientificImageCard
               filePath={gradient.file_path}
               url={gradient.url}
-              alt="Gradient map"
-              title="Gradient Map"
-              subtitle="Sobel magnitude"
+              alt="Gradient xaritasi"
+              title="Gradient xaritasi"
+              subtitle="Sobel magnitudasi"
               highlight
             />
           )}
         </div>
       </section>
 
-      {/* Algorithm comparison grid */}
       <section>
         <SectionHeader
-          title="Algorithm Comparison"
-          description="Edge detection and contour extraction results from classical and genetic approaches"
-          badge={`${edgeRuns.length} algorithms`}
+          title="Algoritmlarni solishtirish"
+          description="Klassik va genetik yondashuvlardan olingan chekka aniqlash va kontur natijalari"
+          badge={`${edgeRuns.length} ta algoritm`}
         />
         {edgeRuns.length === 0 ? (
-          <EmptyState title="No algorithm results" description="Run the experiment to generate outputs." />
+          <EmptyState
+            title="Algoritm natijalari yo'q"
+            description="Natijalarni olish uchun tajribani ishga tushiring."
+          />
         ) : (
           <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
             {edgeRuns.map((run) => {
@@ -174,14 +175,14 @@ export function ExperimentResultsView({ data, sourceImage, conclusion }: Experim
                   key={run.id}
                   filePath={edge.file_path}
                   url={edge.url}
-                  alt={`${run.algorithm_name} result`}
+                  alt={`${run.algorithm_name} natijasi`}
                   title={ALGORITHM_LABELS[run.algorithm_name] ?? run.algorithm_name}
                   subtitle={
                     m?.fitness_score != null
                       ? `Fitness: ${m.fitness_score.toFixed(4)}`
-                      : `Runtime: ${m?.runtime_ms ?? 0} ms`
+                      : `Ishlash vaqti: ${m?.runtime_ms ?? 0} ms`
                   }
-                  badge={run.algorithm_name === "genetic" ? "GA" : "Classical"}
+                  badge={run.algorithm_name === "genetic" ? "GA" : "Klassik"}
                   highlight={run.algorithm_name === "genetic"}
                 />
               );
@@ -190,11 +191,10 @@ export function ExperimentResultsView({ data, sourceImage, conclusion }: Experim
         )}
       </section>
 
-      {/* Detailed per-algorithm cards */}
       <section>
         <SectionHeader
-          title="Detailed Results"
-          description="Edge maps, overlays, and per-algorithm metrics"
+          title="Batafsil natijalar"
+          description="Chekka xaritalari, qoplama rasmlar va algoritm bo'yicha metrikalar"
         />
         <div className="grid gap-6 lg:grid-cols-2">
           {edgeRuns.map((run) => {
@@ -211,7 +211,7 @@ export function ExperimentResultsView({ data, sourceImage, conclusion }: Experim
                   </h3>
                   {m && (
                     <p className="text-xs text-muted-foreground">
-                      Density {(m.edge_density ?? 0).toFixed(4)} · Continuity{" "}
+                      Zichlik {(m.edge_density ?? 0).toFixed(4)} · Uzluksizlik{" "}
                       {(m.continuity_score ?? 0).toFixed(4)} · {m.runtime_ms ?? 0} ms
                     </p>
                   )}
@@ -221,8 +221,8 @@ export function ExperimentResultsView({ data, sourceImage, conclusion }: Experim
                     <ScientificImageCard
                       filePath={edge.file_path}
                       url={edge.url}
-                      alt="Edges"
-                      title="Contour / Edges"
+                      alt="Chekkalar"
+                      title="Kontur / Chekkalar"
                       className="border-0 shadow-none"
                     />
                   )}
@@ -230,8 +230,8 @@ export function ExperimentResultsView({ data, sourceImage, conclusion }: Experim
                     <ScientificImageCard
                       filePath={overlay.file_path}
                       url={overlay.url}
-                      alt="Overlay"
-                      title="Overlay"
+                      alt="Qoplama"
+                      title="Qoplama"
                       className="border-0 shadow-none"
                     />
                   )}
@@ -241,9 +241,9 @@ export function ExperimentResultsView({ data, sourceImage, conclusion }: Experim
                     <ScientificImageCard
                       filePath={mask.file_path}
                       url={mask.url}
-                      alt="Binary mask"
-                      title="Binary Mask"
-                      subtitle="GA chromosome output"
+                      alt="Binar maska"
+                      title="Binar maska"
+                      subtitle="GA xromosoma chiqishi"
                       className="border-0 shadow-none"
                     />
                   </div>
@@ -254,12 +254,11 @@ export function ExperimentResultsView({ data, sourceImage, conclusion }: Experim
         </div>
       </section>
 
-      {/* Overlay comparison */}
       {edgeRuns.length > 1 && (
         <section>
           <SectionHeader
-            title="Overlay Comparison"
-            description="Visual comparison of contour overlays on the original image"
+            title="Qoplama solishtirish"
+            description="Asl rasm ustidagi kontur qoplamalarini vizual solishtirish"
           />
           <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
             {edgeRuns.map((run) => {
@@ -270,9 +269,9 @@ export function ExperimentResultsView({ data, sourceImage, conclusion }: Experim
                   key={run.id}
                   filePath={overlay.file_path}
                   url={overlay.url}
-                  alt={`${run.algorithm_name} overlay`}
+                  alt={`${run.algorithm_name} qoplamasi`}
                   title={ALGORITHM_LABELS[run.algorithm_name] ?? run.algorithm_name}
-                  subtitle="Overlay"
+                  subtitle="Qoplama"
                 />
               );
             })}
@@ -280,27 +279,27 @@ export function ExperimentResultsView({ data, sourceImage, conclusion }: Experim
         </section>
       )}
 
-      {/* Metrics */}
       <section>
         <SectionHeader
-          title="Quantitative Metrics"
-          description="Comparative evaluation: edge density, continuity, noise, fitness, runtime"
-          badge="Scientific"
+          title="Kvantitativ metrikalar"
+          description="Solishtirma baholash: chekka zichligi, uzluksizlik, shovqin, fitness, ishlash vaqti"
+          badge="Ilmiy"
         />
         <MetricsTable rows={metricsRows} />
       </section>
 
-      {/* Fitness chart */}
       {gaRun && (
         <section>
           <FitnessChart history={gaRun.generation_history} />
         </section>
       )}
 
-      {/* Conclusion */}
       {conclusion && (
         <section>
-          <SectionHeader title="Scientific Conclusion" description="Automated analysis based on experiment metrics" />
+          <SectionHeader
+            title="Ilmiy xulosa"
+            description="Tajriba metrikalariga asoslangan avtomatik tahlil"
+          />
           <Card className="scientific-card border-primary/20 bg-primary/5">
             <CardContent className="p-6">
               <p className="text-sm leading-relaxed text-foreground/90">{conclusion}</p>
