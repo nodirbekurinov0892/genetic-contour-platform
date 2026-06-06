@@ -2,14 +2,30 @@ const ACCESS_TOKEN_KEY = "gc_access_token";
 const REFRESH_TOKEN_KEY = "gc_refresh_token";
 const SESSION_COOKIE = "gc_session";
 
+function sessionCookieAttributes(): string {
+  const secure =
+    typeof window !== "undefined" && window.location.protocol === "https:" ? "; Secure" : "";
+  return `path=/; SameSite=Lax${secure}`;
+}
+
 function setSessionCookie(): void {
   if (typeof document === "undefined") return;
-  document.cookie = `${SESSION_COOKIE}=1; path=/; SameSite=Lax`;
+  document.cookie = `${SESSION_COOKIE}=1; ${sessionCookieAttributes()}`;
 }
 
 function clearSessionCookie(): void {
   if (typeof document === "undefined") return;
-  document.cookie = `${SESSION_COOKIE}=; path=/; Max-Age=0; SameSite=Lax`;
+  document.cookie = `${SESSION_COOKIE}=; Max-Age=0; ${sessionCookieAttributes()}`;
+}
+
+/** Keep middleware session cookie aligned with stored access tokens. */
+export function syncSessionCookie(): void {
+  if (typeof window === "undefined") return;
+  if (getAccessToken()) {
+    setSessionCookie();
+  } else {
+    clearSessionCookie();
+  }
 }
 
 export function getAccessToken(): string | null {
@@ -20,6 +36,10 @@ export function getAccessToken(): string | null {
 export function getRefreshToken(): string | null {
   if (typeof window === "undefined") return null;
   return localStorage.getItem(REFRESH_TOKEN_KEY);
+}
+
+export function hasStoredAccessToken(): boolean {
+  return !!getAccessToken();
 }
 
 export function setTokens(accessToken: string, refreshToken: string): void {

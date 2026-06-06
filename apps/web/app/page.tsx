@@ -19,25 +19,38 @@ export default function DashboardPage() {
   const { user, loading: authLoading } = useAuth();
   const [stats, setStats] = useState<PlatformStats | null>(null);
   const [experiments, setExperiments] = useState<ExperimentRecord[]>([]);
-  const [loading, setLoading] = useState(true);
+  const [dataLoading, setDataLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    if (authLoading) return;
-    if (!user) {
-      setLoading(false);
+    if (authLoading || !user) {
       return;
     }
+
+    let cancelled = false;
+    setDataLoading(true);
+    setError(null);
+
     Promise.all([statsService.get(), experimentService.list()])
       .then(([s, exps]) => {
+        if (cancelled) return;
         setStats(s);
         setExperiments(exps);
       })
-      .catch((err) => setError(err.message))
-      .finally(() => setLoading(false));
+      .catch((err) => {
+        if (cancelled) return;
+        setError(err instanceof Error ? err.message : "Ma'lumotlarni yuklab bo'lmadi");
+      })
+      .finally(() => {
+        if (!cancelled) setDataLoading(false);
+      });
+
+    return () => {
+      cancelled = true;
+    };
   }, [user, authLoading]);
 
-  if (authLoading || loading) {
+  if (authLoading) {
     return <LoadingState message="Boshqaruv paneli yuklanmoqda..." />;
   }
 
@@ -59,6 +72,10 @@ export default function DashboardPage() {
         </div>
       </div>
     );
+  }
+
+  if (dataLoading && !stats && !error) {
+    return <LoadingState message="Statistika yuklanmoqda..." />;
   }
 
   if (error) {

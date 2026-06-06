@@ -24,7 +24,7 @@ function LoginForm() {
 
   if (user) {
     router.replace(next);
-    return null;
+    return <LoadingState message="Yo'naltirilmoqda..." className="h-32" />;
   }
 
   const handleSubmit = async (e: React.FormEvent) => {

@@ -8,6 +8,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useAuth } from "@/components/providers/auth-provider";
+import { LoadingState } from "@/components/ui/state-panel";
 
 export default function RegisterPage() {
   const { register, user } = useAuth();
@@ -21,7 +22,11 @@ export default function RegisterPage() {
 
   if (user) {
     router.replace("/");
-    return null;
+    return (
+      <div className="mx-auto flex min-h-[70vh] max-w-md flex-col justify-center">
+        <LoadingState message="Yo'naltirilmoqda..." className="h-32" />
+      </div>
+    );
   }
 
   const handleSubmit = async (e: React.FormEvent) => {

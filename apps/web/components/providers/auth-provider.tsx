@@ -9,7 +9,12 @@ import {
   useState,
 } from "react";
 import { authService, type AuthUser } from "@/services/authService";
-import { clearTokens, getAccessToken, setTokens } from "@/lib/auth-storage";
+import {
+  clearTokens,
+  getAccessToken,
+  setTokens,
+  syncSessionCookie,
+} from "@/lib/auth-storage";
 
 interface AuthContextValue {
   user: AuthUser | null;
@@ -30,8 +35,12 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     const token = getAccessToken();
     if (!token) {
       setUser(null);
+      syncSessionCookie();
       return;
     }
+
+    syncSessionCookie();
+
     try {
       const me = await authService.me();
       setUser(me);
@@ -42,22 +51,32 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }, []);
 
   useEffect(() => {
-    refreshUser().finally(() => setLoading(false));
+    void refreshUser().finally(() => setLoading(false));
   }, [refreshUser]);
 
   const login = useCallback(async (email: string, password: string) => {
-    const tokens = await authService.login({ email, password });
-    setTokens(tokens.access_token, tokens.refresh_token);
-    const me = await authService.me();
-    setUser(me);
+    setLoading(true);
+    try {
+      const tokens = await authService.login({ email, password });
+      setTokens(tokens.access_token, tokens.refresh_token);
+      const me = await authService.me();
+      setUser(me);
+    } finally {
+      setLoading(false);
+    }
   }, []);
 
   const register = useCallback(
     async (email: string, password: string, name?: string) => {
-      const tokens = await authService.register({ email, password, name });
-      setTokens(tokens.access_token, tokens.refresh_token);
-      const me = await authService.me();
-      setUser(me);
+      setLoading(true);
+      try {
+        const tokens = await authService.register({ email, password, name });
+        setTokens(tokens.access_token, tokens.refresh_token);
+        const me = await authService.me();
+        setUser(me);
+      } finally {
+        setLoading(false);
+      }
     },
     [],
   );
