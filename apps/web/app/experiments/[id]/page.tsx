@@ -238,6 +238,3 @@ export default function ExperimentDetailPage() {
   );
 }
 
-}
-
-
