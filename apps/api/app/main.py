@@ -34,6 +34,11 @@ async def lifespan(app: FastAPI):
             "STORAGE_BACKEND=local with API_DEBUG=false — /static file serving is disabled; use s3 in production"
         )
     logger.info("API started (schema managed by Alembic migrations)")
+    if settings.experiment_queue_backend.strip().lower() == "asyncio":
+        from app.jobs.recovery import run_startup_recovery_async
+
+        recovery_stats = await run_startup_recovery_async()
+        logger.info("Startup job recovery: %s", recovery_stats)
     yield
     await engine.dispose()
 

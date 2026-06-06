@@ -34,6 +34,10 @@ if settings.celery_task_always_eager:
 
 @worker_ready.connect
 def _recover_on_worker_start(**_kwargs) -> None:
+    settings = get_settings()
+    if not settings.uses_celery_queue:
+        return
+
     from app.jobs.recovery import run_startup_recovery
 
     run_startup_recovery()

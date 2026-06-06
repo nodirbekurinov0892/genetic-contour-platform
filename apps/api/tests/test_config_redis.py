@@ -13,9 +13,10 @@ def _base_env(monkeypatch: pytest.MonkeyPatch) -> None:
     get_settings.cache_clear()
 
 
-def test_redis_url_required_when_not_eager(monkeypatch: pytest.MonkeyPatch):
+def test_redis_url_required_when_celery_backend(monkeypatch: pytest.MonkeyPatch):
     _base_env(monkeypatch)
     monkeypatch.setenv("API_DEBUG", "true")
+    monkeypatch.setenv("EXPERIMENT_QUEUE_BACKEND", "celery")
     monkeypatch.setenv("CELERY_TASK_ALWAYS_EAGER", "false")
     monkeypatch.setenv("REDIS_URL", "")
 
@@ -23,9 +24,10 @@ def test_redis_url_required_when_not_eager(monkeypatch: pytest.MonkeyPatch):
         Settings()
 
 
-def test_redis_url_required_in_production(monkeypatch: pytest.MonkeyPatch):
+def test_redis_url_required_in_production_with_celery(monkeypatch: pytest.MonkeyPatch):
     _base_env(monkeypatch)
     monkeypatch.setenv("API_DEBUG", "false")
+    monkeypatch.setenv("EXPERIMENT_QUEUE_BACKEND", "celery")
     monkeypatch.setenv("CELERY_TASK_ALWAYS_EAGER", "false")
     monkeypatch.setenv("REDIS_URL", "")
 
@@ -36,6 +38,7 @@ def test_redis_url_required_in_production(monkeypatch: pytest.MonkeyPatch):
 def test_invalid_redis_url_scheme_rejected(monkeypatch: pytest.MonkeyPatch):
     _base_env(monkeypatch)
     monkeypatch.setenv("API_DEBUG", "true")
+    monkeypatch.setenv("EXPERIMENT_QUEUE_BACKEND", "celery")
     monkeypatch.setenv("CELERY_TASK_ALWAYS_EAGER", "false")
     monkeypatch.setenv("REDIS_URL", "http://localhost:6379")
 
@@ -43,9 +46,21 @@ def test_invalid_redis_url_scheme_rejected(monkeypatch: pytest.MonkeyPatch):
         Settings()
 
 
+def test_asyncio_backend_allows_empty_redis_url(monkeypatch: pytest.MonkeyPatch):
+    _base_env(monkeypatch)
+    monkeypatch.setenv("API_DEBUG", "true")
+    monkeypatch.setenv("EXPERIMENT_QUEUE_BACKEND", "asyncio")
+    monkeypatch.setenv("REDIS_URL", "")
+
+    settings = Settings()
+    assert settings.experiment_queue_backend == "asyncio"
+    assert settings.uses_celery_queue is False
+
+
 def test_eager_mode_allows_empty_redis_url(monkeypatch: pytest.MonkeyPatch):
     _base_env(monkeypatch)
     monkeypatch.setenv("API_DEBUG", "true")
+    monkeypatch.setenv("EXPERIMENT_QUEUE_BACKEND", "celery")
     monkeypatch.setenv("CELERY_TASK_ALWAYS_EAGER", "true")
     monkeypatch.setenv("REDIS_URL", "")
 

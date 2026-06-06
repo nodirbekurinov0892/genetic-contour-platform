@@ -40,7 +40,9 @@ class Settings(BaseSettings):
     sentry_traces_sample_rate: float = 0.1
     log_json: bool = False
 
-    # Queue (Celery + Redis)
+    # Queue: "asyncio" = in-process background tasks (Render free tier);
+    #         "celery" = Redis + Celery worker
+    experiment_queue_backend: str = "asyncio"
     redis_url: str = "redis://localhost:6379/0"
     celery_task_always_eager: bool = False
 
@@ -96,9 +98,13 @@ class Settings(BaseSettings):
                 if not value.strip():
                     errors.append(f"{field_name} is required when STORAGE_BACKEND=s3")
 
-        if not self.celery_task_always_eager:
+        backend = self.experiment_queue_backend.strip().lower()
+        if backend not in {"asyncio", "celery"}:
+            errors.append("EXPERIMENT_QUEUE_BACKEND must be 'asyncio' or 'celery'")
+
+        if self.uses_celery_queue and not self.celery_task_always_eager:
             if not self.redis_url.strip():
-                errors.append("REDIS_URL is required when CELERY_TASK_ALWAYS_EAGER is false")
+                errors.append("REDIS_URL is required when EXPERIMENT_QUEUE_BACKEND=celery")
             elif not self.redis_url.startswith(("redis://", "rediss://")):
                 errors.append("REDIS_URL must start with redis:// or rediss://")
 
@@ -109,8 +115,8 @@ class Settings(BaseSettings):
                 errors.append("JWT_SECRET must be a strong random value in production")
             if self.secret_key == self.jwt_secret:
                 errors.append("SECRET_KEY and JWT_SECRET must be different in production")
-            if not self.celery_task_always_eager and not self.redis_url.strip():
-                errors.append("REDIS_URL is required in production")
+            if self.uses_celery_queue and not self.celery_task_always_eager and not self.redis_url.strip():
+                errors.append("REDIS_URL is required in production when EXPERIMENT_QUEUE_BACKEND=celery")
 
         if errors:
             raise ValueError("; ".join(errors))
@@ -151,6 +157,10 @@ class Settings(BaseSettings):
         if url.startswith("postgresql://"):
             return url.replace("postgresql://", "postgresql+psycopg2://", 1)
         return url
+
+    @property
+    def uses_celery_queue(self) -> bool:
+        return self.experiment_queue_backend.strip().lower() == "celery"
 
     @property
     def celery_broker_url(self) -> str:

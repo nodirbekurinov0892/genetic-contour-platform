@@ -81,7 +81,7 @@ class ExperimentService:
         if experiment.status in ACTIVE_STATUSES:
             experiment.cancel_requested = True
             if experiment.celery_task_id:
-                await asyncio.to_thread(revoke_experiment_task, experiment.celery_task_id)
+                revoke_experiment_task(experiment.celery_task_id)
         storage = StorageService(self.settings)
         self.db.delete(experiment)
         await self.db.flush()
@@ -121,12 +121,12 @@ class ExperimentService:
         experiment.cancel_requested = False
         await self.db.flush()
 
-        task_id = await asyncio.to_thread(enqueue_experiment_run, experiment.id)
+        task_id = enqueue_experiment_run(experiment.id)
         experiment.celery_task_id = task_id
         await self.db.flush()
 
         logger.info(
-            "Experiment %s queued (Celery task %s)",
+            "Experiment %s queued (task %s)",
             experiment.id,
             task_id,
         )
@@ -146,7 +146,7 @@ class ExperimentService:
 
         experiment.cancel_requested = True
         if experiment.celery_task_id:
-            await asyncio.to_thread(revoke_experiment_task, experiment.celery_task_id)
+            revoke_experiment_task(experiment.celery_task_id)
 
         if experiment.status == ExperimentStatus.QUEUED.value:
             experiment.status = ExperimentStatus.CANCELLED.value

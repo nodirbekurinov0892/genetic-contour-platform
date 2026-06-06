@@ -15,6 +15,7 @@ os.environ.setdefault("JWT_SECRET", "test-jwt-secret-for-pytest-only-32chars")
 os.environ.setdefault("API_DEBUG", "true")
 os.environ.setdefault("TRUSTED_HOSTS", "testserver,localhost,127.0.0.1")
 os.environ.setdefault("REDIS_URL", "redis://localhost:6379/0")
+os.environ.setdefault("EXPERIMENT_QUEUE_BACKEND", "asyncio")
 os.environ.setdefault("CELERY_TASK_ALWAYS_EAGER", "false")
 
 from app.config import get_settings  # noqa: E402
@@ -59,7 +60,14 @@ def _stub_celery_queue(monkeypatch):
     )
     monkeypatch.setattr(
         "app.jobs.recovery.run_startup_recovery",
-        lambda: {"stale_running_reset": 0, "queued_re_enqueued": 0},
+        lambda: {"stale_running_reset": 0, "queued_re_enqueued": 0, "skipped": False},
+    )
+    async def _noop_startup_recovery_async():
+        return {"stale_running_reset": 0, "queued_re_enqueued": 0, "skipped": False}
+
+    monkeypatch.setattr(
+        "app.jobs.recovery.run_startup_recovery_async",
+        _noop_startup_recovery_async,
     )
     monkeypatch.setattr(
         "app.jobs.queue.revoke_experiment_task",

@@ -31,6 +31,8 @@ async def check_postgres() -> HealthCheckResult:
 
 
 def check_redis(settings: Settings) -> HealthCheckResult:
+    if not settings.uses_celery_queue:
+        return HealthCheckResult("redis", True, "skipped (EXPERIMENT_QUEUE_BACKEND=asyncio)")
     if settings.celery_task_always_eager:
         return HealthCheckResult("redis", True, "skipped (CELERY_TASK_ALWAYS_EAGER)")
 

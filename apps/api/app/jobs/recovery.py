@@ -7,6 +7,7 @@ from datetime import datetime, timezone
 from sqlalchemy import select
 
 from app.config import get_settings
+from app.database import AsyncSessionLocal
 from app.database_sync import SyncSessionLocal
 from app.jobs.queue import enqueue_experiment_run
 from app.jobs.recovery_lock import acquire_recovery_lock, release_recovery_lock
@@ -74,8 +75,95 @@ def requeue_queued_experiments() -> int:
     return count
 
 
+async def reset_stale_running_jobs_async() -> list[uuid.UUID]:
+    """Mark interrupted running jobs as queued (async API startup)."""
+    requeued_ids: list[uuid.UUID] = []
+
+    async with AsyncSessionLocal() as session:
+        result = await session.execute(
+            select(Experiment).where(Experiment.status == ExperimentStatus.RUNNING.value)
+        )
+        stale = list(result.scalars().all())
+        if not stale:
+            return requeued_ids
+
+        for experiment in stale:
+            experiment.status = ExperimentStatus.QUEUED.value
+            experiment.started_at = None
+            experiment.progress_percent = 0.0
+            experiment.current_generation = None
+            experiment.error_message = None
+            requeued_ids.append(experiment.id)
+            logger.warning(
+                "Recovered stale running experiment %s -> queued",
+                experiment.id,
+            )
+
+        await session.commit()
+
+    return requeued_ids
+
+
+async def requeue_queued_experiments_async() -> int:
+    """Re-schedule DB-queued experiments on the API event loop."""
+    count = 0
+
+    async with AsyncSessionLocal() as session:
+        result = await session.execute(
+            select(Experiment).where(Experiment.status == ExperimentStatus.QUEUED.value)
+        )
+        queued = list(result.scalars().all())
+
+        for experiment in queued:
+            if experiment.cancel_requested:
+                experiment.status = ExperimentStatus.CANCELLED.value
+                experiment.finished_at = datetime.now(timezone.utc)
+                continue
+
+            task_id = enqueue_experiment_run(experiment.id)
+            experiment.celery_task_id = task_id
+            count += 1
+            logger.info(
+                "Re-enqueued experiment %s with task %s",
+                experiment.id,
+                task_id,
+            )
+
+        await session.commit()
+
+    return count
+
+
+async def run_startup_recovery_async() -> dict[str, int | bool]:
+    """Full recovery pass on API startup (asyncio queue backend)."""
+    settings = get_settings()
+    if not acquire_recovery_lock(settings):
+        logger.info("Job recovery skipped — lock held by another process")
+        return {
+            "stale_running_reset": 0,
+            "queued_re_enqueued": 0,
+            "skipped": True,
+        }
+
+    try:
+        stale_ids = await reset_stale_running_jobs_async()
+        requeued = await requeue_queued_experiments_async()
+        logger.info(
+            "Job recovery complete: %d stale running reset, %d queued re-enqueued",
+            len(stale_ids),
+            requeued,
+        )
+        return {
+            "stale_running_reset": len(stale_ids),
+            "queued_re_enqueued": requeued,
+            "skipped": False,
+        }
+    finally:
+        release_recovery_lock(settings)
+
+
 def run_startup_recovery() -> dict[str, int | bool]:
-    """Full recovery pass — worker startup only; guarded by Redis lock."""
+    """Full recovery pass — Celery worker startup; guarded by Redis lock."""
     settings = get_settings()
     if not acquire_recovery_lock(settings):
         logger.info("Job recovery skipped — lock held by another process")

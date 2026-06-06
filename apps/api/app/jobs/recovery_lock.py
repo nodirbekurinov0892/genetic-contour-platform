@@ -14,7 +14,7 @@ RECOVERY_LOCK_TTL_SECONDS = 120
 
 def acquire_recovery_lock(settings: Settings) -> bool:
     """Return True if this process should run recovery."""
-    if settings.celery_task_always_eager:
+    if not settings.uses_celery_queue or settings.celery_task_always_eager:
         return True
 
     try:
@@ -36,7 +36,7 @@ def acquire_recovery_lock(settings: Settings) -> bool:
 
 
 def release_recovery_lock(settings: Settings) -> None:
-    if settings.celery_task_always_eager:
+    if not settings.uses_celery_queue or settings.celery_task_always_eager:
         return
 
     try:

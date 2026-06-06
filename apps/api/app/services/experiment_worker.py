@@ -371,6 +371,7 @@ async def _run_genetic_algorithm(
     await session.flush()
 
     loop = asyncio.get_running_loop()
+    progress_queue: asyncio.Queue[tuple[float, int] | None] = asyncio.Queue()
 
     async def _persist_ga_progress(percent: float, gen: int) -> None:
         async with AsyncSessionLocal() as progress_session:
@@ -383,21 +384,32 @@ async def _run_genetic_algorithm(
                 exp.current_generation = gen
                 await progress_session.commit()
 
+    async def _drain_ga_progress() -> None:
+        while True:
+            item = await progress_queue.get()
+            if item is None:
+                break
+            percent, gen = item
+            await _persist_ga_progress(percent, gen)
+
     def on_generation(record: GenerationRecord) -> None:
         percent, gen = tracker.record_ga_generation(record.generation)
         if is_cancelled(experiment_id):
             raise JobCancelled()
-        future = asyncio.run_coroutine_threadsafe(_persist_ga_progress(percent, gen), loop)
-        future.result(timeout=10)
+        loop.call_soon_threadsafe(progress_queue.put_nowait, (percent, gen))
 
     def should_cancel() -> bool:
         return is_cancelled(experiment_id)
 
     engine = GAEngine(ga_config)
+    drainer = asyncio.create_task(_drain_ga_progress())
     try:
         ga_result = await asyncio.to_thread(engine.run, gradient, on_generation, should_cancel)
     except (JobCancelled, GACancelled):
         raise JobCancelled() from None
+    finally:
+        await progress_queue.put(None)
+        await drainer
 
     percent, gen = tracker.complete_ga()
     await _update_progress(session, experiment, percent, gen)
