@@ -6,6 +6,7 @@ import logging
 import uuid
 from datetime import datetime, timezone
 from typing import Any
+from xml.sax.saxutils import escape
 
 import matplotlib
 
@@ -17,7 +18,6 @@ from reportlab.lib.enums import TA_CENTER, TA_JUSTIFY
 from reportlab.lib.pagesizes import A4
 from reportlab.lib.styles import ParagraphStyle, getSampleStyleSheet
 from reportlab.lib.units import cm
-from reportlab.lib.utils import ImageReader
 from reportlab.platypus import (
     Image as RLImage,
     PageBreak,
@@ -55,6 +55,16 @@ ALGO_LABELS = {
     "genetic": "Genetik algoritm (GA)",
     "pipeline": "Preprocessing",
 }
+_MISSING_IMAGE_LABEL = "Rasm mavjud emas"
+_UNICODE_REPLACEMENTS = (
+    ("\u2014", "-"),  # em dash
+    ("\u2013", "-"),  # en dash
+    ("\u00d7", "x"),  # multiplication sign
+    ("\u2018", "'"),  # left single quote
+    ("\u2019", "'"),  # right single quote
+    ("\u201c", '"'),  # left double quote
+    ("\u201d", '"'),  # right double quote
+)
 
 
 class ReportService:
@@ -126,23 +136,19 @@ class ReportService:
             file_path=result_image.file_path,
         )
 
-    def _rl_image(
-        self,
-        result_image: ResultImage,
-        width: float = 7 * cm,
-        height: float = 5 * cm,
-    ) -> RLImage | None:
-        try:
-            data = self._load_result_image_bytes(result_image)
-            return RLImage(ImageReader(io.BytesIO(data)), width=width, height=height)
-        except Exception as exc:
-            logger.warning(
-                "Missing image for PDF (%s): %s — %s",
-                result_image.type,
-                result_image.storage_key or result_image.file_path,
-                exc,
-            )
-            return None
+    @staticmethod
+    def _sanitize_pdf_text(text: str) -> str:
+        normalized = text
+        for source, replacement in _UNICODE_REPLACEMENTS:
+            normalized = normalized.replace(source, replacement)
+        return normalized
+
+    def _pdf_paragraph(self, text: str, style: ParagraphStyle) -> Paragraph:
+        safe = escape(self._sanitize_pdf_text(text))
+        return Paragraph(safe, style)
+
+    def _missing_image_paragraph(self, style: ParagraphStyle) -> Paragraph:
+        return self._pdf_paragraph(_MISSING_IMAGE_LABEL, style)
 
     def _rl_image_from_bytes(
         self,
@@ -151,10 +157,63 @@ class ReportService:
         height: float = 5 * cm,
     ) -> RLImage | None:
         try:
-            return RLImage(ImageReader(io.BytesIO(data)), width=width, height=height)
+            buffer = io.BytesIO(data)
+            buffer.seek(0)
+            return RLImage(buffer, width=width, height=height)
         except Exception as exc:
             logger.warning("Failed to embed image bytes in PDF: %s", exc)
             return None
+
+    def _rl_image(
+        self,
+        result_image: ResultImage,
+        width: float = 7 * cm,
+        height: float = 5 * cm,
+    ) -> RLImage | None:
+        try:
+            data = self._load_result_image_bytes(result_image)
+            return self._rl_image_from_bytes(data, width=width, height=height)
+        except Exception as exc:
+            logger.warning(
+                "Missing image for PDF (%s): %s - %s",
+                result_image.type,
+                result_image.storage_key or result_image.file_path,
+                exc,
+            )
+            return None
+
+    def _rl_image_or_placeholder(
+        self,
+        result_image: ResultImage | None,
+        styles: dict,
+        width: float = 7 * cm,
+        height: float = 5 * cm,
+    ):
+        if not result_image:
+            return self._missing_image_paragraph(styles["Normal"])
+        image = self._rl_image(result_image, width=width, height=height)
+        return image or self._missing_image_paragraph(styles["Normal"])
+
+    def _rl_image_from_storage_or_placeholder(
+        self,
+        *,
+        storage_key: str | None,
+        file_path: str | None,
+        styles: dict,
+        width: float = 7 * cm,
+        height: float = 5 * cm,
+    ):
+        try:
+            data = self._load_storage_bytes(storage_key=storage_key, file_path=file_path)
+            image = self._rl_image_from_bytes(data, width=width, height=height)
+            return image or self._missing_image_paragraph(styles["Normal"])
+        except Exception as exc:
+            logger.warning(
+                "Missing storage image for PDF: %s - %s",
+                storage_key or file_path,
+                exc,
+            )
+            return self._missing_image_paragraph(styles["Normal"])
 
     async def build_report_data(self, experiment_id: uuid.UUID, user: User) -> dict[str, Any]:
         experiment = await self._load_experiment(experiment_id, user)
@@ -423,10 +482,10 @@ class ReportService:
 
         story.append(Paragraph("1. Tajriba ma'lumotlari", heading_style))
         info_data = [
-            ["Tajriba nomi", experiment.title],
+            ["Tajriba nomi", self._sanitize_pdf_text(experiment.title)],
             ["Tajriba ID", str(experiment.id)],
             ["Holat", experiment.status],
-            ["Rasm", image.original_name],
+            ["Rasm", self._sanitize_pdf_text(image.original_name)],
             ["O'lcham", f"{image.width} x {image.height} px"],
             ["Fayl hajmi", f"{image.size / 1024:.1f} KB"],
             ["MIME", image.mime_type],
@@ -447,23 +506,18 @@ class ReportService:
         story.append(Spacer(1, 0.4 * cm))
 
         story.append(Paragraph("2. Preprocessing natijalari", heading_style))
-        prep_cells: list = []
-        try:
-            source_bytes = self._load_storage_bytes(
-                storage_key=image.storage_key,
-                file_path=image.file_path,
-            )
-            source_img = self._rl_image_from_bytes(source_bytes, 4.5 * cm, 3.5 * cm)
-            if source_img:
-                prep_cells.append(
-                    [Paragraph("<b>Asl yuklangan</b>", styles["Normal"]), source_img]
-                )
-        except Exception as exc:
-            logger.warning(
-                "Missing source upload image for PDF: %s — %s",
-                image.storage_key or image.file_path,
-                exc,
-            )
+        prep_cells: list = [
+            [
+                Paragraph("<b>Asl yuklangan</b>", styles["Normal"]),
+                self._rl_image_from_storage_or_placeholder(
+                    storage_key=image.storage_key,
+                    file_path=image.file_path,
+                    styles=styles,
+                    width=4.5 * cm,
+                    height=3.5 * cm,
+                ),
+            ],
+        ]
 
         if pipeline:
             for img_type, label in [
@@ -472,14 +526,18 @@ class ReportService:
                 ("gradient", "Gradient"),
             ]:
                 ri = self._find_image(pipeline, img_type)
-                if ri:
-                    img = self._rl_image(ri, 4.5 * cm, 3.5 * cm)
-                    if img:
-                        prep_cells.append(
-                            [Paragraph(f"<b>{label}</b>", styles["Normal"]), img]
-                        )
-        if prep_cells:
-            story.append(Table(prep_cells, colWidths=[2.5 * cm, 5.5 * cm]))
+                prep_cells.append(
+                    [
+                        Paragraph(f"<b>{label}</b>", styles["Normal"]),
+                        self._rl_image_or_placeholder(
+                            ri,
+                            styles,
+                            width=4.5 * cm,
+                            height=3.5 * cm,
+                        ),
+                    ]
+                )
+        story.append(Table(prep_cells, colWidths=[2.5 * cm, 5.5 * cm]))
         story.append(Spacer(1, 0.3 * cm))
 
         story.append(Paragraph("3. Algoritm natijalari", heading_style))
@@ -493,21 +551,26 @@ class ReportService:
                 if run.algorithm_name == "genetic"
                 else None
             )
-            row_imgs = []
-            if edge_ri:
-                img = self._rl_image(edge_ri, 6 * cm, 4.5 * cm)
-                if img:
-                    row_imgs.append([Paragraph("Kontur", styles["Normal"]), img])
-            if mask_ri:
-                img = self._rl_image(mask_ri, 6 * cm, 4.5 * cm)
-                if img:
-                    row_imgs.append([Paragraph("Binar maska", styles["Normal"]), img])
-            if overlay_ri:
-                img = self._rl_image(overlay_ri, 6 * cm, 4.5 * cm)
-                if img:
-                    row_imgs.append([Paragraph("Overlay", styles["Normal"]), img])
-            if row_imgs:
-                story.append(Table(row_imgs, colWidths=[2 * cm, 7 * cm]))
+            row_imgs = [
+                [
+                    Paragraph("Kontur", styles["Normal"]),
+                    self._rl_image_or_placeholder(edge_ri, styles, 6 * cm, 4.5 * cm),
+                ],
+            ]
+            if run.algorithm_name == "genetic":
+                row_imgs.append(
+                    [
+                        Paragraph("Binar maska", styles["Normal"]),
+                        self._rl_image_or_placeholder(mask_ri, styles, 6 * cm, 4.5 * cm),
+                    ]
+                )
+            row_imgs.append(
+                [
+                    Paragraph("Overlay", styles["Normal"]),
+                    self._rl_image_or_placeholder(overlay_ri, styles, 6 * cm, 4.5 * cm),
+                ]
+            )
+            story.append(Table(row_imgs, colWidths=[2 * cm, 7 * cm]))
             story.append(Spacer(1, 0.2 * cm))
 
         story.append(PageBreak())
@@ -540,12 +603,19 @@ class ReportService:
         if report_data["generation_history"]:
             story.append(Paragraph("5. GA Fitness Evolution", heading_style))
             chart_bytes = self._make_fitness_chart_bytes(report_data["generation_history"])
-            if chart_bytes:
-                story.append(RLImage(ImageReader(io.BytesIO(chart_bytes)), width=14 * cm, height=7 * cm))
+            chart_image = (
+                self._rl_image_from_bytes(chart_bytes, width=14 * cm, height=7 * cm)
+                if chart_bytes
+                else None
+            )
+            if chart_image:
+                story.append(chart_image)
+            else:
+                story.append(self._missing_image_paragraph(styles["Normal"]))
             story.append(Spacer(1, 0.4 * cm))
 
         story.append(Paragraph("6. Ilmiy xulosa", heading_style))
-        story.append(Paragraph(report_data["conclusion"], body_style))
+        story.append(self._pdf_paragraph(report_data["conclusion"], body_style))
 
         pdf_buffer = io.BytesIO()
         doc = SimpleDocTemplate(
