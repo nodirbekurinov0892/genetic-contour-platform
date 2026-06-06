@@ -1,7 +1,6 @@
 "use client";
 
-import Image from "next/image";
-import { resolveStaticUrl } from "@/lib/api";
+import { StoredImage } from "@/components/ui/stored-image";
 import { formatBytes } from "@/lib/utils";
 import type { ImageRecord } from "@shared/types";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -18,12 +17,11 @@ export function ImageCard({ image }: ImageCardProps) {
       </CardHeader>
       <CardContent>
         <div className="relative mb-3 aspect-video overflow-hidden rounded-md bg-muted">
-          <Image
-            src={resolveStaticUrl(image.file_path, image.url)}
+          <StoredImage
+            filePath={image.file_path}
+            url={image.url}
             alt={image.original_name}
             fill
-            className="object-contain"
-            unoptimized
           />
         </div>
         <dl className="grid grid-cols-2 gap-1 text-xs text-muted-foreground">

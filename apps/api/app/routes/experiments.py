@@ -1,3 +1,4 @@
+import logging
 import uuid
 
 from fastapi import APIRouter, Depends, HTTPException, Request
@@ -25,6 +26,8 @@ from app.services.report_service import ReportService
 from app.services.storage import StorageService
 from app.utils.media_urls import resolve_public_url
 from app.utils.rate_limit import limiter
+
+logger = logging.getLogger(__name__)
 
 router = APIRouter(prefix="/api/experiments", tags=["experiments"])
 
@@ -216,10 +219,16 @@ async def get_experiment_report_pdf(
     report_service = ReportService(db, settings)
     try:
         pdf_bytes = await report_service.generate_pdf(experiment_id, current_user)
+    except HTTPException:
+        raise
     except Exception as exc:
+        logger.exception(
+            "PDF generation failed for experiment %s",
+            experiment_id,
+        )
         raise HTTPException(
             status_code=500,
-            detail="PDF report generation failed. Check server logs.",
+            detail=f"PDF report generation failed: {type(exc).__name__}: {exc}",
         ) from exc
 
     filename = f"experiment-{experiment_id}-report.pdf"

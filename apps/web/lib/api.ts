@@ -1,6 +1,8 @@
 import { getAccessToken, getRefreshToken, setTokens, clearTokens } from "@/lib/auth-storage";
 
 const API_BASE = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
+const STORAGE_PUBLIC_BASE =
+  process.env.NEXT_PUBLIC_STORAGE_PUBLIC_URL?.replace(/\/$/, "") ?? "";
 
 export class ApiError extends Error {
   constructor(
@@ -131,12 +133,40 @@ export async function downloadFile(
   URL.revokeObjectURL(objectUrl);
 }
 
+function normalizeStorageKey(pathOrKey: string): string {
+  return pathOrKey.replace(/\\/g, "/").replace(/^\//, "");
+}
+
+export function resolveStorageKey(filePath: string, url?: string | null): string {
+  const key = normalizeStorageKey(filePath);
+  if (key.startsWith("uploads/") || key.startsWith("results/")) {
+    return key;
+  }
+  if (url) {
+    try {
+      const pathname = new URL(url).pathname.replace(/^\//, "");
+      if (pathname.startsWith("uploads/") || pathname.startsWith("results/")) {
+        return pathname;
+      }
+    } catch {
+      // ignore invalid URL
+    }
+  }
+  return key;
+}
+
+export function resolveMediaProxyUrl(storageKey: string): string {
+  const key = normalizeStorageKey(storageKey);
+  if (!key) return "";
+  return `${API_BASE}/api/media/serve/${key}`;
+}
+
 export function staticUrl(filePath: string): string {
   if (!filePath) return "";
   if (filePath.startsWith("http://") || filePath.startsWith("https://")) {
     return filePath;
   }
-  const normalized = filePath.replace(/\\/g, "/").replace(/^\//, "");
+  const normalized = normalizeStorageKey(filePath);
   const path = normalized.startsWith("static/") ? normalized : `static/${normalized}`;
   return `${API_BASE}/${path}`;
 }
@@ -144,7 +174,44 @@ export function staticUrl(filePath: string): string {
 export function resolveStaticUrl(filePath: string, url?: string | null): string {
   if (url?.startsWith("http://") || url?.startsWith("https://")) return url;
   if (url?.startsWith("/static/")) return `${API_BASE}${url}`;
+
+  const key = normalizeStorageKey(filePath);
+  if (
+    STORAGE_PUBLIC_BASE &&
+    (key.startsWith("uploads/") || key.startsWith("results/"))
+  ) {
+    return `${STORAGE_PUBLIC_BASE}/${key}`;
+  }
+
+  if (key.startsWith("uploads/") || key.startsWith("results/")) {
+    return staticUrl(key);
+  }
+
   return staticUrl(filePath);
 }
 
-export { API_BASE };
+export async function fetchAuthenticatedBlob(pathOrUrl: string): Promise<string> {
+  const accessToken = getAccessToken();
+  const url = pathOrUrl.startsWith("http") ? pathOrUrl : `${API_BASE}${pathOrUrl}`;
+  const res = await fetch(url, {
+    headers: accessToken ? { Authorization: `Bearer ${accessToken}` } : {},
+  });
+
+  if (res.status === 401) {
+    const refreshed = await refreshAccessToken();
+    if (refreshed) {
+      return fetchAuthenticatedBlob(pathOrUrl);
+    }
+    throw new ApiError(401, "Autentifikatsiya talab qilinadi");
+  }
+
+  if (!res.ok) {
+    const body = await res.json().catch(() => ({ detail: res.statusText }));
+    throw new ApiError(res.status, formatDetail(body.detail));
+  }
+
+  const blob = await res.blob();
+  return URL.createObjectURL(blob);
+}
+
+export { API_BASE, STORAGE_PUBLIC_BASE };

@@ -108,12 +108,23 @@ class ReportService:
     def _edge_type(self, algo: str) -> str:
         return "ga" if algo == "genetic" else algo
 
-    def _load_result_image_bytes(self, result_image: ResultImage) -> bytes:
+    def _load_storage_bytes(
+        self,
+        *,
+        storage_key: str | None,
+        file_path: str | None,
+    ) -> bytes:
         key = self.storage.resolve_storage_key(
+            storage_key=storage_key,
+            file_path=file_path,
+        )
+        return self.storage.get_bytes(key)
+
+    def _load_result_image_bytes(self, result_image: ResultImage) -> bytes:
+        return self._load_storage_bytes(
             storage_key=result_image.storage_key,
             file_path=result_image.file_path,
         )
-        return self.storage.get_bytes(key)
 
     def _rl_image(
         self,
@@ -124,11 +135,25 @@ class ReportService:
         try:
             data = self._load_result_image_bytes(result_image)
             return RLImage(ImageReader(io.BytesIO(data)), width=width, height=height)
-        except Exception:
+        except Exception as exc:
             logger.warning(
-                "Missing image for PDF: %s",
+                "Missing image for PDF (%s): %s — %s",
+                result_image.type,
                 result_image.storage_key or result_image.file_path,
+                exc,
             )
+            return None
+
+    def _rl_image_from_bytes(
+        self,
+        data: bytes,
+        width: float = 7 * cm,
+        height: float = 5 * cm,
+    ) -> RLImage | None:
+        try:
+            return RLImage(ImageReader(io.BytesIO(data)), width=width, height=height)
+        except Exception as exc:
+            logger.warning("Failed to embed image bytes in PDF: %s", exc)
             return None
 
     async def build_report_data(self, experiment_id: uuid.UUID, user: User) -> dict[str, Any]:
@@ -402,7 +427,7 @@ class ReportService:
             ["Tajriba ID", str(experiment.id)],
             ["Holat", experiment.status],
             ["Rasm", image.original_name],
-            ["O'lcham", f"{image.width} × {image.height} px"],
+            ["O'lcham", f"{image.width} x {image.height} px"],
             ["Fayl hajmi", f"{image.size / 1024:.1f} KB"],
             ["MIME", image.mime_type],
         ]
@@ -422,11 +447,28 @@ class ReportService:
         story.append(Spacer(1, 0.4 * cm))
 
         story.append(Paragraph("2. Preprocessing natijalari", heading_style))
+        prep_cells: list = []
+        try:
+            source_bytes = self._load_storage_bytes(
+                storage_key=image.storage_key,
+                file_path=image.file_path,
+            )
+            source_img = self._rl_image_from_bytes(source_bytes, 4.5 * cm, 3.5 * cm)
+            if source_img:
+                prep_cells.append(
+                    [Paragraph("<b>Asl yuklangan</b>", styles["Normal"]), source_img]
+                )
+        except Exception as exc:
+            logger.warning(
+                "Missing source upload image for PDF: %s — %s",
+                image.storage_key or image.file_path,
+                exc,
+            )
+
         if pipeline:
-            prep_cells: list = []
             for img_type, label in [
-                ("original", "Original"),
-                ("grayscale", "Grayscale"),
+                ("original", "O'lcham o'zgartirilgan"),
+                ("grayscale", "Kulrang"),
                 ("gradient", "Gradient"),
             ]:
                 ri = self._find_image(pipeline, img_type)
@@ -436,8 +478,8 @@ class ReportService:
                         prep_cells.append(
                             [Paragraph(f"<b>{label}</b>", styles["Normal"]), img]
                         )
-            if prep_cells:
-                story.append(Table(prep_cells, colWidths=[2.5 * cm, 5.5 * cm]))
+        if prep_cells:
+            story.append(Table(prep_cells, colWidths=[2.5 * cm, 5.5 * cm]))
         story.append(Spacer(1, 0.3 * cm))
 
         story.append(Paragraph("3. Algoritm natijalari", heading_style))
@@ -446,11 +488,20 @@ class ReportService:
             story.append(Paragraph(f"<b>{label}</b>", styles["Normal"]))
             edge_ri = self._find_image(run, self._edge_type(run.algorithm_name))
             overlay_ri = self._find_image(run, "overlay")
+            mask_ri = (
+                self._find_image(run, "mask")
+                if run.algorithm_name == "genetic"
+                else None
+            )
             row_imgs = []
             if edge_ri:
                 img = self._rl_image(edge_ri, 6 * cm, 4.5 * cm)
                 if img:
                     row_imgs.append([Paragraph("Kontur", styles["Normal"]), img])
+            if mask_ri:
+                img = self._rl_image(mask_ri, 6 * cm, 4.5 * cm)
+                if img:
+                    row_imgs.append([Paragraph("Binar maska", styles["Normal"]), img])
             if overlay_ri:
                 img = self._rl_image(overlay_ri, 6 * cm, 4.5 * cm)
                 if img:
@@ -467,11 +518,11 @@ class ReportService:
         for row in report_data["metrics"]:
             metrics_data.append([
                 row["algorithm"],
-                f"{row['edge_density']:.4f}" if row["edge_density"] is not None else "—",
-                f"{row['continuity_score']:.4f}" if row["continuity_score"] is not None else "—",
-                f"{row['noise_score']:.4f}" if row["noise_score"] is not None else "—",
-                f"{row['fitness_score']:.4f}" if row["fitness_score"] is not None else "—",
-                str(row["runtime_ms"] or "—"),
+                f"{row['edge_density']:.4f}" if row["edge_density"] is not None else "-",
+                f"{row['continuity_score']:.4f}" if row["continuity_score"] is not None else "-",
+                f"{row['noise_score']:.4f}" if row["noise_score"] is not None else "-",
+                f"{row['fitness_score']:.4f}" if row["fitness_score"] is not None else "-",
+                str(row["runtime_ms"] or "-"),
             ])
         mt = Table(metrics_data, colWidths=[3.5 * cm, 2.5 * cm, 2.5 * cm, 2 * cm, 2.5 * cm, 2.5 * cm])
         mt.setStyle(TableStyle([
