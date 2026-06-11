@@ -3,7 +3,7 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 import Link from "next/link";
-import { ArrowLeft, Microscope, XCircle } from "lucide-react";
+import { ArrowLeft, Copy, Microscope, RotateCcw, XCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { ExperimentStatusBadge } from "@/components/experiments/experiment-status-badge";
 import { ExperimentProgress } from "@/components/experiments/experiment-progress";
@@ -12,7 +12,13 @@ import { ExportButtons } from "@/components/experiments/export-buttons";
 import { LoadingState, ErrorState } from "@/components/ui/state-panel";
 import { experimentService } from "@/services/experimentService";
 import { imageService } from "@/services/imageService";
-import type { ExperimentResults, ExperimentStatusResponse, ImageRecord } from "@shared/types";
+import { InsightsPanel } from "@/components/experiments/insights-panel";
+import type {
+  ExperimentResults,
+  ExperimentStatusResponse,
+  ImageRecord,
+  ScientificInsights,
+} from "@shared/types";
 import { API_BASE, ApiError } from "@/lib/api";
 import { safeRedirectPath } from "@/lib/safe-redirect";
 import { formatDate } from "@/lib/utils";
@@ -30,6 +36,9 @@ export default function ExperimentDetailPage() {
   const [jobStatus, setJobStatus] = useState<ExperimentStatusResponse | null>(null);
   const [sourceImage, setSourceImage] = useState<ImageRecord | null>(null);
   const [conclusion, setConclusion] = useState<string | null>(null);
+  const [insights, setInsights] = useState<ScientificInsights | null>(null);
+  const [insightsLoading, setInsightsLoading] = useState(false);
+  const [actionLoading, setActionLoading] = useState(false);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [cancelling, setCancelling] = useState(false);
@@ -46,6 +55,12 @@ export default function ExperimentDetailPage() {
       if (report && typeof report.conclusion === "string") {
         setConclusion(report.conclusion);
       }
+      setInsightsLoading(true);
+      experimentService
+        .getInsights(id)
+        .then(setInsights)
+        .catch(() => setInsights(null))
+        .finally(() => setInsightsLoading(false));
     }
   }, [id]);
 
@@ -88,38 +103,105 @@ export default function ExperimentDetailPage() {
   useEffect(() => {
     if (!jobStatus || TERMINAL_STATUSES.has(jobStatus.status)) return;
 
-    const interval = setInterval(async () => {
-      try {
-        const status = await pollStatus();
-        pollFailuresRef.current = 0;
-        setPollError(null);
+    const controller = new AbortController();
+    let active = true;
 
-        if (TERMINAL_STATUSES.has(status.status)) {
-          await refreshAfterTerminal();
-        } else {
-          const results = await experimentService.getResults(id);
-          setData(results);
+    const runStream = async () => {
+      try {
+        const res = await fetch(experimentService.streamUrl(id), {
+          headers: experimentService.streamHeaders(),
+          signal: controller.signal,
+        });
+        if (!res.ok || !res.body) throw new Error("SSE ulanmadi");
+
+        const reader = res.body.getReader();
+        const decoder = new TextDecoder();
+        let buffer = "";
+
+        while (active) {
+          const { done, value } = await reader.read();
+          if (done) break;
+          buffer += decoder.decode(value, { stream: true });
+          const chunks = buffer.split("\n\n");
+          buffer = chunks.pop() ?? "";
+          for (const chunk of chunks) {
+            const line = chunk.replace(/^data:\s*/, "").trim();
+            if (!line) continue;
+            const status = JSON.parse(line) as ExperimentStatusResponse;
+            setJobStatus(status);
+            pollFailuresRef.current = 0;
+            setPollError(null);
+            if (TERMINAL_STATUSES.has(status.status)) {
+              await refreshAfterTerminal();
+            } else {
+              const results = await experimentService.getResults(id);
+              setData(results);
+            }
+          }
         }
       } catch (err) {
-        if (err instanceof ApiError && err.status === 401) {
-          router.replace(`/login?next=${encodeURIComponent(safeRedirectPath(`/experiments/${id}`))}`);
-          return;
-        }
-
+        if (!active || controller.signal.aborted) return;
         pollFailuresRef.current += 1;
         const message =
-          err instanceof Error ? err.message : "Tajriba holatini yangilab bo'lmadi";
-
+          err instanceof Error ? err.message : "Real-time yangilanish muvaffaqiyatsiz";
         if (pollFailuresRef.current >= MAX_POLL_FAILURES) {
-          setPollError(
-            `${message} (${MAX_POLL_FAILURES} urinishdan keyin). API ulanishini ${API_BASE} manzilida tekshiring.`,
-          );
+          setPollError(`${message}. Polling fallback ishlatilmoqda.`);
         }
       }
-    }, 2000);
+    };
 
-    return () => clearInterval(interval);
-  }, [jobStatus?.status, pollStatus, refreshAfterTerminal, id, router]);
+    void runStream();
+    const fallback = setInterval(async () => {
+      if (!active) return;
+      try {
+        const status = await pollStatus();
+        setJobStatus(status);
+        if (TERMINAL_STATUSES.has(status.status)) {
+          await refreshAfterTerminal();
+        }
+      } catch {
+        // stream/fallback errors handled above
+      }
+    }, 5000);
+
+    return () => {
+      active = false;
+      controller.abort();
+      clearInterval(fallback);
+    };
+  }, [jobStatus?.status, pollStatus, refreshAfterTerminal, id]);
+
+  const handleClone = async () => {
+    setActionLoading(true);
+    try {
+      const cloned = await experimentService.clone(id);
+      router.push(`/experiments/${cloned.id}`);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Nusxalash muvaffaqiyatsiz");
+    } finally {
+      setActionLoading(false);
+    }
+  };
+
+  const handleRerun = async () => {
+    setActionLoading(true);
+    try {
+      const job = await experimentService.rerun(id);
+      setJobStatus({
+        job_id: job.job_id,
+        status: job.status,
+        progress_percent: 0,
+        current_generation: null,
+        started_at: null,
+        finished_at: null,
+        error_message: null,
+      });
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Qayta ishga tushirish muvaffaqiyatsiz");
+    } finally {
+      setActionLoading(false);
+    }
+  };
 
   const handleCancel = async () => {
     setCancelling(true);
@@ -185,18 +267,44 @@ export default function ExperimentDetailPage() {
           </div>
           <div className="flex flex-col items-end gap-3">
             <ExperimentStatusBadge status={displayStatus} />
-            {isActive && (
-              <Button
-                variant="outline"
-                size="sm"
-                className="gap-2"
-                disabled={cancelling}
-                onClick={handleCancel}
-              >
-                <XCircle className="h-4 w-4" />
-                {cancelling ? "Bekor qilinmoqda..." : "Bekor qilish"}
-              </Button>
-            )}
+            <div className="flex flex-wrap gap-2">
+              {displayStatus === "completed" && (
+                <>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="gap-2"
+                    disabled={actionLoading}
+                    onClick={handleClone}
+                  >
+                    <Copy className="h-4 w-4" />
+                    Nusxalash
+                  </Button>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="gap-2"
+                    disabled={actionLoading}
+                    onClick={handleRerun}
+                  >
+                    <RotateCcw className="h-4 w-4" />
+                    Qayta ishga tushirish
+                  </Button>
+                </>
+              )}
+              {isActive && (
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="gap-2"
+                  disabled={cancelling}
+                  onClick={handleCancel}
+                >
+                  <XCircle className="h-4 w-4" />
+                  {cancelling ? "Bekor qilinmoqda..." : "Bekor qilish"}
+                </Button>
+              )}
+            </div>
             {experiment && (
               <ExportButtons
                 experimentId={id}
@@ -225,6 +333,10 @@ export default function ExperimentDetailPage() {
         <div className="rounded-lg border bg-muted/40 p-4 text-sm text-muted-foreground">
           Tajriba yakunlanishidan oldin bekor qilindi.
         </div>
+      )}
+
+      {displayStatus === "completed" && (
+        <InsightsPanel insights={insights} loading={insightsLoading} />
       )}
 
       {data && (

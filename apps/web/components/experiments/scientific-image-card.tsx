@@ -1,7 +1,8 @@
 "use client";
 
-import { Maximize2 } from "lucide-react";
+import { Download, Maximize2 } from "lucide-react";
 import { StoredImage } from "@/components/ui/stored-image";
+import { downloadImage } from "@/lib/download-image";
 import { cn } from "@/lib/utils";
 
 interface ScientificImageCardProps {
@@ -13,6 +14,7 @@ interface ScientificImageCardProps {
   badge?: string;
   className?: string;
   highlight?: boolean;
+  onInspect?: () => void;
 }
 
 export function ScientificImageCard({
@@ -24,6 +26,7 @@ export function ScientificImageCard({
   badge,
   className,
   highlight = false,
+  onInspect,
 }: ScientificImageCardProps) {
   return (
     <div
@@ -42,11 +45,29 @@ export function ScientificImageCard({
         </div>
         {badge && <span className="scientific-badge">{badge}</span>}
       </div>
-      <div className="relative aspect-[4/3] bg-muted/20">
+      <button
+        type="button"
+        className="relative block aspect-[4/3] w-full bg-muted/20"
+        onClick={onInspect}
+      >
         <StoredImage filePath={filePath} url={url} alt={alt} fill />
-        <div className="absolute bottom-2 right-2 rounded-md bg-background/80 p-1 opacity-0 backdrop-blur transition-opacity group-hover:opacity-100">
-          <Maximize2 className="h-3.5 w-3.5 text-muted-foreground" />
-        </div>
+        {onInspect && (
+          <div className="absolute bottom-2 right-2 flex gap-1 opacity-0 transition-opacity group-hover:opacity-100">
+            <span className="rounded-md bg-background/80 p-1 backdrop-blur">
+              <Maximize2 className="h-3.5 w-3.5 text-muted-foreground" />
+            </span>
+          </div>
+        )}
+      </button>
+      <div className="flex justify-end border-t px-3 py-2">
+        <button
+          type="button"
+          className="inline-flex items-center gap-1 text-xs text-muted-foreground hover:text-foreground"
+          onClick={() => downloadImage(filePath, url, `${title}.png`)}
+        >
+          <Download className="h-3.5 w-3.5" />
+          Yuklab olish
+        </button>
       </div>
     </div>
   );

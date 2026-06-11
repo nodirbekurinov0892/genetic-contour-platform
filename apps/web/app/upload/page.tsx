@@ -5,6 +5,7 @@ import Link from "next/link";
 import { Upload, CheckCircle, AlertCircle, FileImage, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { ImageCard } from "@/components/experiments/image-card";
+import { ImageLibrary } from "@/components/experiments/image-library";
 import { SectionHeader } from "@/components/ui/section-header";
 import { imageService } from "@/services/imageService";
 import type { ImageRecord } from "@shared/types";
@@ -186,6 +187,15 @@ export default function UploadPage() {
           <ImageCard image={result} />
         </section>
       )}
+
+      <section>
+        <SectionHeader
+          title="Rasm kutubxonasi"
+          description="Barcha yuklangan rasmlar, qidiruv va Ground Truth maska boshqaruvi"
+          badge="Library"
+        />
+        <ImageLibrary />
+      </section>
     </div>
   );
 }

@@ -1,4 +1,5 @@
-import { apiFetch } from "@/lib/api";
+import { API_BASE, apiFetch } from "@/lib/api";
+import { getAccessToken } from "@/lib/auth-storage";
 import type { ImageRecord } from "@shared/types";
 
 interface UploadResponse {
@@ -16,11 +17,42 @@ export const imageService = {
     });
   },
 
-  list(): Promise<ImageRecord[]> {
-    return apiFetch<ImageRecord[]>("/api/images");
+  list(params?: {
+    search?: string;
+    has_ground_truth?: boolean;
+    limit?: number;
+    offset?: number;
+  }): Promise<ImageRecord[]> {
+    const query = new URLSearchParams();
+    if (params?.search) query.set("search", params.search);
+    if (params?.has_ground_truth != null) {
+      query.set("has_ground_truth", String(params.has_ground_truth));
+    }
+    if (params?.limit != null) query.set("limit", String(params.limit));
+    if (params?.offset != null) query.set("offset", String(params.offset));
+    const suffix = query.toString() ? `?${query.toString()}` : "";
+    return apiFetch<ImageRecord[]>(`/api/images${suffix}`);
   },
 
   getById(id: string): Promise<ImageRecord> {
     return apiFetch<ImageRecord>(`/api/images/${id}`);
+  },
+
+  async uploadGroundTruth(imageId: string, file: File): Promise<ImageRecord> {
+    const form = new FormData();
+    form.append("file", file);
+    const token = getAccessToken();
+    const res = await fetch(`${API_BASE}/api/images/${imageId}/ground-truth`, {
+      method: "POST",
+      headers: token ? { Authorization: `Bearer ${token}` } : {},
+      body: form,
+    });
+    if (!res.ok) {
+      const body = await res.json().catch(() => ({ detail: res.statusText }));
+      throw new Error(
+        typeof body.detail === "string" ? body.detail : "Ground truth yuklanmadi",
+      );
+    }
+    return res.json() as Promise<ImageRecord>;
   },
 };

@@ -1,12 +1,15 @@
-import { apiFetch, downloadFile } from "@/lib/api";
+import { API_BASE, apiFetch, downloadFile } from "@/lib/api";
+import { getAccessToken } from "@/lib/auth-storage";
 import type {
   AlgorithmName,
   AlgorithmParams,
+  ExperimentBrowseResponse,
   ExperimentJobResponse,
   ExperimentRecord,
   ExperimentResults,
   ExperimentStatusResponse,
   GAParams,
+  ScientificInsights,
 } from "@shared/types";
 
 export const experimentService = {
@@ -23,6 +26,29 @@ export const experimentService = {
 
   list(): Promise<ExperimentRecord[]> {
     return apiFetch<ExperimentRecord[]>("/api/experiments");
+  },
+
+  browse(params?: {
+    search?: string;
+    status?: string;
+    algorithm?: string;
+    date_from?: string;
+    date_to?: string;
+    sort?: string;
+    limit?: number;
+    offset?: number;
+  }): Promise<ExperimentBrowseResponse> {
+    const query = new URLSearchParams();
+    if (params?.search) query.set("search", params.search);
+    if (params?.status) query.set("status", params.status);
+    if (params?.algorithm) query.set("algorithm", params.algorithm);
+    if (params?.date_from) query.set("date_from", params.date_from);
+    if (params?.date_to) query.set("date_to", params.date_to);
+    if (params?.sort) query.set("sort", params.sort);
+    if (params?.limit != null) query.set("limit", String(params.limit));
+    if (params?.offset != null) query.set("offset", String(params.offset));
+    const suffix = query.toString() ? `?${query.toString()}` : "";
+    return apiFetch<ExperimentBrowseResponse>(`/api/experiments/browse${suffix}`);
   },
 
   getById(id: string): Promise<ExperimentRecord> {
@@ -51,6 +77,22 @@ export const experimentService = {
     return apiFetch<ExperimentStatusResponse>(`/api/experiments/${id}/cancel`, {
       method: "POST",
     });
+  },
+
+  clone(id: string): Promise<ExperimentRecord> {
+    return apiFetch<ExperimentRecord>(`/api/experiments/${id}/clone`, {
+      method: "POST",
+    });
+  },
+
+  rerun(id: string): Promise<ExperimentJobResponse> {
+    return apiFetch<ExperimentJobResponse>(`/api/experiments/${id}/rerun`, {
+      method: "POST",
+    });
+  },
+
+  getInsights(id: string): Promise<ScientificInsights> {
+    return apiFetch<ScientificInsights>(`/api/experiments/${id}/insights`);
   },
 
   getResults(id: string): Promise<ExperimentResults> {
@@ -84,5 +126,14 @@ export const experimentService = {
     return apiFetch<{ message: string }>(`/api/experiments/${id}`, {
       method: "DELETE",
     });
+  },
+
+  streamUrl(id: string): string {
+    return `${API_BASE}/api/experiments/${id}/stream`;
+  },
+
+  streamHeaders(): Record<string, string> {
+    const token = getAccessToken();
+    return token ? { Authorization: `Bearer ${token}` } : {};
   },
 };

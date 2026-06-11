@@ -3,25 +3,35 @@
 import { useCallback, useEffect, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { Play, Plus } from "lucide-react";
+import { ChevronLeft, ChevronRight, Play, Plus } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { SectionHeader } from "@/components/ui/section-header";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { ExperimentStatusBadge } from "@/components/experiments/experiment-status-badge";
 import { AlgorithmParamsForm } from "@/components/experiments/algorithm-params";
+import { ExperimentsTable } from "@/components/experiments/experiments-table";
+import { ImagePicker } from "@/components/experiments/image-picker";
 import { LoadingState, ErrorState, EmptyState } from "@/components/ui/state-panel";
 import { experimentService } from "@/services/experimentService";
 import { imageService } from "@/services/imageService";
 import { ALGORITHMS, DEFAULT_ALGORITHM_PARAMS, DEFAULT_GA_PARAMS } from "@shared/constants";
-import type { AlgorithmName, AlgorithmParams, ExperimentRecord, GAParams, ImageRecord } from "@shared/types";
+import type {
+  AlgorithmName,
+  AlgorithmParams,
+  ExperimentBrowseItem,
+  GAParams,
+  ImageRecord,
+} from "@shared/types";
 import { API_BASE } from "@/lib/api";
-import { formatDate } from "@/lib/utils";
+
+const PAGE_SIZE = 10;
 
 export default function ExperimentsPage() {
   const router = useRouter();
   const [images, setImages] = useState<ImageRecord[]>([]);
-  const [experiments, setExperiments] = useState<ExperimentRecord[]>([]);
+  const [browseItems, setBrowseItems] = useState<ExperimentBrowseItem[]>([]);
+  const [browseTotal, setBrowseTotal] = useState(0);
+  const [browseOffset, setBrowseOffset] = useState(0);
   const [selectedImage, setSelectedImage] = useState("");
   const [title, setTitle] = useState("");
   const [algorithm, setAlgorithm] = useState<AlgorithmName>("compare_all");
@@ -32,26 +42,46 @@ export default function ExperimentsPage() {
   const [loadError, setLoadError] = useState<string | null>(null);
   const [formError, setFormError] = useState<string | null>(null);
 
+  const [search, setSearch] = useState("");
+  const [statusFilter, setStatusFilter] = useState("");
+  const [algorithmFilter, setAlgorithmFilter] = useState("");
+  const [dateFrom, setDateFrom] = useState("");
+  const [dateTo, setDateTo] = useState("");
+  const [sort, setSort] = useState("created_at_desc");
+
   const loadData = useCallback(async () => {
     setLoading(true);
     setLoadError(null);
     try {
-      const [imgs, exps] = await Promise.all([
-        imageService.list(),
-        experimentService.list(),
+      const [imgs, browse] = await Promise.all([
+        imageService.list({ limit: 100 }),
+        experimentService.browse({
+          search: search || undefined,
+          status: statusFilter || undefined,
+          algorithm: algorithmFilter || undefined,
+          date_from: dateFrom || undefined,
+          date_to: dateTo || undefined,
+          sort,
+          limit: PAGE_SIZE,
+          offset: browseOffset,
+        }),
       ]);
       setImages(imgs);
-      setExperiments(exps);
-      if (imgs.length > 0) setSelectedImage(imgs[0].id);
+      setBrowseItems(browse.items);
+      setBrowseTotal(browse.total);
+      if (imgs.length > 0 && !selectedImage) setSelectedImage(imgs[0].id);
     } catch (err) {
       setLoadError(err instanceof Error ? err.message : "Ma'lumotlarni yuklab bo'lmadi");
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [search, statusFilter, algorithmFilter, dateFrom, dateTo, sort, browseOffset, selectedImage]);
 
   useEffect(() => {
-    loadData();
+    const timer = setTimeout(() => {
+      void loadData();
+    }, 250);
+    return () => clearTimeout(timer);
   }, [loadData]);
 
   const handleRun = async () => {
@@ -80,12 +110,14 @@ export default function ExperimentsPage() {
   };
 
   const showGA = algorithm === "genetic" || algorithm === "compare_all";
+  const totalPages = Math.max(1, Math.ceil(browseTotal / PAGE_SIZE));
+  const currentPage = Math.floor(browseOffset / PAGE_SIZE) + 1;
 
-  if (loading) {
+  if (loading && images.length === 0 && browseItems.length === 0) {
     return <LoadingState message="Tajribalar yuklanmoqda..." />;
   }
 
-  if (loadError) {
+  if (loadError && images.length === 0) {
     return (
       <ErrorState
         title="Tajribalarni yuklab bo'lmadi"
@@ -100,8 +132,8 @@ export default function ExperimentsPage() {
     <div className="space-y-8">
       <SectionHeader
         title="Tajribalar"
-        description="Oldindan qayta ishlash, klassik chekka detektorlari va Genetic Algorithm parametrlarini sozlang"
-        badge="Tahlil"
+        description="Research-grade workflow: visual image picker, filtrlar va professional jadval"
+        badge="Research"
       />
 
       <div className="scientific-card overflow-hidden">
@@ -111,7 +143,7 @@ export default function ExperimentsPage() {
             <div>
               <h2 className="font-semibold">Yangi tajriba</h2>
               <p className="text-sm text-muted-foreground">
-                Algoritm parametrlarini sozlang va tahlilni ishga tushiring
+                Visual image picker va algoritm parametrlari
               </p>
             </div>
           </div>
@@ -129,31 +161,23 @@ export default function ExperimentsPage() {
             />
           ) : (
             <>
-              <div className="grid gap-4 sm:grid-cols-2">
-                <div className="space-y-2">
-                  <Label htmlFor="title">Tajriba sarlavhasi</Label>
-                  <Input
-                    id="title"
-                    placeholder="masalan, Tanga kontur aniqlash"
-                    value={title}
-                    onChange={(e) => setTitle(e.target.value)}
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="image">Rasm</Label>
-                  <select
-                    id="image"
-                    className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
-                    value={selectedImage}
-                    onChange={(e) => setSelectedImage(e.target.value)}
-                  >
-                    {images.map((img) => (
-                      <option key={img.id} value={img.id}>
-                        {img.original_name} ({img.width}×{img.height})
-                      </option>
-                    ))}
-                  </select>
-                </div>
+              <div className="space-y-2">
+                <Label htmlFor="title">Tajriba sarlavhasi</Label>
+                <Input
+                  id="title"
+                  placeholder="masalan, Tanga kontur aniqlash"
+                  value={title}
+                  onChange={(e) => setTitle(e.target.value)}
+                />
+              </div>
+
+              <div className="space-y-2">
+                <Label>Rasm tanlash</Label>
+                <ImagePicker
+                  images={images}
+                  selectedId={selectedImage}
+                  onSelect={setSelectedImage}
+                />
               </div>
 
               <div className="space-y-2">
@@ -196,34 +220,102 @@ export default function ExperimentsPage() {
         </div>
       </div>
 
-      <section>
+      <section className="space-y-4">
         <SectionHeader
           title="Tajribalar tarixi"
-          description="Ilgari bajarilgan tahlillar"
-          className="mb-4"
+          description="Qidiruv, filtr, sort va pagination"
         />
-        {experiments.length === 0 ? (
-          <EmptyState
-            title="Hali tajribalar yo'q"
-            description="Birinchi tajribangizni yuqorida yarating."
+        <div className="grid gap-2 md:grid-cols-2 lg:grid-cols-5">
+          <Input
+            placeholder="Qidirish..."
+            value={search}
+            onChange={(e) => {
+              setBrowseOffset(0);
+              setSearch(e.target.value);
+            }}
           />
-        ) : (
-          <div className="space-y-2">
-            {experiments.map((exp) => (
-              <Link
-                key={exp.id}
-                href={`/experiments/${exp.id}`}
-                className="flex items-center justify-between rounded-lg border p-4 transition-colors hover:bg-accent"
-              >
-                <div>
-                  <p className="font-medium">{exp.title}</p>
-                  <p className="text-xs text-muted-foreground">{formatDate(exp.created_at)}</p>
-                </div>
-                <ExperimentStatusBadge status={exp.status} />
-              </Link>
-            ))}
+          <select
+            className="h-10 rounded-md border bg-background px-3 text-sm"
+            value={statusFilter}
+            onChange={(e) => {
+              setBrowseOffset(0);
+              setStatusFilter(e.target.value);
+            }}
+          >
+            <option value="">Barcha holatlar</option>
+            <option value="completed">Yakunlangan</option>
+            <option value="running">Bajarilmoqda</option>
+            <option value="queued">Navbatda</option>
+            <option value="failed">Muvaffaqiyatsiz</option>
+          </select>
+          <select
+            className="h-10 rounded-md border bg-background px-3 text-sm"
+            value={algorithmFilter}
+            onChange={(e) => {
+              setBrowseOffset(0);
+              setAlgorithmFilter(e.target.value);
+            }}
+          >
+            <option value="">Barcha algoritmlar</option>
+            <option value="compare_all">Hammasi</option>
+            <option value="sobel">Sobel</option>
+            <option value="prewitt">Prewitt</option>
+            <option value="canny">Canny</option>
+            <option value="genetic">GA</option>
+          </select>
+          <Input
+            type="date"
+            value={dateFrom}
+            onChange={(e) => {
+              setBrowseOffset(0);
+              setDateFrom(e.target.value);
+            }}
+          />
+          <Input
+            type="date"
+            value={dateTo}
+            onChange={(e) => {
+              setBrowseOffset(0);
+              setDateTo(e.target.value);
+            }}
+          />
+        </div>
+        <select
+          className="h-10 max-w-xs rounded-md border bg-background px-3 text-sm"
+          value={sort}
+          onChange={(e) => setSort(e.target.value)}
+        >
+          <option value="created_at_desc">Eng yangi</option>
+          <option value="created_at_asc">Eng eski</option>
+          <option value="title_asc">Sarlavha A-Z</option>
+          <option value="title_desc">Sarlavha Z-A</option>
+        </select>
+
+        <ExperimentsTable items={browseItems} />
+
+        <div className="flex items-center justify-between text-sm">
+          <p className="text-muted-foreground">
+            {browseTotal} ta tajriba · sahifa {currentPage}/{totalPages}
+          </p>
+          <div className="flex gap-2">
+            <Button
+              variant="outline"
+              size="sm"
+              disabled={browseOffset === 0}
+              onClick={() => setBrowseOffset((v) => Math.max(0, v - PAGE_SIZE))}
+            >
+              <ChevronLeft className="h-4 w-4" />
+            </Button>
+            <Button
+              variant="outline"
+              size="sm"
+              disabled={browseOffset + PAGE_SIZE >= browseTotal}
+              onClick={() => setBrowseOffset((v) => v + PAGE_SIZE)}
+            >
+              <ChevronRight className="h-4 w-4" />
+            </Button>
           </div>
-        )}
+        </div>
       </section>
     </div>
   );

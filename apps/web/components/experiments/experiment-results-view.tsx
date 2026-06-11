@@ -1,12 +1,18 @@
 "use client";
 
+import { useState } from "react";
 import type { AlgorithmRunRecord, ExperimentResults, ImageRecord } from "@shared/types";
 import { Card, CardContent } from "@/components/ui/card";
 import { EmptyState } from "@/components/ui/state-panel";
 import { SectionHeader } from "@/components/ui/section-header";
+import { ImageLightbox } from "@/components/ui/image-lightbox";
+import { AnalyticsPanel } from "@/components/analytics/analytics-panel";
+import { ComparisonSlider } from "@/components/analytics/comparison-slider";
+import { SupervisedMetricsPanel } from "@/components/analytics/supervised-metrics-panel";
 import { ScientificImageCard } from "@/components/experiments/scientific-image-card";
 import { MetricsTable } from "@/components/experiments/metrics-table";
 import { FitnessChart } from "@/components/experiments/fitness-chart";
+import { ReproducibilityPanel } from "@/components/experiments/reproducibility-panel";
 
 const ALGORITHM_ORDER = ["sobel", "prewitt", "canny", "genetic"] as const;
 const ALGORITHM_LABELS: Record<string, string> = {
@@ -32,6 +38,13 @@ interface ExperimentResultsViewProps {
 }
 
 export function ExperimentResultsView({ data, sourceImage, conclusion }: ExperimentResultsViewProps) {
+  const [lightbox, setLightbox] = useState<{
+    filePath: string;
+    url?: string | null;
+    alt: string;
+    title: string;
+  } | null>(null);
+
   const { experiment, algorithm_runs } = data;
   const pipelineRun = algorithm_runs.find((r) => r.algorithm_name === "pipeline");
   const edgeRuns = algorithm_runs
@@ -103,8 +116,47 @@ export function ExperimentResultsView({ data, sourceImage, conclusion }: Experim
     };
   });
 
+  const supervisedRows = edgeRuns.map((run) => ({
+    algorithm: ALGORITHM_LABELS[run.algorithm_name] ?? run.algorithm_name,
+    metrics: run.metrics[0] ?? {
+      edge_density: null,
+      continuity_score: null,
+      noise_score: null,
+      fitness_score: null,
+      precision: null,
+      recall: null,
+      f1_score: null,
+      iou: null,
+      dice_coefficient: null,
+      runtime_ms: null,
+    },
+  }));
+
+  const comparisonImages = [];
+  if (sourceImage) {
+    comparisonImages.push({
+      label: "Asl",
+      filePath: sourceImage.file_path,
+      url: sourceImage.url,
+    });
+  }
+  for (const run of edgeRuns) {
+    const edge = getEdgeImage(run);
+    if (!edge) continue;
+    comparisonImages.push({
+      label: ALGORITHM_LABELS[run.algorithm_name] ?? run.algorithm_name,
+      filePath: edge.file_path,
+      url: edge.url,
+    });
+  }
+
+  const openImage = (filePath: string, url: string | null | undefined, alt: string, title: string) => {
+    setLightbox({ filePath, url, alt, title });
+  };
+
   return (
     <div className="space-y-10">
+      <ReproducibilityPanel data={experiment.reproducibility_json} />
       <section>
         <SectionHeader
           title="Kirish va oldindan qayta ishlash"
@@ -120,6 +172,9 @@ export function ExperimentResultsView({ data, sourceImage, conclusion }: Experim
               title="Asl rasm"
               subtitle={`${sourceImage.width}×${sourceImage.height} px`}
               badge="Yuklash"
+              onInspect={() =>
+                openImage(sourceImage.file_path, sourceImage.url, "Asl rasm", "Asl rasm")
+              }
             />
           )}
           {originalFromPipeline && (
@@ -279,6 +334,16 @@ export function ExperimentResultsView({ data, sourceImage, conclusion }: Experim
         </section>
       )}
 
+      {comparisonImages.length > 1 && (
+        <section>
+          <ComparisonSlider images={comparisonImages} />
+        </section>
+      )}
+
+      <SupervisedMetricsPanel rows={supervisedRows} />
+
+      <AnalyticsPanel edgeRuns={edgeRuns} />
+
       <section>
         <SectionHeader
           title="Kvantitativ metrikalar"
@@ -307,6 +372,15 @@ export function ExperimentResultsView({ data, sourceImage, conclusion }: Experim
           </Card>
         </section>
       )}
+
+      <ImageLightbox
+        open={!!lightbox}
+        onClose={() => setLightbox(null)}
+        filePath={lightbox?.filePath ?? ""}
+        url={lightbox?.url}
+        alt={lightbox?.alt ?? ""}
+        title={lightbox?.title}
+      />
     </div>
   );
 }

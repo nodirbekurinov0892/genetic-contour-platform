@@ -45,6 +45,11 @@ class MetricResponse(BaseModel):
     continuity_score: float | None
     noise_score: float | None
     fitness_score: float | None
+    precision: float | None = None
+    recall: float | None = None
+    f1_score: float | None = None
+    iou: float | None = None
+    dice_coefficient: float | None = None
     runtime_ms: int | None
 
 
@@ -97,6 +102,28 @@ class ExperimentResponse(BaseModel):
     error_message: str | None = None
     created_at: datetime
     completed_at: datetime | None
+    reproducibility_json: dict[str, Any] | None = None
+
+
+class ExperimentBrowseItem(BaseModel):
+    id: UUID
+    title: str
+    status: str
+    algorithm: str | None = None
+    image_id: UUID
+    image_name: str | None = None
+    progress_percent: float = 0.0
+    created_at: datetime
+    started_at: datetime | None = None
+    finished_at: datetime | None = None
+    duration_ms: int | None = None
+
+
+class ExperimentBrowseResponse(BaseModel):
+    items: list[ExperimentBrowseItem]
+    total: int
+    limit: int
+    offset: int
 
 
 class ExperimentJobResponse(BaseModel):

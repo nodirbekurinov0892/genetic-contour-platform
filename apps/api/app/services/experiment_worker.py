@@ -166,6 +166,33 @@ async def _execute_job(experiment_id: uuid.UUID, settings) -> None:
             await _mark_failed(session, experiment, "Source image not found")
             return
 
+        from app.utils.reproducibility import capture_environment
+
+        experiment.reproducibility_json = capture_environment()
+        await session.flush()
+
+        ground_truth = None
+        if image.ground_truth_storage_key:
+            try:
+                gt_key = storage.resolve_storage_key(
+                    storage_key=image.ground_truth_storage_key,
+                    file_path=image.ground_truth_file_path,
+                )
+                gt_bytes = await asyncio.to_thread(storage.get_bytes, gt_key)
+                import cv2
+                import numpy as np
+
+                ground_truth = cv2.imdecode(
+                    np.frombuffer(gt_bytes, dtype=np.uint8),
+                    cv2.IMREAD_GRAYSCALE,
+                )
+            except Exception:
+                logger.warning(
+                    "Failed to load ground truth for image %s",
+                    image.id,
+                    exc_info=True,
+                )
+
         await _clear_previous_runs(session, experiment.id, storage)
 
         if is_cancelled(experiment_id):
@@ -216,6 +243,7 @@ async def _execute_job(experiment_id: uuid.UUID, settings) -> None:
                         params=request.params,
                         ga=ga,
                         tracker=tracker,
+                        ground_truth=ground_truth,
                     )
                 else:
                     await _run_classical_algorithm(
@@ -225,6 +253,7 @@ async def _execute_job(experiment_id: uuid.UUID, settings) -> None:
                         algo=algo,
                         prep=prep,
                         params=request.params,
+                        ground_truth=ground_truth,
                     )
                     percent, gen = tracker.complete_classical_algorithm()
                     await _update_progress(session, experiment, percent, gen)
@@ -297,7 +326,7 @@ async def _create_pipeline_run(session, storage, experiment, prep, source_storag
     await session.flush()
 
 
-async def _run_classical_algorithm(session, storage, experiment, algo, prep, params):
+async def _run_classical_algorithm(session, storage, experiment, algo, prep, params, ground_truth=None):
     run = AlgorithmRun(
         id=uuid.uuid4(),
         experiment_id=experiment.id,
@@ -323,7 +352,17 @@ async def _run_classical_algorithm(session, storage, experiment, algo, prep, par
         raise ValueError(f"Unknown algorithm: {algo}")
 
     await _save_algorithm_outputs(
-        session, storage, experiment, run, algo, result.edges, prep, gradient, None, result.runtime_ms
+        session,
+        storage,
+        experiment,
+        run,
+        algo,
+        result.edges,
+        prep,
+        gradient,
+        None,
+        result.runtime_ms,
+        ground_truth=ground_truth,
     )
 
 
@@ -336,6 +375,7 @@ async def _run_genetic_algorithm(
     params,
     ga: GAParamsSchema,
     tracker: ExperimentProgressTracker,
+    ground_truth=None,
 ):
     run = AlgorithmRun(
         id=uuid.uuid4(),
@@ -451,6 +491,7 @@ async def _run_genetic_algorithm(
         gradient,
         fitness,
         ga_result.runtime_ms,
+        ground_truth=ground_truth,
     )
     await session.commit()
 
@@ -466,6 +507,7 @@ async def _save_algorithm_outputs(
     gradient,
     fitness: float | None,
     runtime: float,
+    ground_truth=None,
 ):
     edge_filename = "genetic.png" if algo == "genetic" else f"{algo}.png"
     await _save_result_image(session, storage, run, experiment.id, algo if algo != "genetic" else "ga", edges, edge_filename)
@@ -475,7 +517,9 @@ async def _save_algorithm_outputs(
         session, storage, run, experiment.id, ResultImageType.OVERLAY.value, overlay, f"{algo}_overlay.png"
     )
 
-    metrics_data = compute_metrics(edges, gradient, fitness, runtime)
+    metrics_data = compute_metrics(
+        edges, gradient, fitness, runtime, ground_truth=ground_truth
+    )
     session.add(
         Metric(
             algorithm_run_id=run.id,
@@ -483,6 +527,11 @@ async def _save_algorithm_outputs(
             continuity_score=metrics_data["continuity_score"],
             noise_score=metrics_data["noise_score"],
             fitness_score=metrics_data["fitness_score"],
+            precision=metrics_data["precision"],
+            recall=metrics_data["recall"],
+            f1_score=metrics_data["f1_score"],
+            iou=metrics_data["iou"],
+            dice_coefficient=metrics_data["dice_coefficient"],
             runtime_ms=metrics_data["runtime_ms"],
         )
     )

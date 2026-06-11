@@ -26,6 +26,15 @@ def _to_image_response(image, settings: Settings) -> ImageResponse:
         public_url=image.public_url,
         file_path=image.file_path,
     )
+    data.has_ground_truth = bool(image.ground_truth_storage_key)
+    if image.ground_truth_storage_key:
+        data.ground_truth_url = resolve_public_url(
+            storage=storage,
+            settings=settings,
+            storage_key=image.ground_truth_storage_key,
+            public_url=image.ground_truth_public_url,
+            file_path=image.ground_truth_file_path,
+        )
     return data
 
 
@@ -47,13 +56,36 @@ async def upload_image(
 async def list_images(
     limit: int = 50,
     offset: int = 0,
+    search: str | None = None,
+    has_ground_truth: bool | None = None,
     db: AsyncSession = Depends(get_db),
     settings: Settings = Depends(get_settings),
     current_user: User = Depends(get_current_active_user),
 ):
     service = ImageService(db, settings)
-    images = await service.list_all(current_user, limit=limit, offset=offset)
+    images = await service.list_all(
+        current_user,
+        limit=limit,
+        offset=offset,
+        search=search,
+        has_ground_truth=has_ground_truth,
+    )
     return [_to_image_response(img, settings) for img in images]
+
+
+@router.post("/{image_id}/ground-truth", response_model=ImageResponse)
+@limiter.limit("20/hour")
+async def upload_ground_truth(
+    request: Request,
+    image_id: uuid.UUID,
+    file: UploadFile = File(...),
+    db: AsyncSession = Depends(get_db),
+    settings: Settings = Depends(get_settings),
+    current_user: User = Depends(get_current_active_user),
+):
+    service = ImageService(db, settings)
+    image = await service.upload_ground_truth(image_id, file, current_user)
+    return _to_image_response(image, settings)
 
 
 @router.get("/{image_id}", response_model=ImageResponse)

@@ -22,12 +22,23 @@ def compute_metrics(
     gradient: np.ndarray,
     fitness_score: float | None = None,
     runtime_ms: float | None = None,
+    ground_truth: np.ndarray | None = None,
 ) -> dict[str, float | int | None]:
     mask = (edges > 0).astype(np.uint8)
-    return {
+    result: dict[str, float | int | None] = {
         "edge_density": edge_density(edges),
         "continuity_score": _continuity_score(mask),
         "noise_score": _noise_penalty(mask, gradient),
         "fitness_score": fitness_score,
         "runtime_ms": int(runtime_ms) if runtime_ms is not None else None,
+        "precision": None,
+        "recall": None,
+        "f1_score": None,
+        "iou": None,
+        "dice_coefficient": None,
     }
+    if ground_truth is not None:
+        from app.core.supervised_metrics import compute_supervised_metrics
+
+        result.update(compute_supervised_metrics(edges, ground_truth))
+    return result

@@ -1,8 +1,11 @@
+import asyncio
+import json
 import logging
 import uuid
+from datetime import date
 
 from fastapi import APIRouter, Depends, HTTPException, Request
-from fastapi.responses import JSONResponse, Response
+from fastapi.responses import JSONResponse, Response, StreamingResponse
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.config import Settings, get_settings
@@ -11,6 +14,7 @@ from app.dependencies.auth import get_current_active_user
 from app.models.user import User
 from app.schemas.experiment import (
     AlgorithmRunResponse,
+    ExperimentBrowseResponse,
     ExperimentCreate,
     ExperimentJobResponse,
     ExperimentResponse,
@@ -22,6 +26,7 @@ from app.schemas.experiment import (
     ResultImageResponse,
 )
 from app.services.experiment_service import ExperimentService
+from app.services.insights_service import generate_insights
 from app.services.report_service import ReportService
 from app.services.storage import StorageService
 from app.utils.media_urls import resolve_public_url
@@ -95,6 +100,40 @@ async def list_experiments(
     return [ExperimentResponse.model_validate(e) for e in experiments]
 
 
+@router.get("/browse", response_model=ExperimentBrowseResponse)
+async def browse_experiments(
+    search: str | None = None,
+    status: str | None = None,
+    algorithm: str | None = None,
+    date_from: date | None = None,
+    date_to: date | None = None,
+    sort: str = "created_at_desc",
+    limit: int = 20,
+    offset: int = 0,
+    db: AsyncSession = Depends(get_db),
+    settings: Settings = Depends(get_settings),
+    current_user: User = Depends(get_current_active_user),
+):
+    service = ExperimentService(db, settings)
+    items, total = await service.browse(
+        current_user,
+        search=search,
+        status=status,
+        algorithm=algorithm,
+        date_from=date_from,
+        date_to=date_to,
+        sort=sort,
+        limit=limit,
+        offset=offset,
+    )
+    return ExperimentBrowseResponse(
+        items=items,
+        total=total,
+        limit=limit,
+        offset=offset,
+    )
+
+
 @router.get("/{experiment_id}", response_model=ExperimentResponse)
 async def get_experiment(
     experiment_id: uuid.UUID,
@@ -105,6 +144,95 @@ async def get_experiment(
     service = ExperimentService(db, settings)
     experiment = await service.get_by_id(experiment_id, current_user)
     return ExperimentResponse.model_validate(experiment)
+
+
+@router.get("/{experiment_id}/stream")
+async def stream_experiment_status(
+    experiment_id: uuid.UUID,
+    db: AsyncSession = Depends(get_db),
+    settings: Settings = Depends(get_settings),
+    current_user: User = Depends(get_current_active_user),
+):
+    service = ExperimentService(db, settings)
+    terminal = {"completed", "failed", "cancelled"}
+
+    async def event_generator():
+        while True:
+            experiment = await service.get_status(experiment_id, current_user)
+            payload = {
+                "job_id": str(experiment.id),
+                "status": experiment.status,
+                "progress_percent": experiment.progress_percent,
+                "current_generation": experiment.current_generation,
+                "started_at": experiment.started_at.isoformat() if experiment.started_at else None,
+                "finished_at": experiment.finished_at.isoformat() if experiment.finished_at else None,
+                "error_message": experiment.error_message,
+            }
+            yield f"data: {json.dumps(payload)}\n\n"
+            if experiment.status in terminal:
+                break
+            await asyncio.sleep(1)
+
+    return StreamingResponse(
+        event_generator(),
+        media_type="text/event-stream",
+        headers={"Cache-Control": "no-cache", "Connection": "keep-alive"},
+    )
+
+
+@router.get("/{experiment_id}/insights")
+async def get_experiment_insights(
+    experiment_id: uuid.UUID,
+    db: AsyncSession = Depends(get_db),
+    settings: Settings = Depends(get_settings),
+    current_user: User = Depends(get_current_active_user),
+):
+    report_service = ReportService(db, settings)
+    report_data = await report_service.build_report_data(experiment_id, current_user)
+    metrics_rows = [
+        {
+            "algorithm": row["algorithm"],
+            "algorithm_key": row["algorithm_key"],
+            "edge_density": row["edge_density"],
+            "continuity_score": row["continuity_score"],
+            "noise_score": row["noise_score"],
+            "fitness_score": row["fitness_score"],
+            "runtime_ms": row["runtime_ms"],
+            "precision": row.get("precision"),
+            "recall": row.get("recall"),
+            "f1_score": row.get("f1_score"),
+            "iou": row.get("iou"),
+            "dice_coefficient": row.get("dice_coefficient"),
+        }
+        for row in report_data["metrics"]
+    ]
+    return generate_insights(metrics_rows)
+
+
+@router.post("/{experiment_id}/clone", response_model=ExperimentResponse)
+async def clone_experiment(
+    experiment_id: uuid.UUID,
+    db: AsyncSession = Depends(get_db),
+    settings: Settings = Depends(get_settings),
+    current_user: User = Depends(get_current_active_user),
+):
+    service = ExperimentService(db, settings)
+    experiment = await service.clone_experiment(experiment_id, current_user)
+    return ExperimentResponse.model_validate(experiment)
+
+
+@router.post("/{experiment_id}/rerun", response_model=ExperimentJobResponse)
+@limiter.limit("30/hour")
+async def rerun_experiment(
+    request: Request,
+    experiment_id: uuid.UUID,
+    db: AsyncSession = Depends(get_db),
+    settings: Settings = Depends(get_settings),
+    current_user: User = Depends(get_current_active_user),
+):
+    service = ExperimentService(db, settings)
+    experiment = await service.rerun_experiment(experiment_id, current_user)
+    return ExperimentJobResponse(job_id=experiment.id, status=experiment.status)
 
 
 @router.get("/{experiment_id}/status", response_model=ExperimentStatusResponse)

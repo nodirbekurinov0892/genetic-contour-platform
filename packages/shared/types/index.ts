@@ -33,7 +33,18 @@ export interface ImageRecord {
   height: number;
   size: number;
   mime_type: string;
+  has_ground_truth?: boolean;
+  ground_truth_url?: string | null;
+  ground_truth_uploaded_at?: string | null;
   created_at: string;
+}
+
+export interface ReproducibilityInfo {
+  random_seed?: number;
+  python_version?: string;
+  opencv_version?: string;
+  numpy_version?: string;
+  skimage_version?: string;
 }
 
 export interface ExperimentRecord {
@@ -49,6 +60,28 @@ export interface ExperimentRecord {
   error_message: string | null;
   created_at: string;
   completed_at: string | null;
+  reproducibility_json?: ReproducibilityInfo | null;
+}
+
+export interface ExperimentBrowseItem {
+  id: string;
+  title: string;
+  status: ExperimentStatus;
+  algorithm: string | null;
+  image_id: string;
+  image_name: string | null;
+  progress_percent: number;
+  created_at: string;
+  started_at: string | null;
+  finished_at: string | null;
+  duration_ms: number | null;
+}
+
+export interface ExperimentBrowseResponse {
+  items: ExperimentBrowseItem[];
+  total: number;
+  limit: number;
+  offset: number;
 }
 
 export interface ExperimentJobResponse {
@@ -71,6 +104,11 @@ export interface MetricRecord {
   continuity_score: number | null;
   noise_score: number | null;
   fitness_score: number | null;
+  precision: number | null;
+  recall: number | null;
+  f1_score: number | null;
+  iou: number | null;
+  dice_coefficient: number | null;
   runtime_ms: number | null;
 }
 
@@ -103,6 +141,13 @@ export interface AlgorithmRunRecord {
 export interface ExperimentResults {
   experiment: ExperimentRecord;
   algorithm_runs: AlgorithmRunRecord[];
+}
+
+export interface ScientificInsights {
+  summary: string;
+  strengths: string[];
+  weaknesses: string[];
+  comparisons: string[];
 }
 
 export interface AlgorithmParams {

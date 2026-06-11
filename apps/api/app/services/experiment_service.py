@@ -1,17 +1,19 @@
 import asyncio
 import logging
 import uuid
+from datetime import date, datetime, time, timezone
 
 from fastapi import HTTPException
-from sqlalchemy import select
+from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 
 from app.config import Settings
 from app.models.algorithm_run import AlgorithmRun
 from app.models.experiment import ACTIVE_STATUSES, Experiment, ExperimentStatus
+from app.models.image import Image
 from app.models.user import User
-from app.schemas.experiment import ExperimentCreate, ExperimentRunRequest
+from app.schemas.experiment import ExperimentBrowseItem, ExperimentCreate, ExperimentRunRequest
 from app.jobs.queue import enqueue_experiment_run, revoke_experiment_task
 from app.services.storage import StorageService
 from app.utils.ownership import ensure_owner
@@ -75,6 +77,114 @@ class ExperimentService:
             .offset(offset)
         )
         return list(result.scalars().all())
+
+    @staticmethod
+    def _duration_ms(experiment: Experiment) -> int | None:
+        if experiment.started_at and experiment.finished_at:
+            delta = experiment.finished_at - experiment.started_at
+            return int(delta.total_seconds() * 1000)
+        return None
+
+    @staticmethod
+    def _algorithm_from_job(job_params: dict | None) -> str | None:
+        if not job_params:
+            return None
+        return job_params.get("algorithm")
+
+    async def browse(
+        self,
+        user: User,
+        *,
+        search: str | None = None,
+        status: str | None = None,
+        algorithm: str | None = None,
+        date_from: date | None = None,
+        date_to: date | None = None,
+        sort: str = "created_at_desc",
+        limit: int = 20,
+        offset: int = 0,
+    ) -> tuple[list[ExperimentBrowseItem], int]:
+        query = (
+            select(Experiment, Image.original_name)
+            .join(Image, Experiment.image_id == Image.id)
+            .where(Experiment.user_id == user.id)
+        )
+        count_query = select(func.count()).select_from(Experiment).where(
+            Experiment.user_id == user.id
+        )
+
+        if search and search.strip():
+            pattern = f"%{search.strip()}%"
+            query = query.where(Experiment.title.ilike(pattern))
+            count_query = count_query.where(Experiment.title.ilike(pattern))
+        if status:
+            query = query.where(Experiment.status == status)
+            count_query = count_query.where(Experiment.status == status)
+        if algorithm:
+            query = query.where(Experiment.job_params["algorithm"].astext == algorithm)
+            count_query = count_query.where(
+                Experiment.job_params["algorithm"].astext == algorithm
+            )
+        if date_from:
+            start_dt = datetime.combine(date_from, time.min, tzinfo=timezone.utc)
+            query = query.where(Experiment.created_at >= start_dt)
+            count_query = count_query.where(Experiment.created_at >= start_dt)
+        if date_to:
+            end_dt = datetime.combine(date_to, time.max, tzinfo=timezone.utc)
+            query = query.where(Experiment.created_at <= end_dt)
+            count_query = count_query.where(Experiment.created_at <= end_dt)
+
+        sort_map = {
+            "created_at_desc": Experiment.created_at.desc(),
+            "created_at_asc": Experiment.created_at.asc(),
+            "title_asc": Experiment.title.asc(),
+            "title_desc": Experiment.title.desc(),
+            "status_asc": Experiment.status.asc(),
+        }
+        query = query.order_by(sort_map.get(sort, Experiment.created_at.desc()))
+        query = query.limit(limit).offset(offset)
+
+        total = int((await self.db.execute(count_query)).scalar_one())
+        rows = (await self.db.execute(query)).all()
+        items = [
+            ExperimentBrowseItem(
+                id=experiment.id,
+                title=experiment.title,
+                status=experiment.status,
+                algorithm=self._algorithm_from_job(experiment.job_params),
+                image_id=experiment.image_id,
+                image_name=image_name,
+                progress_percent=experiment.progress_percent,
+                created_at=experiment.created_at,
+                started_at=experiment.started_at,
+                finished_at=experiment.finished_at,
+                duration_ms=self._duration_ms(experiment),
+            )
+            for experiment, image_name in rows
+        ]
+        return items, total
+
+    async def clone_experiment(self, experiment_id: uuid.UUID, user: User) -> Experiment:
+        source = await self.get_by_id(experiment_id, user)
+        clone = Experiment(
+            id=uuid.uuid4(),
+            image_id=source.image_id,
+            user_id=user.id,
+            title=f"{source.title} (nusxa)",
+            description=source.description,
+            status=ExperimentStatus.PENDING.value,
+            job_params=source.job_params,
+        )
+        self.db.add(clone)
+        await self.db.flush()
+        return clone
+
+    async def rerun_experiment(self, experiment_id: uuid.UUID, user: User) -> Experiment:
+        experiment = await self.get_by_id(experiment_id, user)
+        if not experiment.job_params:
+            raise HTTPException(status_code=400, detail="Experiment has no saved run parameters")
+        request = ExperimentRunRequest.model_validate(experiment.job_params)
+        return await self.enqueue_run(experiment_id, request, user)
 
     async def delete(self, experiment_id: uuid.UUID, user: User) -> None:
         experiment = await self.get_by_id(experiment_id, user)

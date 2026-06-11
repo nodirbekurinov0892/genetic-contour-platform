@@ -38,6 +38,9 @@ class StorageService:
     def upload_key(self, extension: str) -> str:
         return self.generate_storage_key("uploads", extension)
 
+    def ground_truth_key(self, image_id: str) -> str:
+        return f"uploads/ground-truth/{image_id}.png"
+
     def result_key(self, experiment_id: str, run_id: str, filename: str) -> str:
         """Filename must be server-defined (e.g. sobel.png), never user-supplied."""
         safe_name = Path(filename).name

@@ -244,6 +244,11 @@ class ReportService:
                     "continuity_score": m.continuity_score,
                     "noise_score": m.noise_score,
                     "fitness_score": m.fitness_score,
+                    "precision": m.precision,
+                    "recall": m.recall,
+                    "f1_score": m.f1_score,
+                    "iou": m.iou,
+                    "dice_coefficient": m.dice_coefficient,
                     "runtime_ms": m.runtime_ms,
                 }
             )
@@ -264,6 +269,7 @@ class ReportService:
                 "status": experiment.status,
                 "created_at": experiment.created_at.isoformat() if experiment.created_at else None,
                 "completed_at": experiment.completed_at.isoformat() if experiment.completed_at else None,
+                "reproducibility": experiment.reproducibility_json,
             },
             "image": {
                 "id": str(image.id),
@@ -492,6 +498,13 @@ class ReportService:
         ]
         if experiment.completed_at:
             info_data.append(["Yakunlangan", experiment.completed_at.strftime("%Y-%m-%d %H:%M")])
+        if experiment.reproducibility_json:
+            repro = experiment.reproducibility_json
+            info_data.append(["Random seed", str(repro.get("random_seed", "-"))])
+            info_data.append(["Python", str(repro.get("python_version", "-"))])
+            info_data.append(["OpenCV", str(repro.get("opencv_version", "-"))])
+            info_data.append(["NumPy", str(repro.get("numpy_version", "-"))])
+            info_data.append(["scikit-image", str(repro.get("skimage_version", "-"))])
 
         info_table = Table(info_data, colWidths=[5 * cm, 12 * cm])
         info_table.setStyle(TableStyle([
@@ -576,18 +589,41 @@ class ReportService:
         story.append(PageBreak())
 
         story.append(Paragraph("4. Metrikalar taqqoslash jadvali", heading_style))
-        metrics_header = ["Algoritm", "Edge Density", "Continuity", "Noise", "Fitness", "Runtime (ms)"]
+        has_supervised = any(row.get("iou") is not None for row in report_data["metrics"])
+        if has_supervised:
+            metrics_header = [
+                "Algoritm", "IoU", "F1", "Precision", "Recall", "Dice",
+                "Continuity", "Noise", "Runtime (ms)",
+            ]
+        else:
+            metrics_header = [
+                "Algoritm", "Edge Density", "Continuity", "Noise", "Fitness", "Runtime (ms)",
+            ]
         metrics_data = [metrics_header]
         for row in report_data["metrics"]:
-            metrics_data.append([
-                row["algorithm"],
-                f"{row['edge_density']:.4f}" if row["edge_density"] is not None else "-",
-                f"{row['continuity_score']:.4f}" if row["continuity_score"] is not None else "-",
-                f"{row['noise_score']:.4f}" if row["noise_score"] is not None else "-",
-                f"{row['fitness_score']:.4f}" if row["fitness_score"] is not None else "-",
-                str(row["runtime_ms"] or "-"),
-            ])
-        mt = Table(metrics_data, colWidths=[3.5 * cm, 2.5 * cm, 2.5 * cm, 2 * cm, 2.5 * cm, 2.5 * cm])
+            if has_supervised:
+                metrics_data.append([
+                    row["algorithm"],
+                    f"{row['iou']:.4f}" if row.get("iou") is not None else "-",
+                    f"{row['f1_score']:.4f}" if row.get("f1_score") is not None else "-",
+                    f"{row['precision']:.4f}" if row.get("precision") is not None else "-",
+                    f"{row['recall']:.4f}" if row.get("recall") is not None else "-",
+                    f"{row['dice_coefficient']:.4f}" if row.get("dice_coefficient") is not None else "-",
+                    f"{row['continuity_score']:.4f}" if row["continuity_score"] is not None else "-",
+                    f"{row['noise_score']:.4f}" if row["noise_score"] is not None else "-",
+                    str(row["runtime_ms"] or "-"),
+                ])
+            else:
+                metrics_data.append([
+                    row["algorithm"],
+                    f"{row['edge_density']:.4f}" if row["edge_density"] is not None else "-",
+                    f"{row['continuity_score']:.4f}" if row["continuity_score"] is not None else "-",
+                    f"{row['noise_score']:.4f}" if row["noise_score"] is not None else "-",
+                    f"{row['fitness_score']:.4f}" if row["fitness_score"] is not None else "-",
+                    str(row["runtime_ms"] or "-"),
+                ])
+        col_width = 16 * cm / len(metrics_header)
+        mt = Table(metrics_data, colWidths=[col_width] * len(metrics_header))
         mt.setStyle(TableStyle([
             ("BACKGROUND", (0, 0), (-1, 0), colors.HexColor("#1e40af")),
             ("TEXTCOLOR", (0, 0), (-1, 0), colors.white),
