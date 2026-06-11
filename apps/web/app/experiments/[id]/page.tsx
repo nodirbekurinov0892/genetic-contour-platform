@@ -344,6 +344,9 @@ export default function ExperimentDetailPage() {
           data={data}
           sourceImage={sourceImage}
           conclusion={conclusion}
+          evaluationMode={insights?.evaluation_mode}
+          winner={insights?.winner ?? null}
+          metricWarnings={insights?.metric_warnings ?? []}
         />
       )}
     </div>

@@ -1,5 +1,6 @@
 "use client";
 
+import { MetricTooltip } from "@/components/scientific/metric-tooltip";
 import { cn } from "@/lib/utils";
 
 export interface MetricsRow {
@@ -25,7 +26,7 @@ function bestKey(rows: MetricsRow[], key: keyof MetricsRow, mode: "max" | "min" 
   return mode === "max" ? Math.max(...values) : Math.min(...values);
 }
 
-export function MetricsTable({ rows, className, highlightBest = true }: MetricsTableProps) {
+export function MetricsTable({ rows, className, highlightBest = false }: MetricsTableProps) {
   if (rows.length === 0) {
     return (
       <p className="py-8 text-center text-sm text-muted-foreground">
@@ -34,8 +35,6 @@ export function MetricsTable({ rows, className, highlightBest = true }: MetricsT
     );
   }
 
-  const bestContinuity = highlightBest ? bestKey(rows, "continuity_score", "max") : null;
-  const bestFitness = highlightBest ? bestKey(rows, "fitness_score", "max") : null;
   const lowestNoise = highlightBest ? bestKey(rows, "noise_score", "min") : null;
   const fastest = highlightBest ? bestKey(rows, "runtime_ms", "min") : null;
 
@@ -45,10 +44,18 @@ export function MetricsTable({ rows, className, highlightBest = true }: MetricsT
         <thead>
           <tr>
             <th>Algoritm</th>
-            <th className="text-right">Chekka zichligi</th>
-            <th className="text-right">Uzluksizlik</th>
-            <th className="text-right">Shovqin</th>
-            <th className="text-right">Fitness</th>
+            <th className="text-right">
+              <MetricTooltip metricKey="edge_density" />
+            </th>
+            <th className="text-right">
+              <MetricTooltip metricKey="continuity_score" />
+            </th>
+            <th className="text-right">
+              <MetricTooltip metricKey="noise_score" />
+            </th>
+            <th className="text-right">
+              <MetricTooltip metricKey="fitness_score" />
+            </th>
             <th className="text-right">Ishlash vaqti</th>
           </tr>
         </thead>
@@ -59,34 +66,28 @@ export function MetricsTable({ rows, className, highlightBest = true }: MetricsT
               <td className="text-right font-mono text-xs">
                 {(row.edge_density ?? 0).toFixed(4)}
               </td>
-              <td
-                className={cn(
-                  "text-right font-mono text-xs",
-                  row.continuity_score === bestContinuity && "font-semibold text-emerald-600 dark:text-emerald-400",
-                )}
-              >
+              <td className="text-right font-mono text-xs">
                 {(row.continuity_score ?? 0).toFixed(4)}
               </td>
               <td
                 className={cn(
                   "text-right font-mono text-xs",
-                  row.noise_score === lowestNoise && "font-semibold text-emerald-600 dark:text-emerald-400",
+                  row.noise_score === lowestNoise &&
+                    lowestNoise != null &&
+                    "font-semibold text-emerald-600 dark:text-emerald-400",
                 )}
               >
                 {(row.noise_score ?? 0).toFixed(4)}
               </td>
-              <td
-                className={cn(
-                  "text-right font-mono text-xs",
-                  row.fitness_score === bestFitness && row.fitness_score != null && "font-semibold text-primary",
-                )}
-              >
+              <td className="text-right font-mono text-xs text-muted-foreground">
                 {row.fitness_score?.toFixed(4) ?? "—"}
               </td>
               <td
                 className={cn(
                   "text-right font-mono text-xs",
-                  row.runtime_ms === fastest && "font-semibold text-emerald-600 dark:text-emerald-400",
+                  row.runtime_ms === fastest &&
+                    fastest != null &&
+                    "font-semibold text-emerald-600 dark:text-emerald-400",
                 )}
               >
                 {row.runtime_ms != null ? `${row.runtime_ms} ms` : "—"}
@@ -95,6 +96,10 @@ export function MetricsTable({ rows, className, highlightBest = true }: MetricsT
           ))}
         </tbody>
       </table>
+      <p className="border-t px-3 py-2 text-xs text-muted-foreground">
+        Heuristik metrikalar — algoritm ustunligini isbotlamaydi. Fitness faqat GA ichki
+        optimallashtirish metrikasi.
+      </p>
     </div>
   );
 }

@@ -69,7 +69,7 @@ export function ResultGrid({ runs }: ResultGridProps) {
                   <dd>{run.metrics[0].runtime_ms ?? 0} ms</dd>
                   {run.metrics[0].fitness_score != null && (
                     <>
-                      <dt>Fitness</dt>
+                      <dt>GA ichki fitness</dt>
                       <dd>{run.metrics[0].fitness_score.toFixed(4)}</dd>
                     </>
                   )}

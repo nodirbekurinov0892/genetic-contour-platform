@@ -45,6 +45,49 @@ export interface ReproducibilityInfo {
   opencv_version?: string;
   numpy_version?: string;
   skimage_version?: string;
+  captured_at?: string;
+  platform_version?: string;
+  preprocessing_params?: Record<string, unknown>;
+  algorithm_params?: Record<string, unknown>;
+  image_dimensions?: Record<string, number>;
+  has_ground_truth?: boolean;
+}
+
+export type EvaluationMode = "supervised" | "heuristic";
+
+export interface WinnerInfo {
+  algorithm: string;
+  algorithm_key?: string;
+  algorithm_keys?: string[];
+  primary_metric: string;
+  iou?: number;
+  f1_score?: number;
+  dice_coefficient?: number;
+  tie?: boolean;
+}
+
+export interface MetricWarning {
+  type: string;
+  algorithm: string;
+  message: string;
+}
+
+export interface ScientificEvaluation {
+  evaluation_mode: EvaluationMode;
+  has_ground_truth: boolean;
+  winner: WinnerInfo | null;
+  metric_warnings: MetricWarning[];
+  disclaimer: string | null;
+  summary: string;
+  winner_logic: {
+    criteria: string[];
+    fitness_participates: boolean;
+    declared_when: string;
+  };
+  metric_taxonomy: {
+    supervised: string[];
+    heuristic: string[];
+  };
 }
 
 export interface ExperimentRecord {
@@ -144,10 +187,19 @@ export interface ExperimentResults {
 }
 
 export interface ScientificInsights {
+  evaluation_mode: EvaluationMode;
+  has_ground_truth: boolean;
+  winner: WinnerInfo | null;
+  metric_warnings: MetricWarning[];
+  disclaimer: string | null;
   summary: string;
+  observations: string[];
+  limitations: string[];
+  comparisons: string[];
   strengths: string[];
   weaknesses: string[];
-  comparisons: string[];
+  winner_logic: ScientificEvaluation["winner_logic"];
+  metric_taxonomy: ScientificEvaluation["metric_taxonomy"];
 }
 
 export interface AlgorithmParams {

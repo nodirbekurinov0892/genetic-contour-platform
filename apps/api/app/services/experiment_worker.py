@@ -166,12 +166,8 @@ async def _execute_job(experiment_id: uuid.UUID, settings) -> None:
             await _mark_failed(session, experiment, "Source image not found")
             return
 
-        from app.utils.reproducibility import capture_environment
-
-        experiment.reproducibility_json = capture_environment()
-        await session.flush()
-
         ground_truth = None
+        has_ground_truth = bool(image.ground_truth_storage_key)
         if image.ground_truth_storage_key:
             try:
                 gt_key = storage.resolve_storage_key(
@@ -192,6 +188,33 @@ async def _execute_job(experiment_id: uuid.UUID, settings) -> None:
                     image.id,
                     exc_info=True,
                 )
+
+        from app.utils.reproducibility import capture_environment
+
+        experiment.reproducibility_json = capture_environment(
+            preprocessing_params={
+                "resize_width": request.params.resize_width,
+                "blur_kernel": request.params.blur_kernel,
+                "threshold": request.params.threshold,
+            },
+            algorithm_params={
+                "threshold": request.params.threshold,
+                "canny_low": request.params.canny_low,
+                "canny_high": request.params.canny_high,
+                "algorithms": algorithms,
+                "ga_population_size": ga.population_size,
+                "ga_generations": ga.generations,
+                "ga_mutation_rate": ga.mutation_rate,
+                "ga_crossover_rate": ga.crossover_rate,
+                "ga_elitism_count": ga.elitism_count,
+            },
+            image_dimensions={
+                "original_width": image.width,
+                "original_height": image.height,
+            },
+            has_ground_truth=has_ground_truth,
+        )
+        await session.flush()
 
         await _clear_previous_runs(session, experiment.id, storage)
 

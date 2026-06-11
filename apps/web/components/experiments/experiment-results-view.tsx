@@ -13,6 +13,9 @@ import { ScientificImageCard } from "@/components/experiments/scientific-image-c
 import { MetricsTable } from "@/components/experiments/metrics-table";
 import { FitnessChart } from "@/components/experiments/fitness-chart";
 import { ReproducibilityPanel } from "@/components/experiments/reproducibility-panel";
+import { EvaluationModeBanner } from "@/components/scientific/evaluation-mode-banner";
+import { FalsePositiveWarnings } from "@/components/scientific/false-positive-warnings";
+import type { EvaluationMode, MetricWarning, WinnerInfo } from "@shared/types";
 
 const ALGORITHM_ORDER = ["sobel", "prewitt", "canny", "genetic"] as const;
 const ALGORITHM_LABELS: Record<string, string> = {
@@ -35,9 +38,19 @@ interface ExperimentResultsViewProps {
   data: ExperimentResults;
   sourceImage?: ImageRecord | null;
   conclusion?: string | null;
+  evaluationMode?: EvaluationMode;
+  winner?: WinnerInfo | null;
+  metricWarnings?: MetricWarning[];
 }
 
-export function ExperimentResultsView({ data, sourceImage, conclusion }: ExperimentResultsViewProps) {
+export function ExperimentResultsView({
+  data,
+  sourceImage,
+  conclusion,
+  evaluationMode,
+  winner = null,
+  metricWarnings = [],
+}: ExperimentResultsViewProps) {
   const [lightbox, setLightbox] = useState<{
     filePath: string;
     url?: string | null;
@@ -56,6 +69,11 @@ export function ExperimentResultsView({ data, sourceImage, conclusion }: Experim
     );
 
   const gaRun = edgeRuns.find((r) => r.algorithm_name === "genetic");
+  const hasGroundTruth =
+    sourceImage?.has_ground_truth ??
+    edgeRuns.some((r) => r.metrics[0]?.iou != null);
+  const mode: EvaluationMode =
+    evaluationMode ?? (hasGroundTruth ? "supervised" : "heuristic");
 
   if (
     (experiment.status === "pending" || experiment.status === "queued") &&
@@ -156,6 +174,8 @@ export function ExperimentResultsView({ data, sourceImage, conclusion }: Experim
 
   return (
     <div className="space-y-10">
+      <EvaluationModeBanner mode={mode} hasGroundTruth={hasGroundTruth} />
+      <FalsePositiveWarnings warnings={metricWarnings} />
       <ReproducibilityPanel data={experiment.reproducibility_json} />
       <section>
         <SectionHeader
@@ -234,11 +254,10 @@ export function ExperimentResultsView({ data, sourceImage, conclusion }: Experim
                   title={ALGORITHM_LABELS[run.algorithm_name] ?? run.algorithm_name}
                   subtitle={
                     m?.fitness_score != null
-                      ? `Fitness: ${m.fitness_score.toFixed(4)}`
+                      ? `GA ichki fitness: ${m.fitness_score.toFixed(4)}`
                       : `Ishlash vaqti: ${m?.runtime_ms ?? 0} ms`
                   }
                   badge={run.algorithm_name === "genetic" ? "GA" : "Klassik"}
-                  highlight={run.algorithm_name === "genetic"}
                 />
               );
             })}
@@ -340,18 +359,22 @@ export function ExperimentResultsView({ data, sourceImage, conclusion }: Experim
         </section>
       )}
 
-      <SupervisedMetricsPanel rows={supervisedRows} />
-
-      <AnalyticsPanel edgeRuns={edgeRuns} />
+      <SupervisedMetricsPanel
+        rows={supervisedRows}
+        winner={winner}
+        hasGroundTruth={hasGroundTruth}
+      />
 
       <section>
         <SectionHeader
-          title="Kvantitativ metrikalar"
-          description="Solishtirma baholash: chekka zichligi, uzluksizlik, shovqin, fitness, ishlash vaqti"
-          badge="Ilmiy"
+          title="Heuristik metrikalar"
+          description="Kuzatuv maqsadida — algoritm ustunligini isbotlamaydi"
+          badge="Heuristic"
         />
         <MetricsTable rows={metricsRows} />
       </section>
+
+      <AnalyticsPanel edgeRuns={edgeRuns} hasGroundTruth={hasGroundTruth} />
 
       {gaRun && (
         <section>
@@ -362,8 +385,8 @@ export function ExperimentResultsView({ data, sourceImage, conclusion }: Experim
       {conclusion && (
         <section>
           <SectionHeader
-            title="Ilmiy xulosa"
-            description="Tajriba metrikalariga asoslangan avtomatik tahlil"
+            title="Ma'lumotlarga asoslangan xulosa"
+            description="Narrativsiz, faqat metrikalar faktlari"
           />
           <Card className="scientific-card border-primary/20 bg-primary/5">
             <CardContent className="p-6">

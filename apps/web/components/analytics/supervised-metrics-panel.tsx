@@ -10,7 +10,9 @@ import {
   YAxis,
 } from "recharts";
 import { SectionHeader } from "@/components/ui/section-header";
-import type { MetricRecord } from "@shared/types";
+import { MetricTooltip } from "@/components/scientific/metric-tooltip";
+import { WinnerPanel } from "@/components/scientific/winner-panel";
+import type { MetricRecord, WinnerInfo } from "@shared/types";
 
 interface SupervisedRow {
   algorithm: string;
@@ -19,9 +21,15 @@ interface SupervisedRow {
 
 interface SupervisedMetricsPanelProps {
   rows: SupervisedRow[];
+  winner?: WinnerInfo | null;
+  hasGroundTruth?: boolean;
 }
 
-export function SupervisedMetricsPanel({ rows }: SupervisedMetricsPanelProps) {
+export function SupervisedMetricsPanel({
+  rows,
+  winner = null,
+  hasGroundTruth = false,
+}: SupervisedMetricsPanelProps) {
   const hasSupervised = rows.some(
     (r) => r.metrics.iou != null || r.metrics.f1_score != null,
   );
@@ -30,7 +38,7 @@ export function SupervisedMetricsPanel({ rows }: SupervisedMetricsPanelProps) {
     return (
       <section>
         <SectionHeader
-          title="Ground Truth metrikalari"
+          title="Supervised metrikalar"
           description="Ground truth maska yuklangandan keyin Precision, Recall, F1, IoU va Dice hisoblanadi."
           badge="GT"
         />
@@ -55,31 +63,44 @@ export function SupervisedMetricsPanel({ rows }: SupervisedMetricsPanelProps) {
   return (
     <section className="space-y-4">
       <SectionHeader
-        title="Ground Truth metrikalari"
-        description="Supervised baholash: Precision, Recall, F1, IoU, Dice"
-        badge="Ilmiy"
+        title="Supervised metrikalar"
+        description="Ground Truth asosida o'lchanadigan metrikalar — g'olib faqat shu blokda"
+        badge="Supervised"
       />
+      <WinnerPanel winner={winner} hasGroundTruth={hasGroundTruth} />
       <div className="overflow-x-auto rounded-lg border">
         <table className="w-full text-sm">
           <thead className="bg-muted/50 text-left">
             <tr>
               <th className="px-3 py-2">Algoritm</th>
-              <th className="px-3 py-2">Precision</th>
-              <th className="px-3 py-2">Recall</th>
-              <th className="px-3 py-2">F1</th>
-              <th className="px-3 py-2">IoU</th>
-              <th className="px-3 py-2">Dice</th>
+              <th className="px-3 py-2">
+                <MetricTooltip metricKey="precision" />
+              </th>
+              <th className="px-3 py-2">
+                <MetricTooltip metricKey="recall" />
+              </th>
+              <th className="px-3 py-2">
+                <MetricTooltip metricKey="f1_score" />
+              </th>
+              <th className="px-3 py-2">
+                <MetricTooltip metricKey="iou" />
+              </th>
+              <th className="px-3 py-2">
+                <MetricTooltip metricKey="dice_coefficient" />
+              </th>
             </tr>
           </thead>
           <tbody>
             {rows.map((row) => (
               <tr key={row.algorithm} className="border-t">
                 <td className="px-3 py-2 font-medium">{row.algorithm}</td>
-                <td className="px-3 py-2">{fmt(row.metrics.precision)}</td>
-                <td className="px-3 py-2">{fmt(row.metrics.recall)}</td>
-                <td className="px-3 py-2">{fmt(row.metrics.f1_score)}</td>
-                <td className="px-3 py-2">{fmt(row.metrics.iou)}</td>
-                <td className="px-3 py-2">{fmt(row.metrics.dice_coefficient)}</td>
+                <td className="px-3 py-2 font-mono text-xs">{fmt(row.metrics.precision)}</td>
+                <td className="px-3 py-2 font-mono text-xs">{fmt(row.metrics.recall)}</td>
+                <td className="px-3 py-2 font-mono text-xs">{fmt(row.metrics.f1_score)}</td>
+                <td className="px-3 py-2 font-mono text-xs">{fmt(row.metrics.iou)}</td>
+                <td className="px-3 py-2 font-mono text-xs">
+                  {fmt(row.metrics.dice_coefficient)}
+                </td>
               </tr>
             ))}
           </tbody>
@@ -103,7 +124,7 @@ export function SupervisedMetricsPanel({ rows }: SupervisedMetricsPanelProps) {
           </div>
         </div>
         <div className="scientific-card p-4">
-          <p className="mb-3 text-sm font-semibold">Algoritm reytingi (IoU)</p>
+          <p className="mb-3 text-sm font-semibold">IoU tartibi (g&apos;olib aniqlash mezoni)</p>
           <ol className="space-y-2">
             {ranked.map((row, i) => (
               <li

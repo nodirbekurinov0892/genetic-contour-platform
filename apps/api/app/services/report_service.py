@@ -39,6 +39,7 @@ from app.models.report import Report
 from app.models.result_image import ResultImage
 from app.models.user import User
 from app.services.storage import StorageService
+from app.core.scientific_evaluation import build_scientific_context
 from app.utils.ownership import ensure_owner
 
 logger = logging.getLogger(__name__)
@@ -253,14 +254,19 @@ class ReportService:
                 }
             )
 
-        conclusion = self._generate_conclusion(metrics_rows, ga_run)
+        has_ground_truth = bool(image.ground_truth_storage_key)
+        scientific = build_scientific_context(
+            metrics_rows,
+            has_ground_truth=has_ground_truth,
+        )
+        conclusion = scientific["summary"]
 
         return {
             "meta": {
                 "project_title": PROJECT_TITLE,
                 "project_subtitle": PROJECT_SUBTITLE,
                 "generated_at": datetime.now(timezone.utc).isoformat(),
-                "report_version": "1.0",
+                "report_version": "2.0",
             },
             "experiment": {
                 "id": str(experiment.id),
@@ -312,60 +318,10 @@ class ReportService:
                 else []
             ),
             "conclusion": conclusion,
+            "scientific_evaluation": scientific,
             "pipeline_run_id": str(pipeline.id) if pipeline else None,
             "algorithm_run_ids": {r.algorithm_name: str(r.id) for r in edge_runs},
         }
-
-    def _generate_conclusion(
-        self, metrics_rows: list[dict], ga_run: AlgorithmRun | None
-    ) -> str:
-        if not metrics_rows:
-            return (
-                "Tajriba natijalari mavjud emas. Kontur aniqlash algoritmlarini "
-                "taqqoslash uchun avval tajribani bajarish kerak."
-            )
-
-        best_continuity = max(metrics_rows, key=lambda x: x["continuity_score"] or 0)
-        lowest_noise = min(metrics_rows, key=lambda x: x["noise_score"] or 1)
-        fastest = min(metrics_rows, key=lambda x: x["runtime_ms"] or 999999)
-
-        parts = [
-            f"Ushbu tajribada {len(metrics_rows)} ta kontur aniqlash algoritmi "
-            f"bir xil preprocessing pipeline asosida sinovdan o'tkazildi.",
-            f"Kontur uzluksizligi (continuity) bo'yicha eng yaxshi natija "
-            f"{best_continuity['algorithm']} algoritmida "
-            f"({best_continuity['continuity_score']:.4f}) qayd etildi.",
-            f"Shovqin darajasi (noise penalty) eng past "
-            f"{lowest_noise['algorithm']} algoritmida "
-            f"({lowest_noise['noise_score']:.4f}) bo'ldi.",
-            f"Eng tez ishlash vaqti {fastest['algorithm']} algoritmida "
-            f"({fastest['runtime_ms']} ms) kuzatildi.",
-        ]
-
-        if ga_run and ga_run.result_json:
-            fitness = ga_run.result_json.get("best_fitness")
-            components = ga_run.result_json.get("fitness_components", {})
-            parts.append(
-                f"Genetik algoritm ko'p mezonli fitness funksiyasi asosida "
-                f"optimallashtirilgan kontur topdi (best fitness = {fitness:.4f}). "
-                f"Fitness komponentlari: gradient={components.get('gradient_score', 0):.4f}, "
-                f"continuity={components.get('continuity_score', 0):.4f}, "
-                f"thinness={components.get('thinness_score', 0):.4f}, "
-                f"noise_penalty={components.get('noise_penalty', 0):.4f}."
-            )
-            parts.append(
-                "Klassik algoritmlar (Sobel, Prewitt, Canny) gradient asosida tez "
-                "ishlaydi, biroq genetik algoritm kontur uzluksizligi, ingichkaligi "
-                "va gradient mosligini bir vaqtda optimallashtirish imkonini beradi."
-            )
-        else:
-            parts.append(
-                "Klassik gradient asosidagi algoritmlar tez natija beradi, "
-                "lekin ko'p mezonli optimallashtirish talab qilinadigan vazifalarda "
-                "genetik algoritm qo'llash tavsiya etiladi."
-            )
-
-        return " ".join(parts)
 
     def build_csv(self, report_data: dict[str, Any]) -> str:
         output = io.StringIO()
@@ -381,26 +337,72 @@ class ReportService:
         writer.writerow(["Generated At", report_data["meta"]["generated_at"]])
         writer.writerow([])
 
-        writer.writerow(["Algorithm", "Edge Density", "Continuity", "Noise", "Fitness", "Runtime (ms)"])
-        for row in report_data["metrics"]:
+        sci = report_data.get("scientific_evaluation", {})
+        writer.writerow(["Evaluation Mode", sci.get("evaluation_mode", "")])
+        writer.writerow(["Has Ground Truth", sci.get("has_ground_truth", False)])
+        winner = sci.get("winner")
+        if winner:
+            writer.writerow(["Winner (IoU/F1/Dice)", winner.get("algorithm", "")])
+            writer.writerow(["Winner IoU", winner.get("iou", "")])
+        else:
+            writer.writerow(["Winner", "None (no Ground Truth or no supervised metrics)"])
+        if sci.get("disclaimer"):
+            writer.writerow(["Disclaimer", sci["disclaimer"]])
+        writer.writerow([])
+
+        has_supervised = sci.get("has_ground_truth") and any(
+            row.get("iou") is not None for row in report_data["metrics"]
+        )
+        if has_supervised:
             writer.writerow([
-                row["algorithm"],
-                f"{row['edge_density']:.6f}" if row["edge_density"] is not None else "",
-                f"{row['continuity_score']:.6f}" if row["continuity_score"] is not None else "",
-                f"{row['noise_score']:.6f}" if row["noise_score"] is not None else "",
-                f"{row['fitness_score']:.6f}" if row["fitness_score"] is not None else "",
-                row["runtime_ms"] or "",
+                "Algorithm", "IoU", "F1", "Precision", "Recall", "Dice",
+                "Continuity", "Noise", "Edge Density", "GA Internal Fitness", "Runtime (ms)",
             ])
+            for row in report_data["metrics"]:
+                writer.writerow([
+                    row["algorithm"],
+                    f"{row['iou']:.6f}" if row.get("iou") is not None else "",
+                    f"{row['f1_score']:.6f}" if row.get("f1_score") is not None else "",
+                    f"{row['precision']:.6f}" if row.get("precision") is not None else "",
+                    f"{row['recall']:.6f}" if row.get("recall") is not None else "",
+                    f"{row['dice_coefficient']:.6f}" if row.get("dice_coefficient") is not None else "",
+                    f"{row['continuity_score']:.6f}" if row["continuity_score"] is not None else "",
+                    f"{row['noise_score']:.6f}" if row["noise_score"] is not None else "",
+                    f"{row['edge_density']:.6f}" if row["edge_density"] is not None else "",
+                    f"{row['fitness_score']:.6f}" if row["fitness_score"] is not None else "",
+                    row["runtime_ms"] or "",
+                ])
+        else:
+            writer.writerow([
+                "Algorithm", "Edge Density", "Continuity", "Noise",
+                "GA Internal Fitness", "Runtime (ms)",
+            ])
+            for row in report_data["metrics"]:
+                writer.writerow([
+                    row["algorithm"],
+                    f"{row['edge_density']:.6f}" if row["edge_density"] is not None else "",
+                    f"{row['continuity_score']:.6f}" if row["continuity_score"] is not None else "",
+                    f"{row['noise_score']:.6f}" if row["noise_score"] is not None else "",
+                    f"{row['fitness_score']:.6f}" if row["fitness_score"] is not None else "",
+                    row["runtime_ms"] or "",
+                ])
         writer.writerow([])
 
         if report_data["generation_history"]:
-            writer.writerow(["GA Generation History"])
+            writer.writerow(["GA Internal Optimization — Generation History"])
             writer.writerow(["Generation", "Best Fitness", "Average Fitness"])
             for g in report_data["generation_history"]:
                 writer.writerow([g["generation"], f"{g['best_fitness']:.6f}", f"{g['average_fitness']:.6f}"])
             writer.writerow([])
 
-        writer.writerow(["Scientific Conclusion"])
+        warnings = sci.get("metric_warnings") or []
+        if warnings:
+            writer.writerow(["Metric Inconsistency Warnings"])
+            for w in warnings:
+                writer.writerow([w.get("message", "")])
+            writer.writerow([])
+
+        writer.writerow(["Data-Driven Summary"])
         writer.writerow([report_data["conclusion"]])
 
         return output.getvalue()
@@ -498,13 +500,27 @@ class ReportService:
         ]
         if experiment.completed_at:
             info_data.append(["Yakunlangan", experiment.completed_at.strftime("%Y-%m-%d %H:%M")])
+        sci = report_data.get("scientific_evaluation", {})
+        info_data.append([
+            "Evaluation mode",
+            "Supervised" if sci.get("evaluation_mode") == "supervised" else "Heuristic",
+        ])
+        info_data.append(["Ground Truth", "Mavjud" if sci.get("has_ground_truth") else "Yo'q"])
         if experiment.reproducibility_json:
             repro = experiment.reproducibility_json
             info_data.append(["Random seed", str(repro.get("random_seed", "-"))])
+            info_data.append(["Captured at", str(repro.get("captured_at", "-"))])
             info_data.append(["Python", str(repro.get("python_version", "-"))])
             info_data.append(["OpenCV", str(repro.get("opencv_version", "-"))])
             info_data.append(["NumPy", str(repro.get("numpy_version", "-"))])
             info_data.append(["scikit-image", str(repro.get("skimage_version", "-"))])
+            info_data.append(["Platform version", str(repro.get("platform_version", "-"))])
+            prep = repro.get("preprocessing_params") or {}
+            if prep:
+                info_data.append(["Preprocessing", str(prep)])
+            algo = repro.get("algorithm_params") or {}
+            if algo:
+                info_data.append(["Algorithm params", str(algo)])
 
         info_table = Table(info_data, colWidths=[5 * cm, 12 * cm])
         info_table.setStyle(TableStyle([
@@ -589,15 +605,44 @@ class ReportService:
         story.append(PageBreak())
 
         story.append(Paragraph("4. Metrikalar taqqoslash jadvali", heading_style))
-        has_supervised = any(row.get("iou") is not None for row in report_data["metrics"])
+
+        if sci.get("disclaimer"):
+            story.append(Paragraph(
+                f"<b>Ogohlantirish:</b> {self._sanitize_pdf_text(sci['disclaimer'])}",
+                body_style,
+            ))
+            story.append(Spacer(1, 0.2 * cm))
+
+        winner = sci.get("winner")
+        if winner:
+            story.append(Paragraph(
+                f"<b>Supervised g'olib (IoU/F1/Dice):</b> "
+                f"{self._sanitize_pdf_text(winner['algorithm'])} "
+                f"(IoU={winner.get('iou', 0):.4f}, F1={winner.get('f1_score', 0):.4f}, "
+                f"Dice={winner.get('dice_coefficient', 0):.4f}).",
+                body_style,
+            ))
+            story.append(Spacer(1, 0.2 * cm))
+        elif sci.get("evaluation_mode") == "heuristic":
+            story.append(Paragraph(
+                "<b>G'olib:</b> Aniqlanmagan — Ground Truth mavjud emas.",
+                body_style,
+            ))
+            story.append(Spacer(1, 0.2 * cm))
+
+        has_supervised = sci.get("has_ground_truth") and any(
+            row.get("iou") is not None for row in report_data["metrics"]
+        )
         if has_supervised:
+            story.append(Paragraph("<b>Supervised metrikalar</b>", styles["Normal"]))
             metrics_header = [
                 "Algoritm", "IoU", "F1", "Precision", "Recall", "Dice",
-                "Continuity", "Noise", "Runtime (ms)",
             ]
         else:
+            story.append(Paragraph("<b>Heuristik metrikalar</b>", styles["Normal"]))
             metrics_header = [
-                "Algoritm", "Edge Density", "Continuity", "Noise", "Fitness", "Runtime (ms)",
+                "Algoritm", "Edge Density", "Continuity", "Noise",
+                "GA Ichki Fitness", "Runtime (ms)",
             ]
         metrics_data = [metrics_header]
         for row in report_data["metrics"]:
@@ -609,9 +654,6 @@ class ReportService:
                     f"{row['precision']:.4f}" if row.get("precision") is not None else "-",
                     f"{row['recall']:.4f}" if row.get("recall") is not None else "-",
                     f"{row['dice_coefficient']:.4f}" if row.get("dice_coefficient") is not None else "-",
-                    f"{row['continuity_score']:.4f}" if row["continuity_score"] is not None else "-",
-                    f"{row['noise_score']:.4f}" if row["noise_score"] is not None else "-",
-                    str(row["runtime_ms"] or "-"),
                 ])
             else:
                 metrics_data.append([
@@ -622,6 +664,7 @@ class ReportService:
                     f"{row['fitness_score']:.4f}" if row["fitness_score"] is not None else "-",
                     str(row["runtime_ms"] or "-"),
                 ])
+
         col_width = 16 * cm / len(metrics_header)
         mt = Table(metrics_data, colWidths=[col_width] * len(metrics_header))
         mt.setStyle(TableStyle([
@@ -634,10 +677,50 @@ class ReportService:
             ("PADDING", (0, 0), (-1, -1), 5),
         ]))
         story.append(mt)
-        story.append(Spacer(1, 0.5 * cm))
+        story.append(Spacer(1, 0.3 * cm))
+
+        if has_supervised:
+            story.append(Paragraph("<b>Heuristik metrikalar (qo'shimcha)</b>", styles["Normal"]))
+            heuristic_header = [
+                "Algoritm", "Continuity", "Noise", "Edge Density",
+                "GA Ichki Fitness", "Runtime (ms)",
+            ]
+            heuristic_data = [heuristic_header]
+            for row in report_data["metrics"]:
+                heuristic_data.append([
+                    row["algorithm"],
+                    f"{row['continuity_score']:.4f}" if row["continuity_score"] is not None else "-",
+                    f"{row['noise_score']:.4f}" if row["noise_score"] is not None else "-",
+                    f"{row['edge_density']:.4f}" if row["edge_density"] is not None else "-",
+                    f"{row['fitness_score']:.4f}" if row["fitness_score"] is not None else "-",
+                    str(row["runtime_ms"] or "-"),
+                ])
+            col_w2 = 16 * cm / len(heuristic_header)
+            ht = Table(heuristic_data, colWidths=[col_w2] * len(heuristic_header))
+            ht.setStyle(TableStyle([
+                ("BACKGROUND", (0, 0), (-1, 0), colors.HexColor("#475569")),
+                ("TEXTCOLOR", (0, 0), (-1, 0), colors.white),
+                ("FONTNAME", (0, 0), (-1, 0), "Helvetica-Bold"),
+                ("FONTSIZE", (0, 0), (-1, -1), 8),
+                ("GRID", (0, 0), (-1, -1), 0.5, colors.HexColor("#cbd5e1")),
+                ("ALIGN", (1, 1), (-1, -1), "CENTER"),
+                ("PADDING", (0, 0), (-1, -1), 5),
+            ]))
+            story.append(ht)
+            story.append(Spacer(1, 0.3 * cm))
+
+        warnings = sci.get("metric_warnings") or []
+        if warnings:
+            story.append(Paragraph("5. Metrik nomuvofiqlik ogohlantirishlari", heading_style))
+            for w in warnings:
+                story.append(Paragraph(
+                    f"• {self._sanitize_pdf_text(w.get('message', ''))}",
+                    body_style,
+                ))
+            story.append(Spacer(1, 0.3 * cm))
 
         if report_data["generation_history"]:
-            story.append(Paragraph("5. GA Fitness Evolution", heading_style))
+            story.append(Paragraph("6. GA ichki optimallashtirish (Fitness Evolution)", heading_style))
             chart_bytes = self._make_fitness_chart_bytes(report_data["generation_history"])
             chart_image = (
                 self._rl_image_from_bytes(chart_bytes, width=14 * cm, height=7 * cm)
@@ -650,7 +733,8 @@ class ReportService:
                 story.append(self._missing_image_paragraph(styles["Normal"]))
             story.append(Spacer(1, 0.4 * cm))
 
-        story.append(Paragraph("6. Ilmiy xulosa", heading_style))
+        section_num = "7" if report_data["generation_history"] else "6"
+        story.append(Paragraph(f"{section_num}. Ma'lumotlarga asoslangan xulosa", heading_style))
         story.append(self._pdf_paragraph(report_data["conclusion"], body_style))
 
         pdf_buffer = io.BytesIO()

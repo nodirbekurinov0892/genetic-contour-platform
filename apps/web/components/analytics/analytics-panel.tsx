@@ -15,6 +15,7 @@ import {
   CartesianGrid,
 } from "recharts";
 import { SectionHeader } from "@/components/ui/section-header";
+import { ScientificDisclaimer } from "@/components/scientific/scientific-disclaimer";
 import type { AlgorithmRunRecord } from "@shared/types";
 
 const LABELS: Record<string, string> = {
@@ -26,12 +27,12 @@ const LABELS: Record<string, string> = {
 
 interface AnalyticsPanelProps {
   edgeRuns: AlgorithmRunRecord[];
+  hasGroundTruth?: boolean;
 }
 
-export function AnalyticsPanel({ edgeRuns }: AnalyticsPanelProps) {
+export function AnalyticsPanel({ edgeRuns, hasGroundTruth = false }: AnalyticsPanelProps) {
   const radarData = [
     { metric: "Continuity", full: 1 },
-    { metric: "Fitness", full: 1 },
     { metric: "Low Noise", full: 1 },
     { metric: "IoU", full: 1 },
     { metric: "Speed", full: 1 },
@@ -48,8 +49,6 @@ export function AnalyticsPanel({ edgeRuns }: AnalyticsPanelProps) {
       if (existing !== undefined) continue;
       if (row.metric === "Continuity") {
         (row as Record<string, number | string>)[key] = m.continuity_score ?? 0;
-      } else if (row.metric === "Fitness") {
-        (row as Record<string, number | string>)[key] = m.fitness_score ?? m.edge_density ?? 0;
       } else if (row.metric === "Low Noise") {
         (row as Record<string, number | string>)[key] = 1 - (m.noise_score ?? 0);
       } else if (row.metric === "IoU") {
@@ -60,21 +59,6 @@ export function AnalyticsPanel({ edgeRuns }: AnalyticsPanelProps) {
       }
     }
   }
-
-  const ranking = edgeRuns
-    .map((run) => {
-      const m = run.metrics[0];
-      const score =
-        (m?.iou ?? 0) * 0.35 +
-        (m?.continuity_score ?? 0) * 0.25 +
-        (1 - (m?.noise_score ?? 0)) * 0.2 +
-        (m?.f1_score ?? 0) * 0.2;
-      return {
-        algorithm: LABELS[run.algorithm_name] ?? run.algorithm_name,
-        score,
-      };
-    })
-    .sort((a, b) => b.score - a.score);
 
   const gaRun = edgeRuns.find((r) => r.algorithm_name === "genetic");
   const varianceData =
@@ -93,12 +77,13 @@ export function AnalyticsPanel({ edgeRuns }: AnalyticsPanelProps) {
     <section className="space-y-6">
       <SectionHeader
         title="Kengaytirilgan analitika"
-        description="Radar, reyting, konvergensiya va fitness komponentlari"
+        description="Heuristik vizualizatsiya va GA ichki optimallashtirish"
         badge="Analytics"
       />
+      {!hasGroundTruth && <ScientificDisclaimer />}
       <div className="grid gap-4 lg:grid-cols-2">
         <div className="scientific-card p-4">
-          <p className="mb-2 text-sm font-semibold">Radar chart</p>
+          <p className="mb-2 text-sm font-semibold">Radar chart (heuristik + supervised)</p>
           <div className="h-72">
             <ResponsiveContainer width="100%" height="100%">
               <RadarChart data={radarData}>
@@ -125,25 +110,31 @@ export function AnalyticsPanel({ edgeRuns }: AnalyticsPanelProps) {
           </div>
         </div>
         <div className="scientific-card p-4">
-          <p className="mb-2 text-sm font-semibold">Algoritm reytingi</p>
+          <p className="mb-2 text-sm font-semibold">Runtime taqqoslash</p>
           <ol className="space-y-2">
-            {ranking.map((row, i) => (
-              <li
-                key={row.algorithm}
-                className="flex items-center justify-between rounded-md border px-3 py-2 text-sm"
-              >
-                <span>
-                  #{i + 1} {row.algorithm}
-                </span>
-                <span className="font-mono">{row.score.toFixed(4)}</span>
-              </li>
-            ))}
+            {[...edgeRuns]
+              .sort(
+                (a, b) => (a.metrics[0]?.runtime_ms ?? 0) - (b.metrics[0]?.runtime_ms ?? 0),
+              )
+              .map((run) => (
+                <li
+                  key={run.id}
+                  className="flex items-center justify-between rounded-md border px-3 py-2 text-sm"
+                >
+                  <span>{LABELS[run.algorithm_name] ?? run.algorithm_name}</span>
+                  <span className="font-mono">{run.metrics[0]?.runtime_ms ?? 0} ms</span>
+                </li>
+              ))}
           </ol>
+          <p className="mt-3 text-xs text-muted-foreground">
+            Algoritm reytingi va g&apos;olib faqat Ground Truth bo&apos;lganda IoU/F1/Dice
+            orqali aniqlanadi.
+          </p>
         </div>
       </div>
       {varianceData.length > 0 && (
         <div className="scientific-card p-4">
-          <p className="mb-2 text-sm font-semibold">GA konvergensiya va variance</p>
+          <p className="mb-2 text-sm font-semibold">GA ichki optimallashtirish — konvergensiya</p>
           <div className="h-64">
             <ResponsiveContainer width="100%" height="100%">
               <LineChart data={varianceData}>
@@ -161,7 +152,10 @@ export function AnalyticsPanel({ edgeRuns }: AnalyticsPanelProps) {
       )}
       {fitnessComponents && (
         <div className="scientific-card p-4">
-          <p className="mb-2 text-sm font-semibold">Fitness komponentlari (GA)</p>
+          <p className="mb-2 text-sm font-semibold">GA ichki fitness komponentlari</p>
+          <p className="mb-3 text-xs text-muted-foreground">
+            Faqat genetik algoritm evolyutsiyasi uchun. Algoritmlararo taqqoslash metrikasi emas.
+          </p>
           <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-4">
             {Object.entries(fitnessComponents).map(([key, value]) => (
               <div key={key} className="rounded-md border px-3 py-2 text-sm">

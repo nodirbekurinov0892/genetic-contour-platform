@@ -133,13 +133,13 @@ export default function DashboardPage() {
           accent="green"
         />
         <StatCard
-          title="Eng yaxshi GA fitness"
+          title="GA ichki fitness ko'rsatkichi"
           value={
             stats?.best_ga_fitness != null
               ? stats.best_ga_fitness.toFixed(4)
               : "—"
           }
-          subtitle="Barcha Genetic Algorithm ishlarida"
+          subtitle="GA optimallashtirish metrikasi (global g'olib emas)"
           icon={TrendingUp}
           accent="amber"
         />

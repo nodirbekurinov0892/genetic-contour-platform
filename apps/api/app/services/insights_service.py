@@ -1,8 +1,13 @@
-"""Rule-based scientific insights from experiment metrics."""
+"""Rule-based scientific insights from experiment metrics — narrative-free."""
 
 from __future__ import annotations
 
 from typing import Any
+
+from app.core.scientific_evaluation import (
+    build_scientific_context,
+    has_supervised_metrics,
+)
 
 ALGO_LABELS = {
     "sobel": "Sobel",
@@ -12,117 +17,138 @@ ALGO_LABELS = {
 }
 
 
-def _pct_delta(base: float | None, value: float | None) -> float | None:
-    if base is None or value is None or base == 0:
+def _metric_fact(
+    field: str,
+    label: str,
+    rows: list[dict[str, Any]],
+    *,
+    higher_is_better: bool = True,
+) -> str | None:
+    ranked = [r for r in rows if r.get(field) is not None]
+    if not ranked:
         return None
-    return ((value - base) / abs(base)) * 100
+    if higher_is_better:
+        best = max(ranked, key=lambda x: x[field])
+        return f"{label} bo'yicha eng yuqori qiymat: {best['algorithm']} ({best[field]:.4f})."
+    best = min(ranked, key=lambda x: x[field])
+    return (
+        f"{label} bo'yicha eng past penalty: {best['algorithm']} ({best[field]:.4f})."
+    )
 
 
-def generate_insights(metrics_rows: list[dict[str, Any]]) -> dict[str, Any]:
+def generate_insights(
+    metrics_rows: list[dict[str, Any]],
+    *,
+    has_ground_truth: bool = False,
+) -> dict[str, Any]:
     if not metrics_rows:
         return {
+            "evaluation_mode": "heuristic",
+            "has_ground_truth": False,
+            "winner": None,
+            "metric_warnings": [],
+            "disclaimer": (
+                "These results are heuristic observations only. "
+                "Algorithm superiority cannot be scientifically established without Ground Truth."
+            ),
             "summary": "Tajriba metrikalari mavjud emas.",
-            "strengths": [],
-            "weaknesses": [],
+            "observations": [],
+            "limitations": [],
             "comparisons": [],
+            "winner_logic": {
+                "criteria": ["iou", "f1_score", "dice_coefficient"],
+                "fitness_participates": False,
+                "declared_when": "has_ground_truth",
+            },
         }
 
-    by_key = {row["algorithm_key"]: row for row in metrics_rows if row.get("algorithm_key")}
-    genetic = by_key.get("genetic")
-    classical = [by_key[k] for k in ("sobel", "prewitt", "canny") if k in by_key]
+    scientific = build_scientific_context(
+        metrics_rows,
+        has_ground_truth=has_ground_truth or has_supervised_metrics(metrics_rows),
+    )
 
-    strengths: list[str] = []
-    weaknesses: list[str] = []
+    observations: list[str] = []
+    limitations: list[str] = []
     comparisons: list[str] = []
 
-    def best_of(field: str) -> dict | None:
-        ranked = [r for r in metrics_rows if r.get(field) is not None]
-        if not ranked:
-            return None
-        if field == "noise_score":
-            return min(ranked, key=lambda x: x[field])
-        return max(ranked, key=lambda x: x[field])
+    if scientific["has_ground_truth"] and scientific["winner"]:
+        w = scientific["winner"]
+        if w.get("tie"):
+            observations.append(
+                f"IoU ({w['iou']:.4f}) bo'yicha teng natija: {w['algorithm']}."
+            )
+        else:
+            observations.append(
+                f"IoU bo'yicha eng yuqori overlap: {w['algorithm']} ({w['iou']:.4f})."
+            )
+        for field, label in (
+            ("f1_score", "F1"),
+            ("dice_coefficient", "Dice"),
+            ("precision", "Precision"),
+            ("recall", "Recall"),
+        ):
+            fact = _metric_fact(field, label, metrics_rows)
+            if fact:
+                observations.append(fact)
+    else:
+        limitations.append(scientific["disclaimer"] or "")
+        for field, label, higher in (
+            ("continuity_score", "Continuity", True),
+            ("noise_score", "Noise (penalty)", False),
+            ("edge_density", "Edge density", True),
+        ):
+            fact = _metric_fact(field, label, metrics_rows, higher_is_better=higher)
+            if fact:
+                observations.append(f"Heuristik kuzatuv — {fact}")
 
-    best_iou = best_of("iou")
-    best_f1 = best_of("f1_score")
-    best_continuity = best_of("continuity_score")
-    lowest_noise = best_of("noise_score")
+        ga_row = next(
+            (r for r in metrics_rows if r.get("algorithm_key") == "genetic"),
+            None,
+        )
+        if ga_row and ga_row.get("fitness_score") is not None:
+            observations.append(
+                f"GA ichki optimallashtirish fitness: {ga_row['fitness_score']:.4f} "
+                f"(algoritmlararo taqqoslash metrikasi emas)."
+            )
 
-    if best_iou:
-        strengths.append(
-            f"IoU bo'yicha eng yaxshi natija {best_iou['algorithm']} algoritmida "
-            f"({best_iou['iou']:.4f})."
+    if not scientific["has_ground_truth"]:
+        limitations.append(
+            "Ground truth maska yo'q — Precision, Recall, IoU, F1, Dice hisoblanmagan."
         )
-    if best_f1:
-        strengths.append(
-            f"F1 Score bo'yicha yetakchi {best_f1['algorithm']} "
-            f"({best_f1['f1_score']:.4f})."
-        )
-    if best_continuity:
-        strengths.append(
-            f"Kontur uzluksizligi {best_continuity['algorithm']} da eng yuqori "
-            f"({best_continuity['continuity_score']:.4f})."
-        )
+        limitations.append("G'olib aniqlanmagan (winner = null).")
 
-    if lowest_noise:
-        strengths.append(
-            f"Eng past shovqin darajasi {lowest_noise['algorithm']} da "
-            f"({lowest_noise['noise_score']:.4f})."
-        )
+    for warning in scientific.get("metric_warnings", []):
+        limitations.append(warning.get("message", ""))
 
-    slowest = max(
-        (r for r in metrics_rows if r.get("runtime_ms") is not None),
-        key=lambda x: x["runtime_ms"],
-        default=None,
-    )
-    if slowest and slowest["runtime_ms"] and slowest["runtime_ms"] > 5000:
-        weaknesses.append(
-            f"{slowest['algorithm']} sekin ishladi ({slowest['runtime_ms']} ms)."
-        )
-
-    has_supervised = any(r.get("iou") is not None for r in metrics_rows)
-    if not has_supervised:
-        weaknesses.append(
-            "Ground truth maska yo'q — Precision/Recall/IoU metrikalari hisoblanmagan."
-        )
-
-    if genetic:
-        for key in ("sobel", "prewitt", "canny"):
-            ref = by_key.get(key)
-            if not ref:
-                continue
-            label = ALGO_LABELS[key]
-            for metric, label_uz, higher_is_better in (
-                ("continuity_score", "continuity", True),
-                ("noise_score", "noise", False),
-                ("iou", "IoU", True),
-                ("f1_score", "F1", True),
-            ):
-                g_val = genetic.get(metric)
-                r_val = ref.get(metric)
-                if g_val is None or r_val is None:
+    if scientific["has_ground_truth"]:
+        for row in metrics_rows:
+            for other in metrics_rows:
+                if row is other:
                     continue
-                delta = _pct_delta(r_val, g_val)
-                if delta is None:
-                    continue
-                if higher_is_better and delta > 1:
-                    comparisons.append(
-                        f"Genetik algoritm {label} ga nisbatan {abs(delta):.1f}% yuqori "
-                        f"{label_uz} ko'rsatdi."
-                    )
-                elif not higher_is_better and delta < -1:
-                    comparisons.append(
-                        f"Genetik algoritm {label} ga nisbatan {abs(delta):.1f}% past "
-                        f"{label_uz} ko'rsatdi."
-                    )
+                for field, label in (("iou", "IoU"), ("f1_score", "F1")):
+                    a, b = row.get(field), other.get(field)
+                    if a is None or b is None or b == 0:
+                        continue
+                    delta = ((a - b) / abs(b)) * 100
+                    if abs(delta) > 1:
+                        direction = "yuqori" if delta > 0 else "past"
+                        comparisons.append(
+                            f"{row['algorithm']} {other['algorithm']} ga nisbatan "
+                            f"{abs(delta):.1f}% {direction} {label} ({a:.4f} vs {b:.4f})."
+                        )
 
-    summary_parts = [
-        f"{len(metrics_rows)} ta algoritm tahlil qilindi.",
-        *comparisons[:2],
-    ]
     return {
-        "summary": " ".join(summary_parts),
-        "strengths": strengths,
-        "weaknesses": weaknesses,
+        "evaluation_mode": scientific["evaluation_mode"],
+        "has_ground_truth": scientific["has_ground_truth"],
+        "winner": scientific["winner"],
+        "metric_warnings": scientific["metric_warnings"],
+        "disclaimer": scientific["disclaimer"],
+        "summary": scientific["summary"],
+        "observations": [o for o in observations if o],
+        "limitations": [l for l in limitations if l],
         "comparisons": comparisons,
+        "strengths": [o for o in observations if o],
+        "weaknesses": [l for l in limitations if l],
+        "winner_logic": scientific["winner_logic"],
+        "metric_taxonomy": scientific["metric_taxonomy"],
     }

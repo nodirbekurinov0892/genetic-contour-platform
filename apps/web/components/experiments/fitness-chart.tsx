@@ -39,8 +39,8 @@ export function FitnessChart({ history }: FitnessChartProps) {
     <div className="scientific-card overflow-hidden">
       <div className="border-b bg-muted/30 px-6 py-4">
         <SectionHeader
-          title="GA fitness evolyutsiyasi"
-          description={`${history.length} ta avlod · Yakuniy eng yaxshi fitness: ${bestFinal.toFixed(4)} · Yaxshilanish: ${improvement >= 0 ? "+" : ""}${improvement.toFixed(1)}%`}
+          title="GA ichki fitness evolyutsiyasi"
+          description={`${history.length} ta avlod · Yakuniy ichki fitness: ${bestFinal.toFixed(4)} · Yaxshilanish: ${improvement >= 0 ? "+" : ""}${improvement.toFixed(1)}% · Algoritmlararo taqqoslash emas`}
           badge="Genetic Algorithm"
           className="mb-0"
         />
