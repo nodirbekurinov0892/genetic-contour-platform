@@ -109,6 +109,11 @@ class Settings(BaseSettings):
                 errors.append("REDIS_URL must start with redis:// or rediss://")
 
         if not self.api_debug:
+            public_lower = self.api_public_url.lower()
+            if "localhost" in public_lower or "127.0.0.1" in public_lower:
+                errors.append(
+                    "API_PUBLIC_URL must not point to localhost when API_DEBUG=false"
+                )
             if self.secret_key.strip() in _INSECURE_SECRET_MARKERS:
                 errors.append("SECRET_KEY must be a strong random value in production")
             if self.jwt_secret.strip() in _INSECURE_SECRET_MARKERS:

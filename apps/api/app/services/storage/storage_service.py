@@ -12,6 +12,7 @@ from app.services.storage.base import StorageBackend, StoredObject
 from app.services.storage.local_storage import LocalStorageBackend
 from app.services.storage.s3_storage import S3StorageBackend
 from app.utils.file_utils import MIME_BY_EXT
+from app.utils.public_url_safety import is_stale_public_url
 
 
 class StorageService:
@@ -104,7 +105,11 @@ class StorageService:
         public_url: str | None,
         file_path: str | None = None,
     ) -> str:
-        if public_url and public_url.strip():
+        if (
+            public_url
+            and public_url.strip()
+            and not is_stale_public_url(public_url, self.settings)
+        ):
             return public_url
         if storage_key:
             return self.get_public_url(storage_key)

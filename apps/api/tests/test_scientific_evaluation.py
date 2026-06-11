@@ -67,6 +67,19 @@ def test_supervised_mode():
     assert ctx["disclaimer"] is None
 
 
+def test_gt_added_after_run_stays_heuristic():
+    """Image may have GT later; report must follow run-time supervised metrics."""
+    rows = [
+        _row("Sobel", "sobel", continuity_score=0.9, edge_density=0.07, iou=None),
+        _row("GA", "genetic", fitness_score=0.65, continuity_score=0.99, iou=None),
+    ]
+    ctx = build_scientific_context(rows, has_ground_truth=True)
+    assert ctx["evaluation_mode"] == EVALUATION_MODE_HEURISTIC
+    assert ctx["has_ground_truth"] is False
+    assert ctx["winner"] is None
+    assert ctx["disclaimer"] is not None
+
+
 def test_insights_noise_wording_lowest_penalty():
     from app.services.insights_service import generate_insights
 

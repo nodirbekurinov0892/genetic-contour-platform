@@ -206,10 +206,7 @@ async def get_experiment_insights(
         }
         for row in report_data["metrics"]
     ]
-    has_ground_truth = bool(
-        report_data.get("scientific_evaluation", {}).get("has_ground_truth")
-    )
-    return generate_insights(metrics_rows, has_ground_truth=has_ground_truth)
+    return generate_insights(metrics_rows)
 
 
 @router.post("/{experiment_id}/clone", response_model=ExperimentResponse)

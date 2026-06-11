@@ -30,7 +30,7 @@ services:
 
       - key: API_PUBLIC_URL
 
-        sync: false
+        value: "https://genetic-contour-platform.onrender.com"
 
       - key: CORS_ORIGINS
 

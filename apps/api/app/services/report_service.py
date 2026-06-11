@@ -254,11 +254,7 @@ class ReportService:
                 }
             )
 
-        has_ground_truth = bool(image.ground_truth_storage_key)
-        scientific = build_scientific_context(
-            metrics_rows,
-            has_ground_truth=has_ground_truth,
-        )
+        scientific = build_scientific_context(metrics_rows)
         conclusion = scientific["summary"]
 
         return {

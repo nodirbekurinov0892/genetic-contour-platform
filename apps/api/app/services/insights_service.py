@@ -62,10 +62,7 @@ def generate_insights(
             },
         }
 
-    scientific = build_scientific_context(
-        metrics_rows,
-        has_ground_truth=has_ground_truth or has_supervised_metrics(metrics_rows),
-    )
+    scientific = build_scientific_context(metrics_rows)
 
     observations: list[str] = []
     limitations: list[str] = []

@@ -184,7 +184,7 @@ Vercel (Frontend)  →  Render (FastAPI API)  →  Render PostgreSQL
 | Variable | Example | Required |
 |----------|---------|----------|
 | `DATABASE_URL` | `postgresql://user:pass@host/db` | Yes (auto from Render DB) |
-| `API_PUBLIC_URL` | `https://genetic-contour-api.onrender.com` | Yes |
+| `API_PUBLIC_URL` | `https://genetic-contour-platform.onrender.com` | Yes |
 | `CORS_ORIGINS` | `https://your-app.vercel.app` | Yes |
 | `SECRET_KEY` | random 64-char string | Yes |
 | `JWT_SECRET` | random 64-char string (different from SECRET_KEY) | Yes |
@@ -213,7 +213,7 @@ Optional: deploy via Blueprint using `apps/api/render.yaml`.
 
 | Variable | Value | Required |
 |----------|-------|----------|
-| `NEXT_PUBLIC_API_URL` | `https://genetic-contour-api.onrender.com` | **Yes** |
+| `NEXT_PUBLIC_API_URL` | `https://genetic-contour-platform.onrender.com` | **Yes** |
 | `NEXT_PUBLIC_STORAGE_PUBLIC_URL` | Same as backend `S3_PUBLIC_BASE_URL` (e.g. `https://pub-xxxx.r2.dev`) | **Yes** when `STORAGE_BACKEND=s3` |
 
 4. Deploy

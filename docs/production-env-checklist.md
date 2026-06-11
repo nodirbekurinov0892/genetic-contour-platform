@@ -9,7 +9,7 @@ Use before every beta/production deploy. All values must be set unless marked op
 | `DATABASE_URL` | Yes | From Render PostgreSQL |
 | `REDIS_URL` | Yes | `redis://` or `rediss://` |
 | `API_DEBUG` | Yes | `false` |
-| `API_PUBLIC_URL` | Yes | `https://your-api.onrender.com` |
+| `API_PUBLIC_URL` | Yes | `https://genetic-contour-platform.onrender.com` |
 | `CORS_ORIGINS` | Yes | Vercel URL(s), comma-separated |
 | `TRUSTED_HOSTS` | Yes | Render hostname |
 | `SECRET_KEY` | Yes | Random 64+ chars |
@@ -37,7 +37,7 @@ Worker does not need `CORS_ORIGINS` or `API_PUBLIC_URL` when using S3.
 
 | Variable | Required | Set before build |
 |----------|----------|------------------|
-| `NEXT_PUBLIC_API_URL` | Yes | Render API URL |
+| `NEXT_PUBLIC_API_URL` | Yes | `https://genetic-contour-platform.onrender.com` |
 | `NEXT_PUBLIC_STORAGE_PUBLIC_URL` | Yes | Same as `S3_PUBLIC_BASE_URL` |
 
 ## Infrastructure

@@ -37,7 +37,7 @@ Default queue: **Celery + Redis**. Start Redis via `docker compose up -d redis`,
 ```env
 DATABASE_URL=<from Render PostgreSQL>
 REDIS_URL=redis://<host>:6379/0
-API_PUBLIC_URL=https://your-service.onrender.com
+API_PUBLIC_URL=https://genetic-contour-platform.onrender.com
 CORS_ORIGINS=https://your-app.vercel.app
 SECRET_KEY=<random-64-chars>
 JWT_SECRET=<random-64-chars-different-from-secret>
@@ -114,8 +114,10 @@ Ensure bucket policy or CloudFront allows public `GET` on `uploads/*` and `resul
 
 ### Vercel Frontend
 
+**Root Directory:** `apps/web`
+
 ```env
-NEXT_PUBLIC_API_URL=https://your-service.onrender.com
+NEXT_PUBLIC_API_URL=https://genetic-contour-platform.onrender.com
 NEXT_PUBLIC_STORAGE_PUBLIC_URL=https://pub-xxxx.r2.dev
 ```
 

@@ -180,27 +180,31 @@ def generate_data_driven_summary(
 def build_scientific_context(
     metrics_rows: list[dict[str, Any]],
     *,
-    has_ground_truth: bool,
+    has_ground_truth: bool | None = None,
 ) -> dict[str, Any]:
-    mode = get_evaluation_mode(has_ground_truth)
-    winner = determine_winner(metrics_rows) if has_ground_truth else None
-    warnings = detect_metric_inconsistencies(metrics_rows) if has_ground_truth else []
+    # Run-time truth: only experiments that computed supervised metrics used GT.
+    run_had_ground_truth = has_supervised_metrics(metrics_rows)
+    mode = get_evaluation_mode(run_had_ground_truth)
+    winner = determine_winner(metrics_rows) if run_had_ground_truth else None
+    warnings = (
+        detect_metric_inconsistencies(metrics_rows) if run_had_ground_truth else []
+    )
     summary = generate_data_driven_summary(
         metrics_rows,
-        has_ground_truth=has_ground_truth,
+        has_ground_truth=run_had_ground_truth,
         winner=winner,
     )
 
     return {
         "evaluation_mode": mode,
-        "has_ground_truth": has_ground_truth,
+        "has_ground_truth": run_had_ground_truth,
         "winner": winner,
         "metric_warnings": warnings,
         "summary": summary,
         "winner_logic": {
             "criteria": ["iou", "f1_score", "dice_coefficient"],
             "fitness_participates": False,
-            "declared_when": "has_ground_truth",
+            "declared_when": "supervised_metrics_present",
         },
         "metric_taxonomy": {
             "supervised": list(SUPERVISED_METRICS),
@@ -208,7 +212,7 @@ def build_scientific_context(
         },
         "disclaimer": (
             None
-            if has_ground_truth
+            if run_had_ground_truth
             else (
                 "These results are heuristic observations only. "
                 "Algorithm superiority cannot be scientifically established without Ground Truth."
