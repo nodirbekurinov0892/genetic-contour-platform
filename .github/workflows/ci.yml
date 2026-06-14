@@ -56,15 +56,6 @@ jobs:
           python -c "from importlib.metadata import version; print('pytest-timeout', version('pytest-timeout'))"
           pytest -vv --tb=short --junitxml=junit.xml --durations=15 2>&1 | tee pytest.log
           pytest_exit=${PIPESTATUS[0]}
-          python -c "import xml.etree.ElementTree as ET, pathlib; p=pathlib.Path('junit.xml');
-exec('''
-if p.exists():
-  for case in ET.parse(p).getroot().iter('testcase'):
-    for child in case:
-      if child.tag in ('failure','error'):
-        msg=(child.get('message') or child.text or 'failed').replace(chr(10),' ')[:200]
-        print(f\"::error::{case.get('classname')}::{case.get('name')} — {msg}\")
-''')" || true
           echo "## Pytest output (tail)" >> "$GITHUB_STEP_SUMMARY"
           tail -80 pytest.log >> "$GITHUB_STEP_SUMMARY"
           echo "" >> "$GITHUB_STEP_SUMMARY"
