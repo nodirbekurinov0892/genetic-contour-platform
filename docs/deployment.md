@@ -144,6 +144,30 @@ Multiple origins: comma-separated.
 - Duplicate Celery tasks: only one claims `queued` → `running` (`SELECT FOR UPDATE`).
 - **Cancel is cooperative** for running jobs (`cancel_requested` DB flag). Queued jobs are revoked via Celery `revoke(terminate=False)`.
 
+### Asyncio queue mode (`EXPERIMENT_QUEUE_BACKEND=asyncio`)
+
+**Current production default on Render free tier** when Redis/Celery worker is not provisioned.
+
+| Aspect | `asyncio` (in-process) | `celery` + Redis (recommended at scale) |
+|--------|------------------------|----------------------------------------|
+| Where jobs run | Same process as the API web service | Dedicated Celery worker service |
+| Persistence | Experiment status in PostgreSQL | Same |
+| Recovery on restart | API startup runs `run_startup_recovery_async` | Worker startup + Redis lock |
+| Horizontal scaling | **Not safe** — duplicate in-process workers race | Safe with one queue consumer per job |
+| `/health/ready` redis check | Reported as **skipped** (not a failure) | Must be connected |
+
+**Scalability warning:** With `EXPERIMENT_QUEUE_BACKEND=asyncio`, long-running `compare_all` / benchmark cohort jobs share the API process event loop. This is acceptable for demos, thesis evaluation, and low concurrent load. For public beta with multiple simultaneous users, switch to:
+
+```env
+EXPERIMENT_QUEUE_BACKEND=celery
+REDIS_URL=redis://<host>:6379/0
+CELERY_TASK_ALWAYS_EAGER=false
+```
+
+Deploy a Render **Background Worker** (`celery -A app.jobs.celery_app worker --queues=experiments`) using the same `DATABASE_URL` and storage env as the API. Until then, `/health/ready` will show `redis: skipped (EXPERIMENT_QUEUE_BACKEND=asyncio)` — expected, not an outage.
+
+See also: [Production status](https://genetic-contour-platform-web.vercel.app/status) · `GET /health/ready` on the API.
+
 ### Database migration
 
 After deploying queue/storage changes, run:

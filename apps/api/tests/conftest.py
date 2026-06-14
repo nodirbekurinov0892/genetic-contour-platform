@@ -4,6 +4,7 @@ from collections.abc import AsyncGenerator
 import pytest
 import pytest_asyncio
 from httpx import ASGITransport, AsyncClient
+from sqlalchemy import text
 from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker, create_async_engine
 
 os.environ.setdefault(
@@ -37,6 +38,20 @@ async def prepare_database():
         await conn.run_sync(Base.metadata.create_all)
     yield
     await test_engine.dispose()
+
+
+@pytest_asyncio.fixture(autouse=True)
+async def _isolate_test_data(prepare_database):
+    """Truncate between tests — sync recovery tests commit outside the shared session."""
+    table_names = ", ".join(
+        f'"{table.name}"' for table in Base.metadata.sorted_tables
+    )
+    if table_names:
+        async with test_engine.begin() as conn:
+            await conn.execute(
+                text(f"TRUNCATE {table_names} RESTART IDENTITY CASCADE")
+            )
+    yield
 
 
 @pytest_asyncio.fixture

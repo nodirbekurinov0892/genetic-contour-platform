@@ -4,6 +4,24 @@
 
 Dissertatsiya III bob: *"Intellektual dasturiy tizim ishlab chiqish"*
 
+## Production (Phase Ultimate)
+
+| Service | URL |
+|---------|-----|
+| Frontend | https://genetic-contour-platform-web.vercel.app |
+| API | https://genetic-contour-platform.onrender.com |
+| Status page | https://genetic-contour-platform-web.vercel.app/status |
+| API health | https://genetic-contour-platform.onrender.com/health/ready |
+| OpenAPI | https://genetic-contour-platform.onrender.com/docs |
+
+**Live checks:** register/login · ground truth · `compare_all` + `fair_v1` · PDF v3 · benchmarks · legal/onboarding pages.
+
+**Queue mode:** `EXPERIMENT_QUEUE_BACKEND=asyncio` on Render (Redis check skipped in `/health/ready` — expected). For multi-user scale, migrate to Celery + Redis — see [docs/deployment.md](docs/deployment.md) (Asyncio queue mode section).
+
+**Auth:** SMTP optional; production uses degraded mode when unset (registration works; password reset returns 503).
+
+**CI:** GitHub Actions — PostgreSQL service + `pytest` + web lint/build.
+
 ## Features
 
 - Real genetic algorithm (population, fitness, selection, crossover, mutation, elitism)
@@ -242,6 +260,8 @@ postgresql+asyncpg://user:pass@ep-xxx.neon.tech/genetic_contour?sslmode=require
 | Method | Endpoint | Description |
 |--------|----------|-------------|
 | GET | `/health` | Health check |
+| GET | `/health/ready` | Readiness (PostgreSQL, Redis/storage) |
+| GET | `/api/auth/config` | SMTP / degraded auth mode |
 | POST | `/api/auth/register` | Register user |
 | POST | `/api/auth/login` | Login (rate limit: 5/min) |
 | POST | `/api/auth/refresh` | Refresh access token |
@@ -257,6 +277,22 @@ postgresql+asyncpg://user:pass@ep-xxx.neon.tech/genetic_contour?sslmode=require
 | GET | `/api/experiments/{id}/report` | Enriched JSON report |
 | GET | `/api/experiments/{id}/report/csv` | CSV download |
 | GET | `/api/experiments/{id}/report/pdf` | PDF download |
+| GET | `/api/ground-truth/coverage` | GT coverage summary |
+| GET/POST | `/api/benchmarks` | Benchmark datasets & runs |
+
+---
+
+## Production verification
+
+```bash
+# API + frontend E2E (23 checks)
+node scripts/production_e2e_ultimate.mjs
+
+# API unit/integration tests (requires PostgreSQL)
+cd apps/api && pytest -q
+```
+
+Human-readable status: [/status](https://genetic-contour-platform-web.vercel.app/status) on the deployed frontend.
 
 ---
 

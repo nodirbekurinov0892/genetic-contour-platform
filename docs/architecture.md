@@ -76,3 +76,6 @@ Upload Image → Store in uploads/ → Create Experiment
 | Frontend | Vercel |
 | Backend API | Render Web Service |
 | PostgreSQL | Render PostgreSQL / Neon / Supabase |
+| Job queue | `asyncio` (in-process, current Render default) or `celery` + Redis (scale-out) |
+
+When `EXPERIMENT_QUEUE_BACKEND=asyncio`, experiment jobs run inside the API process. `/health/ready` reports Redis as skipped — not an error. See [deployment.md](deployment.md) for upgrading to Celery.
