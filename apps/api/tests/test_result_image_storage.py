@@ -9,6 +9,7 @@ from httpx import AsyncClient
 from PIL import Image as PILImage
 
 from app.config import get_settings
+from app.jobs import background
 from app.jobs.background import schedule_experiment_run
 from app.services.storage import StorageService
 
@@ -71,6 +72,16 @@ async def _wait_for_completion(
     raise TimeoutError("Experiment did not finish in time")
 
 
+async def _drain_background_tasks(timeout: float = 60.0) -> None:
+    deadline = time.monotonic() + timeout
+    while time.monotonic() < deadline:
+        pending = [task for task in background._background_tasks.values() if not task.done()]
+        if not pending:
+            return
+        await asyncio.wait(pending, timeout=min(2.0, deadline - time.monotonic()))
+    raise TimeoutError("Background experiment tasks did not finish")
+
+
 @pytest.mark.asyncio
 async def test_sobel_results_use_storage_keys(client: AsyncClient, inline_worker):
     headers, experiment_id = await _register_upload_experiment(client)
@@ -91,7 +102,8 @@ async def test_sobel_results_use_storage_keys(client: AsyncClient, inline_worker
     )
     assert run.status_code == 200
 
-    final_status = await _wait_for_completion(client, headers, experiment_id)
+    await _drain_background_tasks()
+    final_status = await _wait_for_completion(client, headers, experiment_id, timeout=5.0)
     assert final_status == "completed"
 
     results = await client.get(
