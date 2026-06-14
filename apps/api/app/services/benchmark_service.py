@@ -51,6 +51,14 @@ class BenchmarkService:
             raise HTTPException(status_code=404, detail="Benchmark not found")
         return benchmark
 
+    async def _reload_benchmark(self, benchmark_id: uuid.UUID) -> Benchmark:
+        result = await self.db.execute(
+            select(Benchmark)
+            .where(Benchmark.id == benchmark_id)
+            .options(selectinload(Benchmark.datasets))
+        )
+        return result.scalar_one()
+
     async def create_benchmark(
         self,
         *,
@@ -90,7 +98,7 @@ class BenchmarkService:
                     )
                 )
             await self.db.flush()
-        return await self.get_benchmark(benchmark.id)
+        return await self._reload_benchmark(benchmark.id)
 
     async def add_dataset_image(
         self, benchmark_id: uuid.UUID, image_id: uuid.UUID, user: User

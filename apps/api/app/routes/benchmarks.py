@@ -24,16 +24,23 @@ router = APIRouter(prefix="/api/benchmarks", tags=["benchmarks"])
 def _to_benchmark_response(benchmark, *, include_datasets: bool = False) -> BenchmarkResponse:
     from sqlalchemy import inspect as sa_inspect
 
-    data = BenchmarkResponse.model_validate(benchmark)
     state = sa_inspect(benchmark)
-    loaded_datasets = state.dict.get("datasets")
-    if include_datasets and loaded_datasets is not None:
-        data.datasets = [BenchmarkDatasetResponse.model_validate(ds) for ds in loaded_datasets]
-        data.dataset_count = len(data.datasets)
-    else:
-        data.datasets = []
-        data.dataset_count = len(loaded_datasets) if loaded_datasets is not None else 0
-    return data
+    loaded_datasets = state.dict.get("datasets") or []
+    datasets: list[BenchmarkDatasetResponse] = []
+    if include_datasets and loaded_datasets:
+        datasets = [BenchmarkDatasetResponse.model_validate(ds) for ds in loaded_datasets]
+    return BenchmarkResponse(
+        id=benchmark.id,
+        slug=benchmark.slug,
+        name=benchmark.name,
+        description=benchmark.description,
+        methodology_version=benchmark.methodology_version,
+        comparison_protocol=benchmark.comparison_protocol,
+        is_public=benchmark.is_public,
+        created_at=benchmark.created_at,
+        dataset_count=len(loaded_datasets),
+        datasets=datasets,
+    )
 
 
 @router.get("", response_model=list[BenchmarkResponse])
