@@ -1,5 +1,4 @@
-import { API_BASE, apiFetch } from "@/lib/api";
-import { getAccessToken } from "@/lib/auth-storage";
+import { apiFetch } from "@/lib/api";
 import type { ImageRecord } from "@shared/types";
 
 interface UploadResponse {
@@ -41,18 +40,9 @@ export const imageService = {
   async uploadGroundTruth(imageId: string, file: File): Promise<ImageRecord> {
     const form = new FormData();
     form.append("file", file);
-    const token = getAccessToken();
-    const res = await fetch(`${API_BASE}/api/images/${imageId}/ground-truth`, {
+    return apiFetch<ImageRecord>(`/api/images/${imageId}/ground-truth`, {
       method: "POST",
-      headers: token ? { Authorization: `Bearer ${token}` } : {},
       body: form,
     });
-    if (!res.ok) {
-      const body = await res.json().catch(() => ({ detail: res.statusText }));
-      throw new Error(
-        typeof body.detail === "string" ? body.detail : "Ground truth yuklanmadi",
-      );
-    }
-    return res.json() as Promise<ImageRecord>;
   },
 };

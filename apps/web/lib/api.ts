@@ -184,7 +184,7 @@ export function resolveMediaProxyUrl(storageKey: string): string {
   const key = stripStaticPrefix(storageKey);
   if (!key) return "";
   if (USE_BFF) {
-    return `${API_BASE}/media/serve/${key}`;
+    return `/media/serve/${key}`;
   }
   return `${DIRECT_API}/api/media/serve/${key}`;
 }
@@ -218,9 +218,19 @@ export function resolveStaticUrl(filePath: string, url?: string | null): string 
   return staticUrl(filePath);
 }
 
+function toFetchUrl(pathOrUrl: string): string {
+  if (pathOrUrl.startsWith("http://") || pathOrUrl.startsWith("https://")) {
+    return pathOrUrl;
+  }
+  if (pathOrUrl.startsWith("/api/")) {
+    return pathOrUrl;
+  }
+  return `${API_BASE}${pathOrUrl.startsWith("/") ? pathOrUrl : `/${pathOrUrl}`}`;
+}
+
 export async function fetchAuthenticatedBlob(pathOrUrl: string): Promise<string> {
   const accessToken = getAccessToken();
-  const url = pathOrUrl.startsWith("http") ? pathOrUrl : `${API_BASE}${pathOrUrl}`;
+  const url = toFetchUrl(pathOrUrl);
   const res = await fetch(url, {
     headers: accessToken ? { Authorization: `Bearer ${accessToken}` } : {},
     credentials: USE_BFF ? "include" : "same-origin",
