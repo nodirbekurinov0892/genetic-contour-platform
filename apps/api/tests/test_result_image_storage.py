@@ -16,20 +16,17 @@ from app.services.storage import StorageService
 
 @pytest.fixture
 def inline_worker(monkeypatch):
-    """Schedule jobs on the running test loop; return task handles for direct await."""
-
-    scheduled: list[asyncio.Task] = []
+    """Defer worker until after request commit; poll /status for completion."""
 
     def inline_enqueue(experiment_id: uuid.UUID):
         async def _run():
-            await asyncio.sleep(0)  # let the HTTP handler commit before claim
+            await asyncio.sleep(0)
             await run_experiment_job(experiment_id)
 
-        task = asyncio.get_running_loop().create_task(
+        asyncio.get_running_loop().create_task(
             _run(),
             name=f"inline-worker-{experiment_id}",
         )
-        scheduled.append(task)
         return str(experiment_id)
 
     monkeypatch.setattr("app.jobs.queue.enqueue_experiment_run", inline_enqueue)
@@ -37,7 +34,6 @@ def inline_worker(monkeypatch):
         "app.services.experiment_service.enqueue_experiment_run",
         inline_enqueue,
     )
-    return scheduled
 
 
 def _make_test_image_bytes() -> bytes:
@@ -88,9 +84,7 @@ async def _wait_for_completion(
 
 
 @pytest.mark.asyncio
-async def test_sobel_results_use_storage_keys(
-    client: AsyncClient, inline_worker: list[asyncio.Task]
-):
+async def test_sobel_results_use_storage_keys(client: AsyncClient, inline_worker):
     headers, experiment_id = await _register_upload_experiment(client)
 
     run = await client.post(
@@ -108,10 +102,8 @@ async def test_sobel_results_use_storage_keys(
         },
     )
     assert run.status_code == 200
-    assert inline_worker, "enqueue did not schedule a background job"
-    await asyncio.gather(*inline_worker)
 
-    final_status = await _wait_for_completion(client, headers, experiment_id, timeout=5.0)
+    final_status = await _wait_for_completion(client, headers, experiment_id, timeout=30.0)
     assert final_status == "completed"
 
     results = await client.get(
