@@ -64,7 +64,7 @@ async def _register_upload_experiment(client: AsyncClient) -> tuple[dict, str]:
 
 
 async def _wait_for_completion(
-    client: AsyncClient, headers: dict, experiment_id: str, timeout: float = 60.0
+    client: AsyncClient, headers: dict, experiment_id: str, timeout: float = 30.0
 ) -> str:
     deadline = time.monotonic() + timeout
     while time.monotonic() < deadline:
@@ -77,20 +77,6 @@ async def _wait_for_completion(
             return body["status"]
         await asyncio.sleep(0.25)
     raise TimeoutError("Experiment did not finish in time")
-
-
-async def _drain_pending_tasks(timeout: float = 60.0) -> None:
-    deadline = time.monotonic() + timeout
-    while time.monotonic() < deadline:
-        pending = [
-            task
-            for task in asyncio.all_tasks()
-            if not task.done() and task.get_name().startswith("inline-worker-")
-        ]
-        if not pending:
-            return
-        await asyncio.wait(pending, timeout=min(2.0, deadline - time.monotonic()))
-    raise TimeoutError("Inline experiment tasks did not finish")
 
 
 @pytest.mark.asyncio
@@ -113,8 +99,7 @@ async def test_sobel_results_use_storage_keys(client: AsyncClient, inline_worker
     )
     assert run.status_code == 200
 
-    await _drain_pending_tasks()
-    final_status = await _wait_for_completion(client, headers, experiment_id, timeout=5.0)
+    final_status = await _wait_for_completion(client, headers, experiment_id)
     assert final_status == "completed"
 
     results = await client.get(
