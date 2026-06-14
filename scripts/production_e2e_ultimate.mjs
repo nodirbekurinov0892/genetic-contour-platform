@@ -71,7 +71,40 @@ async function main() {
     );
   }
 
-  // Register + login
+  // BFF auth (browser → Vercel → Render)
+  {
+    const bffSuffix = Date.now();
+    const bffEmail = `bff-e2e-${bffSuffix}@example.com`;
+    const bffPassword = "SecurePass123!";
+    const reg = await fetch(`${WEB}/api/auth/register`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ email: bffEmail, password: bffPassword, name: "BFF E2E" }),
+    });
+    record("BFF register", "200", String(reg.status), bffEmail, reg.ok ? "PASS" : "FAIL");
+
+    const login = await fetch(`${WEB}/api/auth/login`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ email: bffEmail, password: bffPassword }),
+    });
+    const setCookies = typeof login.headers.getSetCookie === "function"
+      ? login.headers.getSetCookie()
+      : [];
+    const cookieHeader = setCookies.map((c) => c.split(";")[0]).join("; ");
+    record("BFF login", "200", String(login.status), bffEmail, login.ok ? "PASS" : "FAIL");
+
+    const me = await fetch(`${WEB}/api/backend/auth/me`, {
+      headers: cookieHeader ? { Cookie: cookieHeader } : {},
+    });
+    const meOk = me.ok;
+    record("BFF /me", "200", String(me.status), meOk ? "profile ok" : await me.text(), meOk ? "PASS" : "FAIL");
+
+    const dash = await fetch(`${WEB}/`);
+    record("WEB dashboard /", "200", String(dash.status), WEB, dash.ok ? "PASS" : "FAIL");
+  }
+
+  // Register + login (direct API)
   let accessToken = "";
   {
     const { res, json } = await api("/api/auth/register", {

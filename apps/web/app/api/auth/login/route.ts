@@ -1,42 +1,66 @@
 import { NextRequest, NextResponse } from "next/server";
 
-const API_BASE = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
+import {
+  bffNetworkErrorDetail,
+  fetchBackend,
+  parseBackendJson,
+} from "@/lib/bff-backend";
+
 const ACCESS_COOKIE = "gc_access_token";
 const REFRESH_COOKIE = "gc_refresh_token";
 
+export const maxDuration = 60;
+
 export async function POST(request: NextRequest) {
-  const body = await request.json();
-  const res = await fetch(`${API_BASE}/api/auth/login`, {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify(body),
-  });
-  const data = await res.json();
-  if (!res.ok) {
-    return NextResponse.json(data, { status: res.status });
+  try {
+    const body = await request.json();
+    const res = await fetchBackend("/api/auth/login", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(body),
+    });
+    const data = await parseBackendJson(res);
+    if (!res.ok) {
+      return NextResponse.json(data, { status: res.status });
+    }
+
+    const accessToken = data.access_token;
+    const refreshToken = data.refresh_token;
+    if (typeof accessToken !== "string" || typeof refreshToken !== "string") {
+      return NextResponse.json(
+        { detail: "Backend token javobi noto'g'ri formatda" },
+        { status: 502 },
+      );
+    }
+
+    const secure = request.nextUrl.protocol === "https:";
+    const response = NextResponse.json({ ok: true });
+    response.cookies.set(ACCESS_COOKIE, accessToken, {
+      httpOnly: true,
+      secure,
+      sameSite: "lax",
+      path: "/",
+      maxAge: 60 * 30,
+    });
+    response.cookies.set(REFRESH_COOKIE, refreshToken, {
+      httpOnly: true,
+      secure,
+      sameSite: "lax",
+      path: "/",
+      maxAge: 60 * 60 * 24 * 7,
+    });
+    response.cookies.set("gc_session", "1", {
+      httpOnly: false,
+      secure,
+      sameSite: "lax",
+      path: "/",
+      maxAge: 60 * 60 * 24 * 7,
+    });
+    return response;
+  } catch (err) {
+    return NextResponse.json(
+      { detail: bffNetworkErrorDetail(err) },
+      { status: 503 },
+    );
   }
-  const secure = request.nextUrl.protocol === "https:";
-  const response = NextResponse.json({ ok: true });
-  response.cookies.set(ACCESS_COOKIE, data.access_token, {
-    httpOnly: true,
-    secure,
-    sameSite: "lax",
-    path: "/",
-    maxAge: 60 * 30,
-  });
-  response.cookies.set(REFRESH_COOKIE, data.refresh_token, {
-    httpOnly: true,
-    secure,
-    sameSite: "lax",
-    path: "/",
-    maxAge: 60 * 60 * 24 * 7,
-  });
-  response.cookies.set("gc_session", "1", {
-    httpOnly: false,
-    secure,
-    sameSite: "lax",
-    path: "/",
-    maxAge: 60 * 60 * 24 * 7,
-  });
-  return response;
 }

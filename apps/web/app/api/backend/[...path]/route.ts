@@ -1,6 +1,13 @@
 import { NextRequest, NextResponse } from "next/server";
 
-const API_BASE = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
+import {
+  bffNetworkErrorDetail,
+  fetchBackend,
+  getBackendApiBase,
+  parseBackendJson,
+} from "@/lib/bff-backend";
+
+export const maxDuration = 60;
 
 async function proxyRequest(request: NextRequest, path: string) {
   const accessToken = request.cookies.get("gc_access_token")?.value;
@@ -11,7 +18,8 @@ async function proxyRequest(request: NextRequest, path: string) {
   if (contentType) headers["Content-Type"] = contentType;
   if (accessToken) headers.Authorization = `Bearer ${accessToken}`;
 
-  const url = `${API_BASE}/api/${path}${request.nextUrl.search}`;
+  const apiBase = getBackendApiBase();
+  const url = `${apiBase}/api/${path}${request.nextUrl.search}`;
   let body: BodyInit | undefined;
   if (request.method !== "GET" && request.method !== "HEAD") {
     if (contentType?.includes("multipart/form-data")) {
@@ -22,39 +30,52 @@ async function proxyRequest(request: NextRequest, path: string) {
     }
   }
 
-  let res = await fetch(url, { method: request.method, headers, body });
+  try {
+    let res = await fetchBackend(url, { method: request.method, headers, body });
 
-  if (res.status === 401 && refreshToken) {
-    const refreshRes = await fetch(`${API_BASE}/api/auth/refresh`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ refresh_token: refreshToken }),
-    });
-    if (refreshRes.ok) {
-      const tokens = await refreshRes.json();
-      headers.Authorization = `Bearer ${tokens.access_token}`;
-      res = await fetch(url, { method: request.method, headers, body });
-      const secure = request.nextUrl.protocol === "https:";
-      const out = new NextResponse(res.body, { status: res.status, headers: res.headers });
-      out.cookies.set("gc_access_token", tokens.access_token, {
-        httpOnly: true,
-        secure,
-        sameSite: "lax",
-        path: "/",
-        maxAge: 60 * 30,
+    if (res.status === 401 && refreshToken) {
+      const refreshRes = await fetchBackend(`${apiBase}/api/auth/refresh`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ refresh_token: refreshToken }),
       });
-      out.cookies.set("gc_refresh_token", tokens.refresh_token, {
-        httpOnly: true,
-        secure,
-        sameSite: "lax",
-        path: "/",
-        maxAge: 60 * 60 * 24 * 7,
-      });
-      return out;
+      if (refreshRes.ok) {
+        const tokens = await parseBackendJson(refreshRes);
+        const newAccess = tokens.access_token;
+        const newRefresh = tokens.refresh_token;
+        if (typeof newAccess === "string") {
+          headers.Authorization = `Bearer ${newAccess}`;
+        }
+        res = await fetchBackend(url, { method: request.method, headers, body });
+        const secure = request.nextUrl.protocol === "https:";
+        const out = new NextResponse(res.body, { status: res.status, headers: res.headers });
+        if (typeof newAccess === "string" && typeof newRefresh === "string") {
+          out.cookies.set("gc_access_token", newAccess, {
+            httpOnly: true,
+            secure,
+            sameSite: "lax",
+            path: "/",
+            maxAge: 60 * 30,
+          });
+          out.cookies.set("gc_refresh_token", newRefresh, {
+            httpOnly: true,
+            secure,
+            sameSite: "lax",
+            path: "/",
+            maxAge: 60 * 60 * 24 * 7,
+          });
+        }
+        return out;
+      }
     }
-  }
 
-  return new NextResponse(res.body, { status: res.status, headers: res.headers });
+    return new NextResponse(res.body, { status: res.status, headers: res.headers });
+  } catch (err) {
+    return NextResponse.json(
+      { detail: bffNetworkErrorDetail(err) },
+      { status: 503 },
+    );
+  }
 }
 
 export async function GET(

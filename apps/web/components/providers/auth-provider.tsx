@@ -15,6 +15,7 @@ import {
   setTokens,
   syncSessionCookie,
 } from "@/lib/auth-storage";
+import { toUserFacingNetworkError } from "@/lib/network-errors";
 
 interface AuthContextValue {
   user: AuthUser | null;
@@ -61,8 +62,17 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     setLoading(true);
     try {
       await authService.login({ email, password });
-      const me = await authService.me();
-      setUser(me);
+      try {
+        const me = await authService.me();
+        setUser(me);
+      } catch (err) {
+        clearTokens();
+        setUser(null);
+        throw toUserFacingNetworkError(
+          err,
+          "Kirish muvaffaqiyatli, lekin profil yuklanmadi. Sahifani yangilab qayta urinib ko'ring.",
+        );
+      }
     } finally {
       setLoading(false);
     }
@@ -74,8 +84,17 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       try {
         await authService.register({ email, password, name });
         await authService.login({ email, password });
-        const me = await authService.me();
-        setUser(me);
+        try {
+          const me = await authService.me();
+          setUser(me);
+        } catch (err) {
+          clearTokens();
+          setUser(null);
+          throw toUserFacingNetworkError(
+            err,
+            "Ro'yxatdan o'tish muvaffaqiyatli, lekin profil yuklanmadi.",
+          );
+        }
       } finally {
         setLoading(false);
       }

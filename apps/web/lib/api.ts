@@ -1,4 +1,5 @@
 import { getAccessToken, getRefreshToken, setTokens, clearTokens } from "@/lib/auth-storage";
+import { toUserFacingNetworkError } from "@/lib/network-errors";
 
 const DIRECT_API = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
 const USE_BFF = typeof window !== "undefined";
@@ -42,15 +43,21 @@ type ApiFetchOptions = RequestInit & {
   _retry?: boolean;
 };
 
+function toBffApiPath(path: string): string {
+  if (!USE_BFF) return path;
+  return path.replace(/^\/api/, "");
+}
+
 async function refreshAccessToken(): Promise<boolean> {
   const refreshToken = getRefreshToken();
   if (!refreshToken) return false;
 
   try {
-    const res = await fetch(`${API_BASE}/api/auth/refresh`, {
+    const res = await fetch(`${API_BASE}${toBffApiPath("/api/auth/refresh")}`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ refresh_token: refreshToken }),
+      credentials: "include",
     });
     if (!res.ok) {
       clearTokens();
@@ -69,7 +76,7 @@ export async function apiFetch<T>(
   path: string,
   options?: ApiFetchOptions,
 ): Promise<T> {
-  const apiPath = USE_BFF ? path.replace(/^\/api/, "") : path;
+  const apiPath = toBffApiPath(path);
   const url = `${API_BASE}${apiPath}`;
   const headers: Record<string, string> = {
     ...(options?.body instanceof FormData
@@ -85,11 +92,16 @@ export async function apiFetch<T>(
     }
   }
 
-  const res = await fetch(url, {
-    ...options,
-    headers,
-    credentials: USE_BFF ? "include" : options?.credentials,
-  });
+  let res: Response;
+  try {
+    res = await fetch(url, {
+      ...options,
+      headers,
+      credentials: USE_BFF ? "include" : options?.credentials,
+    });
+  } catch (err) {
+    throw toUserFacingNetworkError(err, "So'rov bajarilmadi");
+  }
 
   if (res.status === 401 && !options?.skipAuth && !options?._retry) {
     const refreshed = await refreshAccessToken();

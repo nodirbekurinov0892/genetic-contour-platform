@@ -1,5 +1,6 @@
 import { apiFetch } from "@/lib/api";
 import { clearTokens, getRefreshToken, setTokens, syncSessionCookie } from "@/lib/auth-storage";
+import { detailFromBody, toUserFacingNetworkError } from "@/lib/network-errors";
 
 function syncSessionCookieFromBff(): void {
   syncSessionCookie();
@@ -23,35 +24,38 @@ export interface TokenResponse {
   token_type: string;
 }
 
+async function authBffFetch(
+  path: string,
+  body: unknown,
+  fallbackError: string,
+): Promise<void> {
+  try {
+    const res = await fetch(path, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(body),
+      credentials: "include",
+    });
+    if (!res.ok) {
+      const payload = (await res.json().catch(() => ({}))) as Record<string, unknown>;
+      throw new Error(detailFromBody(payload, fallbackError));
+    }
+  } catch (err) {
+    throw toUserFacingNetworkError(err, fallbackError);
+  }
+}
+
 export const authService = {
   async register(data: {
     email: string;
     password: string;
     name?: string;
   }): Promise<void> {
-    const res = await fetch("/api/auth/register", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(data),
-      credentials: "include",
-    });
-    if (!res.ok) {
-      const body = await res.json().catch(() => ({}));
-      throw new Error(body.detail || "Registration failed");
-    }
+    await authBffFetch("/api/auth/register", data, "Ro'yxatdan o'tish muvaffaqiyatsiz");
   },
 
   async login(data: { email: string; password: string }): Promise<void> {
-    const res = await fetch("/api/auth/login", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(data),
-      credentials: "include",
-    });
-    if (!res.ok) {
-      const body = await res.json().catch(() => ({}));
-      throw new Error(body.detail || "Login failed");
-    }
+    await authBffFetch("/api/auth/login", data, "Kirish muvaffaqiyatsiz");
     setTokens("cookie", "cookie");
     syncSessionCookieFromBff();
   },
