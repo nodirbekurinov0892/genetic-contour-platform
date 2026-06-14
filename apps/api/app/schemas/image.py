@@ -20,6 +20,13 @@ class ImageResponse(BaseModel):
     has_ground_truth: bool = False
     ground_truth_url: str | None = None
     ground_truth_uploaded_at: datetime | None = None
+    content_checksum: str | None = None
+    gt_checksum: str | None = None
+    gt_validation_status: str | None = None
+    gt_validation_metadata: dict | None = None
+    gt_provenance_json: dict | None = None
+    gt_validated_at: datetime | None = None
+    dataset_version: str | None = None
     created_at: datetime
 
 

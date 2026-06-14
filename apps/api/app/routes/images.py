@@ -98,3 +98,19 @@ async def get_image(
     service = ImageService(db, settings)
     image = await service.get_by_id(image_id, current_user)
     return _to_image_response(image, settings)
+
+
+@router.delete("/{image_id}")
+@limiter.limit("30/hour")
+async def delete_image(
+    request: Request,
+    image_id: uuid.UUID,
+    db: AsyncSession = Depends(get_db),
+    settings: Settings = Depends(get_settings),
+    current_user: User = Depends(get_current_active_user),
+):
+    from app.services.lifecycle_service import LifecycleService
+
+    service = LifecycleService(db, settings)
+    await service.delete_image(image_id, current_user)
+    return {"message": "Image deleted"}

@@ -149,3 +149,74 @@ async def get_platform_stats(
         "most_used_algorithm": most_used_algorithm,
         "activity_7d": activity_7d,
     }
+
+
+@router.get("/v2")
+async def get_analytics_v2(
+    db: AsyncSession = Depends(get_db),
+    current_user: User = Depends(get_current_active_user),
+):
+    """Analytics v2: leaderboards, trends, GT coverage, benchmark summary."""
+    base = await get_platform_stats(db=db, current_user=current_user)
+
+    user_id: uuid.UUID = current_user.id
+    leaderboard_rows = await db.execute(
+        select(
+            AlgorithmRun.algorithm_name,
+            func.avg(Metric.iou),
+            func.avg(Metric.f1_score),
+            func.count(),
+        )
+        .join(Metric, Metric.algorithm_run_id == AlgorithmRun.id)
+        .join(Experiment, AlgorithmRun.experiment_id == Experiment.id)
+        .where(
+            Experiment.user_id == user_id,
+            Metric.iou.isnot(None),
+            AlgorithmRun.algorithm_name.in_(_EDGE_ALGORITHMS),
+        )
+        .group_by(AlgorithmRun.algorithm_name)
+        .order_by(func.avg(Metric.iou).desc().nullslast())
+    )
+    leaderboard = [
+        {
+            "algorithm": row[0],
+            "avg_iou": round(float(row[1]), 4) if row[1] is not None else None,
+            "avg_f1": round(float(row[2]), 4) if row[2] is not None else None,
+            "runs": row[3],
+        }
+        for row in leaderboard_rows.all()
+    ]
+
+    from app.models.image import Image
+
+    gt_valid = await db.scalar(
+        select(func.count())
+        .select_from(Image)
+        .where(Image.user_id == user_id, Image.gt_validation_status == "valid")
+    )
+    gt_invalid = await db.scalar(
+        select(func.count())
+        .select_from(Image)
+        .where(Image.user_id == user_id, Image.gt_validation_status == "invalid")
+    )
+
+    from app.models.benchmark import BenchmarkRun
+
+    benchmark_runs = await db.scalar(
+        select(func.count()).select_from(BenchmarkRun).where(BenchmarkRun.user_id == user_id)
+    )
+
+    return {
+        **base,
+        "leaderboard": leaderboard,
+        "gt_validation": {
+            "valid": gt_valid or 0,
+            "invalid": gt_invalid or 0,
+        },
+        "benchmark_runs": benchmark_runs or 0,
+        "trends": {
+            "activity_7d": base.get("activity_7d", []),
+            "avg_iou": base.get("avg_iou"),
+            "avg_f1": base.get("avg_f1"),
+        },
+    }

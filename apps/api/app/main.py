@@ -18,7 +18,7 @@ from app.middleware.request_id import RequestIdMiddleware
 from app.middleware.security_headers import SecurityHeadersMiddleware
 from app.utils.request_context import get_request_id
 from app.utils.sentry_init import init_sentry
-from app.routes import admin, auth, experiments, health, images, media, stats
+from app.routes import admin, auth, benchmarks, experiments, ground_truth, health, images, lifecycle, media, stats
 from app.utils.logging_config import setup_logging
 from app.utils.rate_limit import limiter
 
@@ -77,6 +77,9 @@ app.include_router(auth.router)
 app.include_router(admin.router)
 app.include_router(stats.router)
 app.include_router(images.router)
+app.include_router(ground_truth.router)
+app.include_router(lifecycle.router)
+app.include_router(benchmarks.router)
 app.include_router(media.router)
 app.include_router(experiments.router)
 

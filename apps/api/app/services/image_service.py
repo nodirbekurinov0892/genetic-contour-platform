@@ -24,8 +24,14 @@ from app.models.user import User
 
 from app.services.storage import StorageService
 
-from app.utils.file_utils import detect_mime_type, generate_safe_filename, validate_extension
+from app.services.gt_validation import (
+    build_gt_provenance,
+    decode_gt_from_bytes,
+    sha256_hex,
+    validate_ground_truth_mask,
+)
 
+from app.utils.file_utils import detect_mime_type, validate_extension
 from app.utils.ownership import ensure_owner
 
 
@@ -113,27 +119,18 @@ class ImageService:
 
 
         image = Image(
-
             id=uuid.uuid4(),
-
             user_id=user.id,
-
             original_name=file.filename,
-
             storage_key=stored.storage_key,
-
             public_url=stored.public_url,
-
             file_path=stored.storage_key,
-
             width=width,
-
             height=height,
-
             size=len(content),
-
             mime_type=mime,
-
+            content_checksum=sha256_hex(content),
+            dataset_version="1.0",
         )
 
         self.db.add(image)
@@ -212,6 +209,9 @@ class ImageService:
         if arr is None:
             raise HTTPException(status_code=400, detail="Unable to decode ground truth mask")
 
+        validation = validate_ground_truth_mask(arr, image.width, image.height)
+        checksum = sha256_hex(content)
+
         storage_key = self.storage.ground_truth_key(str(image_id))
         stored = self.storage.save_bytes(storage_key, content, mime)
 
@@ -222,9 +222,70 @@ class ImageService:
         image.ground_truth_public_url = stored.public_url
         image.ground_truth_file_path = stored.storage_key
         image.ground_truth_uploaded_at = datetime.now(timezone.utc)
+        image.gt_checksum = checksum
+        image.gt_validation_status = validation["status"]
+        image.gt_validation_metadata = validation
+        image.gt_validated_at = datetime.now(timezone.utc)
+        image.gt_provenance_json = build_gt_provenance(
+            uploaded_by_user_id=str(user.id),
+            original_filename=file.filename,
+            source_image_id=str(image.id),
+            checksum=checksum,
+            validation=validation,
+        )
         await self.db.flush()
         logger.info("Ground truth uploaded for image %s -> %s", image.id, stored.storage_key)
         return image
+
+    async def revalidate_ground_truth(self, image_id: uuid.UUID, user: User) -> Image:
+        from datetime import datetime, timezone
+
+        image = await self.get_by_id(image_id, user)
+        if not image.ground_truth_storage_key:
+            raise HTTPException(status_code=404, detail="No ground truth to validate")
+
+        key = self.storage.resolve_storage_key(
+            storage_key=image.ground_truth_storage_key,
+            file_path=image.ground_truth_file_path,
+        )
+        content = self.storage.get_bytes(key)
+        arr = decode_gt_from_bytes(content)
+        if arr is None:
+            image.gt_validation_status = "invalid"
+            image.gt_validation_metadata = {"status": "invalid", "issues": ["Decode failed"]}
+        else:
+            validation = validate_ground_truth_mask(arr, image.width, image.height)
+            image.gt_validation_status = validation["status"]
+            image.gt_validation_metadata = validation
+            image.gt_checksum = sha256_hex(content)
+        image.gt_validated_at = datetime.now(timezone.utc)
+        if image.gt_provenance_json:
+            image.gt_provenance_json = {
+                **image.gt_provenance_json,
+                "revalidated_at": image.gt_validated_at.isoformat(),
+                "validation_status": image.gt_validation_status,
+            }
+        await self.db.flush()
+        return image
+
+    async def list_gt_manager(
+        self,
+        user: User,
+        *,
+        status: str | None = None,
+        limit: int = 50,
+        offset: int = 0,
+    ) -> list[Image]:
+        query = select(Image).where(
+            Image.user_id == user.id,
+            Image.ground_truth_storage_key.isnot(None),
+        )
+        if status:
+            query = query.where(Image.gt_validation_status == status)
+        result = await self.db.execute(
+            query.order_by(Image.gt_validated_at.desc().nullslast()).limit(limit).offset(offset)
+        )
+        return list(result.scalars().all())
 
 
 

@@ -433,6 +433,7 @@ class ReportService:
 
         report_data = await self.build_report_data(experiment_id, user)
         image = await self._load_image(experiment.image_id)
+        sci = report_data.get("scientific_evaluation", {})
 
         pipeline = next(
             (r for r in experiment.algorithm_runs if r.algorithm_name == "pipeline"),
@@ -483,6 +484,33 @@ class ReportService:
         ))
         story.append(Spacer(1, 0.5 * cm))
 
+        story.append(Paragraph("Abstract", heading_style))
+        eval_mode = "supervised" if sci.get("has_ground_truth") else "heuristic"
+        story.append(self._pdf_paragraph(
+            f"This report documents a contour detection experiment on {PLATFORM_NAME}. "
+            f"Evaluation mode: {eval_mode}. "
+            f"Algorithms compared: Sobel, Prewitt, Canny, and Genetic Algorithm. "
+            f"Protocol: {experiment.comparison_protocol or 'legacy'}.",
+            body_style,
+        ))
+        story.append(Spacer(1, 0.3 * cm))
+
+        story.append(Paragraph("Methodology", heading_style))
+        repro = experiment.reproducibility_json or {}
+        methodology = repro.get("fair_comparison_methodology") or {}
+        story.append(self._pdf_paragraph(
+            methodology.get("description")
+            or "Standard preprocessing pipeline with resize, Gaussian blur, and gradient magnitude.",
+            body_style,
+        ))
+        if experiment.methodology_version:
+            story.append(self._pdf_paragraph(
+                f"Methodology version: {experiment.methodology_version}",
+                body_style,
+            ))
+        story.append(Spacer(1, 0.3 * cm))
+
+        story.append(Paragraph("Experiment Setup", heading_style))
         story.append(Paragraph("1. Tajriba ma'lumotlari", heading_style))
         info_data = [
             ["Tajriba nomi", self._sanitize_pdf_text(experiment.title)],
@@ -495,12 +523,15 @@ class ReportService:
         ]
         if experiment.completed_at:
             info_data.append(["Yakunlangan", experiment.completed_at.strftime("%Y-%m-%d %H:%M")])
-        sci = report_data.get("scientific_evaluation", {})
         info_data.append([
             "Evaluation mode",
             "Supervised" if sci.get("evaluation_mode") == "supervised" else "Heuristic",
         ])
         info_data.append(["Ground Truth", "Mavjud" if sci.get("has_ground_truth") else "Yo'q"])
+        if image.gt_validation_status:
+            info_data.append(["GT validation", image.gt_validation_status])
+        if image.gt_checksum:
+            info_data.append(["GT checksum", image.gt_checksum[:16] + "..."])
         if experiment.reproducibility_json:
             repro = experiment.reproducibility_json
             info_data.append(["Random seed", str(repro.get("random_seed", "-"))])
@@ -731,6 +762,46 @@ class ReportService:
         section_num = "7" if report_data["generation_history"] else "6"
         story.append(Paragraph(f"{section_num}. Ma'lumotlarga asoslangan xulosa", heading_style))
         story.append(self._pdf_paragraph(report_data["conclusion"], body_style))
+
+        story.append(Spacer(1, 0.4 * cm))
+        story.append(Paragraph("Limitations", heading_style))
+        limitations = [
+            "Heuristic metrics are not equivalent to supervised IoU/F1/Dice without ground truth.",
+            "GA fitness is an internal optimization objective and must not be used for cross-algorithm winner selection.",
+            "Classical threshold parameters may require calibration per dataset.",
+        ]
+        if not sci.get("has_ground_truth"):
+            limitations.append("No ground truth was available; supervised conclusions are not applicable.")
+        for lim in limitations:
+            story.append(self._pdf_paragraph(f"• {lim}", body_style))
+
+        story.append(Spacer(1, 0.3 * cm))
+        story.append(Paragraph("References", heading_style))
+        refs = [
+            "Canny, J. (1986). A Computational Approach to Edge Detection.",
+            "Holland, J. H. (1975). Adaptation in Natural and Artificial Systems.",
+            f"{PLATFORM_NAME} Platform Documentation v{repro.get('platform_version', '2.0.0')}.",
+        ]
+        for ref in refs:
+            story.append(self._pdf_paragraph(ref, body_style))
+
+        story.append(PageBreak())
+        story.append(Paragraph("Reproducibility Appendix", heading_style))
+        if experiment.reproducibility_json:
+            for key in (
+                "reproducibility_version",
+                "random_seed",
+                "git_commit",
+                "comparison_protocol",
+                "image_checksum_sha256",
+                "ground_truth_checksum_sha256",
+                "dataset_version",
+            ):
+                val = experiment.reproducibility_json.get(key)
+                if val is not None:
+                    story.append(self._pdf_paragraph(f"{key}: {val}", body_style))
+        else:
+            story.append(self._pdf_paragraph("No reproducibility metadata captured.", body_style))
 
         pdf_buffer = io.BytesIO()
         doc = SimpleDocTemplate(

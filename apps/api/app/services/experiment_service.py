@@ -174,6 +174,9 @@ class ExperimentService:
             description=source.description,
             status=ExperimentStatus.PENDING.value,
             job_params=source.job_params,
+            parent_experiment_id=source.id,
+            comparison_protocol=source.comparison_protocol,
+            methodology_version=source.methodology_version,
         )
         self.db.add(clone)
         await self.db.flush()
@@ -222,6 +225,11 @@ class ExperimentService:
 
         experiment.status = ExperimentStatus.QUEUED.value
         experiment.job_params = request.model_dump(mode="json")
+        experiment.comparison_protocol = request.comparison_protocol or "fair_v1"
+        from app.core.fair_comparison import METHODOLOGY_VERSION
+
+        experiment.methodology_version = METHODOLOGY_VERSION
+        experiment.experiment_seed = request.seed
         experiment.progress_percent = 0.0
         experiment.current_generation = None
         experiment.started_at = None

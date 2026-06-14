@@ -61,6 +61,8 @@ export const experimentService = {
       algorithm: AlgorithmName;
       params: AlgorithmParams;
       ga_params?: GAParams;
+      comparison_protocol?: string;
+      seed?: number;
     },
   ): Promise<ExperimentJobResponse> {
     return apiFetch<ExperimentJobResponse>(`/api/experiments/${id}/run`, {

@@ -10,6 +10,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useAuth } from "@/components/providers/auth-provider";
 import { RedirectIfAuthenticated } from "@/components/auth/redirect-if-authenticated";
+import { SmtpAuthNotice } from "@/components/auth/smtp-auth-notice";
 import { LoadingState } from "@/components/ui/state-panel";
 import { safeRedirectPath } from "@/lib/safe-redirect";
 
@@ -47,6 +48,8 @@ function LoginForm() {
             <p className="text-xs text-muted-foreground">{PLATFORM_SUBTITLE}</p>
           </div>
         </div>
+
+        <SmtpAuthNotice />
 
         <form onSubmit={handleSubmit} className="space-y-4">
           <div className="space-y-2">

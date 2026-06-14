@@ -9,6 +9,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useAuth } from "@/components/providers/auth-provider";
 import { RedirectIfAuthenticated } from "@/components/auth/redirect-if-authenticated";
+import { SmtpAuthNotice } from "@/components/auth/smtp-auth-notice";
 
 export default function RegisterPage() {
   const { register } = useAuth();
@@ -44,6 +45,8 @@ export default function RegisterPage() {
               <p className="text-xs text-muted-foreground">{PLATFORM_SUBTITLE}</p>
             </div>
           </div>
+
+          <SmtpAuthNotice />
 
           <form onSubmit={handleSubmit} className="space-y-4">
             <div className="space-y-2">

@@ -1,6 +1,8 @@
 import { getAccessToken, getRefreshToken, setTokens, clearTokens } from "@/lib/auth-storage";
 
-const API_BASE = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
+const DIRECT_API = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
+const USE_BFF = typeof window !== "undefined";
+const API_BASE = USE_BFF ? "/api/backend" : DIRECT_API;
 const STORAGE_PUBLIC_BASE =
   process.env.NEXT_PUBLIC_STORAGE_PUBLIC_URL?.replace(/\/$/, "") ?? "";
 
@@ -67,7 +69,8 @@ export async function apiFetch<T>(
   path: string,
   options?: ApiFetchOptions,
 ): Promise<T> {
-  const url = `${API_BASE}${path}`;
+  const apiPath = USE_BFF ? path.replace(/^\/api/, "") : path;
+  const url = `${API_BASE}${apiPath}`;
   const headers: Record<string, string> = {
     ...(options?.body instanceof FormData
       ? {}
@@ -85,6 +88,7 @@ export async function apiFetch<T>(
   const res = await fetch(url, {
     ...options,
     headers,
+    credentials: USE_BFF ? "include" : options?.credentials,
   });
 
   if (res.status === 401 && !options?.skipAuth && !options?._retry) {

@@ -89,6 +89,12 @@ class StorageService:
     def delete_prefix(self, prefix: str) -> int:
         return self.backend.delete_prefix(prefix)
 
+    def list_prefix(self, prefix: str) -> list[str]:
+        list_fn = getattr(self.backend, "list_prefix", None)
+        if callable(list_fn):
+            return list_fn(prefix)
+        return []
+
     def exists(self, storage_key: str) -> bool:
         return self.backend.exists(storage_key)
 

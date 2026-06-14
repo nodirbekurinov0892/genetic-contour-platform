@@ -1,4 +1,5 @@
 from app.models.algorithm_run import AlgorithmRun
+from app.models.benchmark import Benchmark, BenchmarkDataset, BenchmarkLeaderboard, BenchmarkRun, StorageOrphan
 from app.models.experiment import Experiment
 from app.models.ga_generation_history import GAGenerationHistory
 from app.models.ga_parameters import GAParameters
@@ -21,4 +22,9 @@ __all__ = [
     "ResultImage",
     "Metric",
     "Report",
+    "Benchmark",
+    "BenchmarkDataset",
+    "BenchmarkRun",
+    "BenchmarkLeaderboard",
+    "StorageOrphan",
 ]

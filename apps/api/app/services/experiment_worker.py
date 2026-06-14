@@ -2,6 +2,7 @@
 
 import asyncio
 import logging
+import random
 import uuid
 from datetime import datetime, timezone
 
@@ -15,6 +16,7 @@ from app.core.classical_algorithms import (
 )
 from app.core.evaluation import compute_metrics
 from app.core.genetic_algorithm.ga_engine import GACancelled, GAConfig, GAEngine, GenerationRecord
+from app.core.fair_comparison import resolve_algorithm_input, resolve_protocol
 from app.core.preprocessing import PreprocessConfig, load_image_from_bytes, preprocess
 from app.core.visualization import create_overlay, gradient_to_uint8
 from app.database import AsyncSessionLocal
@@ -189,9 +191,23 @@ async def _execute_job(experiment_id: uuid.UUID, settings) -> None:
                     exc_info=True,
                 )
 
-        from app.utils.reproducibility import capture_environment
+        from app.utils.reproducibility_v2 import build_reproducibility_v2
 
-        experiment.reproducibility_json = capture_environment(
+        protocol = resolve_protocol(
+            experiment.comparison_protocol or request.comparison_protocol
+        )
+        seed = request.seed
+        if seed is None and experiment.experiment_seed is not None:
+            seed = experiment.experiment_seed
+        if seed is None and experiment.reproducibility_json:
+            seed = experiment.reproducibility_json.get("random_seed")
+
+        experiment.comparison_protocol = protocol
+        experiment.methodology_version = "2.0.0"
+        experiment.experiment_seed = seed
+
+        experiment.reproducibility_json = build_reproducibility_v2(
+            seed=seed if seed is not None else random.randint(0, 2**31 - 1),
             preprocessing_params={
                 "resize_width": request.params.resize_width,
                 "blur_kernel": request.params.blur_kernel,
@@ -213,7 +229,17 @@ async def _execute_job(experiment_id: uuid.UUID, settings) -> None:
                 "original_height": image.height,
             },
             has_ground_truth=has_ground_truth,
+            comparison_protocol=protocol,
+            image_checksum=image.content_checksum,
+            gt_checksum=image.gt_checksum,
+            dataset_version=image.dataset_version,
+            parent_experiment_id=str(experiment.parent_experiment_id) if experiment.parent_experiment_id else None,
+            benchmark_run_id=str(experiment.benchmark_run_id) if experiment.benchmark_run_id else None,
+            experiment_lineage=experiment.experiment_lineage_json,
         )
+        if seed is None:
+            seed = experiment.reproducibility_json.get("random_seed")
+            experiment.experiment_seed = seed
         await session.flush()
 
         await _clear_previous_runs(session, experiment.id, storage)
@@ -235,6 +261,7 @@ async def _execute_job(experiment_id: uuid.UUID, settings) -> None:
                 threshold=request.params.threshold,
             )
             prep = await asyncio.to_thread(preprocess, raw, config)
+            algo_input = resolve_algorithm_input(prep, protocol)
 
             await _create_pipeline_run(
                 session=session,
@@ -267,6 +294,7 @@ async def _execute_job(experiment_id: uuid.UUID, settings) -> None:
                         ga=ga,
                         tracker=tracker,
                         ground_truth=ground_truth,
+                        ga_gradient=algo_input.ga_gradient,
                     )
                 else:
                     await _run_classical_algorithm(
@@ -277,6 +305,7 @@ async def _execute_job(experiment_id: uuid.UUID, settings) -> None:
                         prep=prep,
                         params=request.params,
                         ground_truth=ground_truth,
+                        classical_input=algo_input.classical_grayscale,
                     )
                     percent, gen = tracker.complete_classical_algorithm()
                     await _update_progress(session, experiment, percent, gen)
@@ -349,7 +378,7 @@ async def _create_pipeline_run(session, storage, experiment, prep, source_storag
     await session.flush()
 
 
-async def _run_classical_algorithm(session, storage, experiment, algo, prep, params, ground_truth=None):
+async def _run_classical_algorithm(session, storage, experiment, algo, prep, params, ground_truth=None, classical_input=None):
     run = AlgorithmRun(
         id=uuid.uuid4(),
         experiment_id=experiment.id,
@@ -360,7 +389,7 @@ async def _run_classical_algorithm(session, storage, experiment, algo, prep, par
     session.add(run)
     await session.flush()
 
-    grayscale = prep.blurred
+    grayscale = classical_input if classical_input is not None else prep.blurred
     gradient = prep.gradient_magnitude
 
     if algo == "sobel":
@@ -399,6 +428,7 @@ async def _run_genetic_algorithm(
     ga: GAParamsSchema,
     tracker: ExperimentProgressTracker,
     ground_truth=None,
+    ga_gradient=None,
 ):
     run = AlgorithmRun(
         id=uuid.uuid4(),
@@ -410,7 +440,7 @@ async def _run_genetic_algorithm(
     session.add(run)
     await session.flush()
 
-    gradient = prep.gradient_magnitude
+    gradient = ga_gradient if ga_gradient is not None else prep.gradient_magnitude
     ga_config = GAConfig(
         population_size=ga.population_size,
         generations=ga.generations,

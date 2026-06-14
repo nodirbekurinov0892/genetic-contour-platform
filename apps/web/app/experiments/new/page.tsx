@@ -21,7 +21,6 @@ import { ImageCard } from "@/components/experiments/image-card";
 import { imageService } from "@/services/imageService";
 import { experimentService } from "@/services/experimentService";
 import {
-  ALGORITHMS,
   DEFAULT_ALGORITHM_PARAMS,
   DEFAULT_GA_PARAMS,
   PLATFORM_NAME,
@@ -39,8 +38,6 @@ const STEPS = [
   "Ishga tushirish",
 ] as const;
 
-const EDGE_ALGOS = ["sobel", "prewitt", "canny", "genetic"] as const;
-
 export default function NewExperimentPage() {
   const router = useRouter();
   const [step, setStep] = useState(0);
@@ -48,7 +45,6 @@ export default function NewExperimentPage() {
   const [preview, setPreview] = useState<string | null>(null);
   const [image, setImage] = useState<ImageRecord | null>(null);
   const [gtFile, setGtFile] = useState<File | null>(null);
-  const [selectedAlgos, setSelectedAlgos] = useState<string[]>([...EDGE_ALGOS]);
   const [title, setTitle] = useState("");
   const [params, setParams] = useState<AlgorithmParams>(DEFAULT_ALGORITHM_PARAMS);
   const [gaParams, setGAParams] = useState<GAParams>(DEFAULT_GA_PARAMS);
@@ -110,10 +106,6 @@ export default function NewExperimentPage() {
 
   const runExperiment = async () => {
     if (!image || !title.trim()) return;
-    if (selectedAlgos.length !== 4) {
-      setError("Taqqoslash uchun barcha 4 algoritm tanlangan bo'lishi kerak");
-      return;
-    }
     setBusy(true);
     setError(null);
     try {
@@ -125,18 +117,13 @@ export default function NewExperimentPage() {
         algorithm: "compare_all",
         params,
         ga_params: gaParams,
+        comparison_protocol: "fair_v1",
       });
-      router.push(`/comparison?experiment=${exp.id}`);
+      router.push(`/experiments/${exp.id}`);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Tajriba ishga tushmadi");
       setBusy(false);
     }
-  };
-
-  const toggleAlgo = (id: string) => {
-    setSelectedAlgos((prev) =>
-      prev.includes(id) ? prev.filter((a) => a !== id) : [...prev, id],
-    );
   };
 
   return (
@@ -250,33 +237,15 @@ export default function NewExperimentPage() {
 
       {step === 2 && (
         <div className="scientific-card space-y-4 p-6">
-          <h2 className="text-lg font-semibold">3. Algoritm tanlovi</h2>
-          <div className="grid gap-2 sm:grid-cols-2">
-            {EDGE_ALGOS.map((id) => {
-              const meta = ALGORITHMS.find((a) => a.id === id);
-              return (
-                <label
-                  key={id}
-                  className="flex cursor-pointer items-start gap-3 rounded-lg border p-3 hover:bg-muted/50"
-                >
-                  <input
-                    type="checkbox"
-                    checked={selectedAlgos.includes(id)}
-                    onChange={() => toggleAlgo(id)}
-                    className="mt-1"
-                  />
-                  <div>
-                    <p className="font-medium">{meta?.label ?? id}</p>
-                    <p className="text-xs text-muted-foreground">{meta?.description}</p>
-                  </div>
-                </label>
-              );
-            })}
-          </div>
+          <h2 className="text-lg font-semibold">3. Algoritmlar va parametrlar</h2>
+          <p className="text-sm text-muted-foreground">
+            Taqqoslash rejimi: <strong>compare_all</strong> — barcha 4 algoritm (Sobel, Prewitt,
+            Canny, GA) fair_v1 protokoli bilan ishlaydi.
+          </p>
           <AlgorithmParamsForm
             params={params}
             gaParams={gaParams}
-            showGA={selectedAlgos.includes("genetic")}
+            showGA
             onParamsChange={setParams}
             onGAParamsChange={setGAParams}
           />
@@ -284,9 +253,7 @@ export default function NewExperimentPage() {
             <Button variant="outline" onClick={() => setStep(1)}>
               Orqaga
             </Button>
-            <Button onClick={() => setStep(3)} disabled={selectedAlgos.length === 0}>
-              Davom etish
-            </Button>
+            <Button onClick={() => setStep(3)}>Davom etish</Button>
           </div>
         </div>
       )}

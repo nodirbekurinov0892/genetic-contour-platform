@@ -36,6 +36,8 @@ export interface ImageRecord {
   has_ground_truth?: boolean;
   ground_truth_url?: string | null;
   ground_truth_uploaded_at?: string | null;
+  gt_validation_status?: string | null;
+  gt_validated_at?: string | null;
   created_at: string;
 }
 

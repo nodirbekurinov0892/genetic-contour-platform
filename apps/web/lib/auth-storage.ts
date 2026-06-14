@@ -21,7 +21,7 @@ function clearSessionCookie(): void {
 /** Keep middleware session cookie aligned with stored access tokens. */
 export function syncSessionCookie(): void {
   if (typeof window === "undefined") return;
-  if (getAccessToken()) {
+  if (getAccessToken() || document.cookie.includes(`${SESSION_COOKIE}=1`)) {
     setSessionCookie();
   } else {
     clearSessionCookie();
@@ -30,7 +30,9 @@ export function syncSessionCookie(): void {
 
 export function getAccessToken(): string | null {
   if (typeof window === "undefined") return null;
-  return localStorage.getItem(ACCESS_TOKEN_KEY);
+  const token = localStorage.getItem(ACCESS_TOKEN_KEY);
+  if (token === "cookie") return null;
+  return token;
 }
 
 export function getRefreshToken(): string | null {
@@ -39,7 +41,11 @@ export function getRefreshToken(): string | null {
 }
 
 export function hasStoredAccessToken(): boolean {
-  return !!getAccessToken();
+  if (typeof document !== "undefined" && document.cookie.includes("gc_session=1")) {
+    return true;
+  }
+  const token = getAccessToken();
+  return !!token;
 }
 
 export function setTokens(accessToken: string, refreshToken: string): void {

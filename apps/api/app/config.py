@@ -61,6 +61,13 @@ class Settings(BaseSettings):
     upload_dir: str = "uploads"
     results_dir: str = "results"
 
+    # Email (optional — degraded auth mode when unset)
+    smtp_host: str = ""
+    smtp_port: int = 587
+    smtp_user: str = ""
+    smtp_password: str = ""
+    smtp_from: str = ""
+
     # Rate limiting
     rate_limit_per_minute: int = 60
 
@@ -186,6 +193,14 @@ class Settings(BaseSettings):
     def use_local_static_files(self) -> bool:
         """Local /static serving is dev-only. Production uses S3/R2 public URLs."""
         return self.storage_backend.strip().lower() == "local" and self.api_debug
+
+    @property
+    def smtp_configured(self) -> bool:
+        return bool(self.smtp_host.strip() and self.smtp_from.strip())
+
+    @property
+    def email_verification_required(self) -> bool:
+        return not self.api_debug and self.smtp_configured
 
     @property
     def use_json_logs(self) -> bool:

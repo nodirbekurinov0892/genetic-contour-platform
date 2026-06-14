@@ -62,6 +62,16 @@ class Experiment(Base):
         DateTime(timezone=True), nullable=True
     )
     reproducibility_json: Mapped[dict | None] = mapped_column(JSONB, nullable=True)
+    comparison_protocol: Mapped[str | None] = mapped_column(String(32), nullable=True)
+    methodology_version: Mapped[str | None] = mapped_column(String(32), nullable=True)
+    experiment_seed: Mapped[int | None] = mapped_column(Integer, nullable=True)
+    parent_experiment_id: Mapped[uuid.UUID | None] = mapped_column(
+        UUID(as_uuid=True), ForeignKey("experiments.id", ondelete="SET NULL"), nullable=True
+    )
+    benchmark_run_id: Mapped[uuid.UUID | None] = mapped_column(
+        UUID(as_uuid=True), ForeignKey("benchmark_runs.id", ondelete="SET NULL"), nullable=True
+    )
+    experiment_lineage_json: Mapped[dict | None] = mapped_column(JSONB, nullable=True)
 
     image: Mapped["Image"] = relationship(back_populates="experiments")  # noqa: F821
     user: Mapped["User"] = relationship(back_populates="experiments")  # noqa: F821

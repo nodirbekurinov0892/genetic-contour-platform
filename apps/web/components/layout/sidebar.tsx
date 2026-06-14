@@ -4,6 +4,7 @@ import {
   BarChart3,
   FlaskConical,
   GitCompare,
+  HelpCircle,
   Home,
   ImageIcon,
   LineChart,
@@ -12,6 +13,8 @@ import {
   LogIn,
   LogOut,
   PlusCircle,
+  Target,
+  Trophy,
 } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
@@ -24,11 +27,14 @@ import { Button } from "@/components/ui/button";
 const mainNav = [
   { href: "/", label: "Boshqaruv paneli", icon: Home },
   { href: "/library", label: "Rasm kutubxonasi", icon: ImageIcon },
+  { href: "/ground-truth", label: "Ground Truth", icon: Target },
   { href: "/experiments/new", label: "Yangi tajriba", icon: PlusCircle },
   { href: "/experiments", label: "Tajribalar", icon: FlaskConical },
   { href: "/comparison", label: "Taqqoslash markazi", icon: GitCompare },
+  { href: "/benchmarks", label: "Benchmarklar", icon: Trophy },
   { href: "/analytics", label: "Analitika markazi", icon: LineChart },
   { href: "/reports", label: "Hisobotlar", icon: FileText },
+  { href: "/help", label: "Yordam", icon: HelpCircle },
 ];
 
 export function Sidebar() {
@@ -36,7 +42,7 @@ export function Sidebar() {
   const { user, logout } = useAuth();
 
   return (
-    <aside className="flex h-screen w-64 flex-col border-r bg-sidebar text-sidebar-foreground">
+    <aside className="hidden h-screen w-64 flex-col border-r bg-sidebar text-sidebar-foreground md:flex">
       <div className="border-b px-5 py-4">
         <div className="flex items-center gap-2">
           <Layers className="h-6 w-6 shrink-0 text-primary" />

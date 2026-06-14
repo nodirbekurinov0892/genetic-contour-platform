@@ -33,13 +33,16 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   const refreshUser = useCallback(async () => {
     const token = getAccessToken();
-    if (!token) {
+    const hasCookieSession =
+      typeof document !== "undefined" &&
+      document.cookie.includes("gc_session=1");
+    if (!token && !hasCookieSession) {
       setUser(null);
       syncSessionCookie();
       return;
     }
 
-    syncSessionCookie();
+    if (token) syncSessionCookie();
 
     try {
       const me = await authService.me();
@@ -57,8 +60,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const login = useCallback(async (email: string, password: string) => {
     setLoading(true);
     try {
-      const tokens = await authService.login({ email, password });
-      setTokens(tokens.access_token, tokens.refresh_token);
+      await authService.login({ email, password });
       const me = await authService.me();
       setUser(me);
     } finally {
@@ -70,8 +72,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     async (email: string, password: string, name?: string) => {
       setLoading(true);
       try {
-        const tokens = await authService.register({ email, password, name });
-        setTokens(tokens.access_token, tokens.refresh_token);
+        await authService.register({ email, password, name });
+        await authService.login({ email, password });
         const me = await authService.me();
         setUser(me);
       } finally {

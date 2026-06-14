@@ -36,6 +36,11 @@ class ExperimentRunRequest(BaseModel):
     )
     params: AlgorithmParamsSchema = Field(default_factory=AlgorithmParamsSchema)
     ga_params: GAParamsSchema | None = None
+    comparison_protocol: str | None = Field(
+        default="fair_v1",
+        description="fair_v1 (default) | legacy",
+    )
+    seed: int | None = Field(default=None, ge=0, le=2**31 - 1)
 
 
 class MetricResponse(BaseModel):
@@ -103,6 +108,11 @@ class ExperimentResponse(BaseModel):
     created_at: datetime
     completed_at: datetime | None
     reproducibility_json: dict[str, Any] | None = None
+    comparison_protocol: str | None = None
+    methodology_version: str | None = None
+    experiment_seed: int | None = None
+    parent_experiment_id: UUID | None = None
+    benchmark_run_id: UUID | None = None
 
 
 class ExperimentBrowseItem(BaseModel):

@@ -72,12 +72,15 @@ class LocalStorageBackend(StorageBackend):
         if normalized.startswith("results/"):
             target = self.results_path / normalized[len("results/") :]
             base = self.results_path
+            root = self.results_path
         elif normalized.startswith("uploads/"):
             target = self.upload_path / normalized[len("uploads/") :]
             base = self.upload_path
+            root = self.upload_path
         else:
             target = self.base_dir / normalized
             base = self.base_dir
+            root = self.base_dir
 
         try:
             target = ensure_path_within_base(target, base)
@@ -101,6 +104,28 @@ class LocalStorageBackend(StorageBackend):
         if target.is_dir():
             shutil.rmtree(target, ignore_errors=True)
         return removed
+
+    def list_prefix(self, prefix: str) -> list[str]:
+        normalized = prefix.replace("\\", "/").rstrip("/")
+        if normalized.startswith("uploads/"):
+            root = self.upload_path
+            scan = root / normalized[len("uploads/") :]
+            storage_prefix = "uploads/"
+        elif normalized.startswith("results/"):
+            root = self.results_path
+            scan = root / normalized[len("results/") :]
+            storage_prefix = "results/"
+        else:
+            return []
+
+        if not scan.exists():
+            return []
+        keys: list[str] = []
+        for file_path in scan.rglob("*"):
+            if file_path.is_file():
+                rel = file_path.relative_to(root).as_posix()
+                keys.append(f"{storage_prefix}{rel}")
+        return keys
 
     def exists(self, storage_key: str) -> bool:
         return self._resolve_local_path(storage_key).exists()

@@ -37,5 +37,20 @@ class UserResponse(BaseModel):
     name: str | None
     role: str
     is_active: bool
+    email_verified: bool = False
+    onboarding_completed_at: datetime | None = None
     created_at: datetime
     updated_at: datetime
+
+
+class VerifyEmailRequest(BaseModel):
+    token: str = Field(min_length=1)
+
+
+class PasswordResetRequest(BaseModel):
+    email: EmailStr
+
+
+class PasswordResetConfirm(BaseModel):
+    token: str = Field(min_length=1)
+    new_password: str = Field(min_length=8, max_length=128)

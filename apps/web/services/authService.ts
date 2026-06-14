@@ -1,5 +1,9 @@
 import { apiFetch } from "@/lib/api";
-import { clearTokens, getRefreshToken, setTokens } from "@/lib/auth-storage";
+import { clearTokens, getRefreshToken, setTokens, syncSessionCookie } from "@/lib/auth-storage";
+
+function syncSessionCookieFromBff(): void {
+  syncSessionCookie();
+}
 
 export interface AuthUser {
   id: string;
@@ -7,6 +11,8 @@ export interface AuthUser {
   name: string | null;
   role: string;
   is_active: boolean;
+  email_verified?: boolean;
+  onboarding_completed_at?: string | null;
   created_at: string;
   updated_at: string;
 }
@@ -18,24 +24,36 @@ export interface TokenResponse {
 }
 
 export const authService = {
-  register(data: {
+  async register(data: {
     email: string;
     password: string;
     name?: string;
-  }): Promise<TokenResponse> {
-    return apiFetch<TokenResponse>("/api/auth/register", {
+  }): Promise<void> {
+    const res = await fetch("/api/auth/register", {
       method: "POST",
+      headers: { "Content-Type": "application/json" },
       body: JSON.stringify(data),
-      skipAuth: true,
+      credentials: "include",
     });
+    if (!res.ok) {
+      const body = await res.json().catch(() => ({}));
+      throw new Error(body.detail || "Registration failed");
+    }
   },
 
-  login(data: { email: string; password: string }): Promise<TokenResponse> {
-    return apiFetch<TokenResponse>("/api/auth/login", {
+  async login(data: { email: string; password: string }): Promise<void> {
+    const res = await fetch("/api/auth/login", {
       method: "POST",
+      headers: { "Content-Type": "application/json" },
       body: JSON.stringify(data),
-      skipAuth: true,
+      credentials: "include",
     });
+    if (!res.ok) {
+      const body = await res.json().catch(() => ({}));
+      throw new Error(body.detail || "Login failed");
+    }
+    setTokens("cookie", "cookie");
+    syncSessionCookieFromBff();
   },
 
   async refresh(): Promise<TokenResponse> {
@@ -53,17 +71,10 @@ export const authService = {
   },
 
   async logout(): Promise<void> {
-    const refreshToken = getRefreshToken();
-    if (refreshToken) {
-      try {
-        await apiFetch("/api/auth/logout", {
-          method: "POST",
-          body: JSON.stringify({ refresh_token: refreshToken }),
-          skipAuth: true,
-        });
-      } catch {
-        // Clear local session even if server logout fails
-      }
+    try {
+      await fetch("/api/auth/logout", { method: "POST", credentials: "include" });
+    } catch {
+      // ignore
     }
     clearTokens();
   },

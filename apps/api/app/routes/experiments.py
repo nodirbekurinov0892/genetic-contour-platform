@@ -147,7 +147,9 @@ async def get_experiment(
 
 
 @router.get("/{experiment_id}/stream")
+@limiter.limit("60/minute")
 async def stream_experiment_status(
+    request: Request,
     experiment_id: uuid.UUID,
     db: AsyncSession = Depends(get_db),
     settings: Settings = Depends(get_settings),
@@ -308,7 +310,9 @@ async def get_experiment_results(
 
 
 @router.get("/{experiment_id}/report")
+@limiter.limit("60/minute")
 async def get_experiment_report(
+    request: Request,
     experiment_id: uuid.UUID,
     db: AsyncSession = Depends(get_db),
     settings: Settings = Depends(get_settings),
@@ -338,7 +342,9 @@ async def get_experiment_report_csv(
 
 
 @router.get("/{experiment_id}/report/pdf")
+@limiter.limit("20/hour")
 async def get_experiment_report_pdf(
+    request: Request,
     experiment_id: uuid.UUID,
     db: AsyncSession = Depends(get_db),
     settings: Settings = Depends(get_settings),
