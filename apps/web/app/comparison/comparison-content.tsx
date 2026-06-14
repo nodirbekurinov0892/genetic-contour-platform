@@ -38,6 +38,8 @@ export default function ComparisonPageContent() {
     setExperiments(browse.items);
     if (!selectedId && browse.items.length > 0) {
       setSelectedId(browse.items[0].id);
+    } else if (browse.items.length === 0) {
+      setLoading(false);
     }
   }, [selectedId]);
 
