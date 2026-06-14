@@ -9,6 +9,7 @@ on:
 jobs:
   api-tests:
     runs-on: ubuntu-latest
+    timeout-minutes: 15
     services:
       postgres:
         image: postgres:16-alpine
@@ -52,10 +53,11 @@ jobs:
           MPLBACKEND: Agg
         run: |
           set -o pipefail
-          pytest -q --tb=line 2>&1 | tee pytest.log
+          python -c "import pytest_timeout; print('pytest-timeout', pytest_timeout.__version__)"
+          pytest -vv --tb=short 2>&1 | tee pytest.log
           pytest_exit=${PIPESTATUS[0]}
           echo "## Pytest output (tail)" >> "$GITHUB_STEP_SUMMARY"
-          tail -40 pytest.log >> "$GITHUB_STEP_SUMMARY"
+          tail -80 pytest.log >> "$GITHUB_STEP_SUMMARY"
           exit $pytest_exit
 
   web-lint-build:

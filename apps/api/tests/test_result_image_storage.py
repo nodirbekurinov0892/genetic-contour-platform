@@ -3,26 +3,41 @@
 import asyncio
 import io
 import time
+import uuid
 
 import pytest
 from httpx import AsyncClient
 from PIL import Image as PILImage
 
 from app.config import get_settings
-from app.jobs import background
-from app.jobs.background import schedule_experiment_run
+from app.services.experiment_worker import run_experiment_job
 from app.services.storage import StorageService
 
 
 @pytest.fixture
 def inline_worker(monkeypatch):
-    """Run experiment jobs on the API event loop (asyncio backend)."""
+    """Schedule jobs on the running test loop; return task handles for direct await."""
 
-    monkeypatch.setattr("app.jobs.queue.enqueue_experiment_run", schedule_experiment_run)
+    scheduled: list[asyncio.Task] = []
+
+    def inline_enqueue(experiment_id: uuid.UUID):
+        async def _run():
+            await asyncio.sleep(0)  # let the HTTP handler commit before claim
+            await run_experiment_job(experiment_id)
+
+        task = asyncio.get_running_loop().create_task(
+            _run(),
+            name=f"inline-worker-{experiment_id}",
+        )
+        scheduled.append(task)
+        return str(experiment_id)
+
+    monkeypatch.setattr("app.jobs.queue.enqueue_experiment_run", inline_enqueue)
     monkeypatch.setattr(
         "app.services.experiment_service.enqueue_experiment_run",
-        schedule_experiment_run,
+        inline_enqueue,
     )
+    return scheduled
 
 
 def _make_test_image_bytes() -> bytes:
@@ -72,16 +87,10 @@ async def _wait_for_completion(
     raise TimeoutError("Experiment did not finish in time")
 
 
-async def _await_scheduled_job(experiment_id: str, timeout: float = 30.0) -> None:
-    """Await the single job task directly — avoids asyncio.wait() loop deadlock."""
-    task = background._background_tasks.get(experiment_id)
-    if task is None:
-        raise AssertionError(f"No background task registered for experiment {experiment_id}")
-    await asyncio.wait_for(asyncio.shield(task), timeout=timeout)
-
-
 @pytest.mark.asyncio
-async def test_sobel_results_use_storage_keys(client: AsyncClient, inline_worker):
+async def test_sobel_results_use_storage_keys(
+    client: AsyncClient, inline_worker: list[asyncio.Task]
+):
     headers, experiment_id = await _register_upload_experiment(client)
 
     run = await client.post(
@@ -99,8 +108,9 @@ async def test_sobel_results_use_storage_keys(client: AsyncClient, inline_worker
         },
     )
     assert run.status_code == 200
+    assert inline_worker, "enqueue did not schedule a background job"
+    await asyncio.gather(*inline_worker)
 
-    await _await_scheduled_job(experiment_id)
     final_status = await _wait_for_completion(client, headers, experiment_id, timeout=5.0)
     assert final_status == "completed"
 
