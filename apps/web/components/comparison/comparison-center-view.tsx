@@ -55,7 +55,7 @@ export function ComparisonCenterView({
     return (
       <EmptyState
         title="Taqqoslash uchun natijalar yo&apos;q"
-        description="Yakunlangan compare_all tajribasini tanlang yoki yangi tajriba ishga tushiring."
+        description="Yakunlangan tajriba uchun algoritm natijalarini yonma-yon tahlil qiling"
       />
     );
   }

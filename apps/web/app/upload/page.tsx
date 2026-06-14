@@ -21,6 +21,7 @@ export default function UploadPage() {
   const [result, setResult] = useState<ImageRecord | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [dragActive, setDragActive] = useState(false);
+  const [libraryRefresh, setLibraryRefresh] = useState(0);
 
   const validateAndSetFile = useCallback((selected: File) => {
     if (!ALLOWED_TYPES.includes(selected.type)) {
@@ -78,6 +79,7 @@ export default function UploadPage() {
     try {
       const res = await imageService.upload(file);
       setResult(res.image);
+      setLibraryRefresh((k) => k + 1);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Yuklash muvaffaqiyatsiz");
     } finally {
@@ -194,7 +196,7 @@ export default function UploadPage() {
           description="Barcha yuklangan rasmlar, qidiruv va Ground Truth maska boshqaruvi"
           badge="Library"
         />
-        <ImageLibrary />
+        <ImageLibrary refreshKey={libraryRefresh} />
       </section>
     </div>
   );

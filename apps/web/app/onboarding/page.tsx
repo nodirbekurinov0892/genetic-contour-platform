@@ -8,7 +8,7 @@ import { apiFetch } from "@/lib/api";
 const steps = [
   "Rasm kutubxonasiga asl rasm yuklang",
   "Ixtiyoriy Ground Truth mask qo&apos;shing",
-  "Yangi tajriba wizardida compare_all ishga tushiring",
+  "Yangi tajriba wizardida barcha algoritmlarni ishga tushiring",
   "Taqqoslash markazida natijalarni tahlil qiling",
 ];
 

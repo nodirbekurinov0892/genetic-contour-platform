@@ -306,10 +306,7 @@ export default function ExperimentDetailPage() {
               )}
             </div>
             {experiment && (
-              <ExportButtons
-                experimentId={id}
-                disabled={displayStatus !== "completed"}
-              />
+              <ExportButtons experimentId={id} status={displayStatus} />
             )}
           </div>
         </div>

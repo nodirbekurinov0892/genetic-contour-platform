@@ -11,9 +11,10 @@ import type { ImageRecord } from "@shared/types";
 
 interface ImageLibraryProps {
   onSelect?: (image: ImageRecord) => void;
+  refreshKey?: number;
 }
 
-export function ImageLibrary({ onSelect }: ImageLibraryProps) {
+export function ImageLibrary({ onSelect, refreshKey = 0 }: ImageLibraryProps) {
   const [images, setImages] = useState<ImageRecord[]>([]);
   const [search, setSearch] = useState("");
   const [gtOnly, setGtOnly] = useState(false);
@@ -35,9 +36,9 @@ export function ImageLibrary({ onSelect }: ImageLibraryProps) {
   }, [search, gtOnly]);
 
   useEffect(() => {
-    const timer = setTimeout(load, 250);
+    const timer = setTimeout(() => void load(), 250);
     return () => clearTimeout(timer);
-  }, [load]);
+  }, [load, refreshKey]);
 
   const handleGtUpload = async (imageId: string, file: File) => {
     setUploadingGtFor(imageId);
@@ -70,6 +71,9 @@ export function ImageLibrary({ onSelect }: ImageLibraryProps) {
         >
           <Target className="mr-1 h-3.5 w-3.5" />
           Faqat GT
+        </Button>
+        <Button type="button" variant="ghost" size="sm" onClick={() => void load()}>
+          Yangilash
         </Button>
       </div>
       {images.length === 0 ? (

@@ -1,7 +1,8 @@
 "use client";
 
 import { useCallback, useEffect, useRef, useState } from "react";
-import { ImageOff, Loader2 } from "lucide-react";
+import { ImageOff, Loader2, RefreshCw } from "lucide-react";
+import { Button } from "@/components/ui/button";
 import {
   ApiError,
   fetchAuthenticatedBlob,
@@ -23,7 +24,9 @@ function shouldPreferProxyFirst(directSrc: string, storageKey: string): boolean 
   if (!storageKey) return false;
   if (process.env.NODE_ENV !== "production") return false;
   return (
-    directSrc.includes("/static/results/") || directSrc.includes("/static/uploads/")
+    directSrc.includes("/static/results/") ||
+    directSrc.includes("/static/uploads/") ||
+    directSrc.includes("onrender.com/static/")
   );
 }
 
@@ -39,6 +42,7 @@ export function StoredImage({
   const [error, setError] = useState<string | null>(null);
   const triedProxyRef = useRef(false);
   const objectUrlRef = useRef<string | null>(null);
+  const [reloadToken, setReloadToken] = useState(0);
 
   const storageKey = resolveStorageKey(filePath, url);
   const directSrc = resolveStaticUrl(filePath, url);
@@ -52,7 +56,7 @@ export function StoredImage({
 
   const loadViaProxy = useCallback(async () => {
     if (!storageKey) {
-      setError("Rasm URL ko'rsatilmagan");
+      setError("Rasm manzili topilmadi");
       setLoading(false);
       return;
     }
@@ -71,7 +75,7 @@ export function StoredImage({
           : err instanceof Error
             ? err.message
             : "Noma'lum xato";
-      setError(`Artifact yuklanmadi: ${message}`);
+      setError(`Rasm yuklanmadi: ${message}`);
       setDisplaySrc(null);
     } finally {
       setLoading(false);
@@ -85,7 +89,7 @@ export function StoredImage({
 
     if (!storageKey && !directSrc) {
       setDisplaySrc(null);
-      setError("Rasm URL ko'rsatilmagan");
+      setError("Rasm manzili topilmadi");
       setLoading(false);
       return;
     }
@@ -97,23 +101,25 @@ export function StoredImage({
 
     setDisplaySrc(directSrc);
     setLoading(false);
-  }, [directSrc, loadViaProxy, revokeObjectUrl, storageKey]);
+  }, [directSrc, loadViaProxy, revokeObjectUrl, storageKey, reloadToken]);
 
   useEffect(() => () => revokeObjectUrl(), [revokeObjectUrl]);
 
   const handleImageError = () => {
     if (triedProxyRef.current || !storageKey) {
-      setError(
-        directSrc
-          ? `Rasm yuklanmadi: ${directSrc}`
-          : "Rasm yuklanmadi",
-      );
+      setError("Rasm yuklanmadi — qayta urinib ko'ring");
       setDisplaySrc(null);
+      setLoading(false);
       return;
     }
 
     triedProxyRef.current = true;
     void loadViaProxy();
+  };
+
+  const handleRetry = () => {
+    triedProxyRef.current = false;
+    setReloadToken((t) => t + 1);
   };
 
   if (loading) {
@@ -141,6 +147,12 @@ export function StoredImage({
       >
         <ImageOff className="h-8 w-8 opacity-40" />
         <span className="text-xs leading-relaxed">{error ?? "Rasm mavjud emas"}</span>
+        {storageKey && (
+          <Button type="button" variant="outline" size="sm" className="h-7 text-xs" onClick={handleRetry}>
+            <RefreshCw className="mr-1 h-3 w-3" />
+            Qayta yuklash
+          </Button>
+        )}
       </div>
     );
   }

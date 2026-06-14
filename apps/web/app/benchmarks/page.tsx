@@ -178,7 +178,7 @@ export default function BenchmarksPage() {
       <SectionHeader
         title="Benchmark tizimi"
         description="Dataset yaratish, cohort run va aggregate natijalar"
-        badge="fair_v1"
+        badge="Benchmark"
       />
 
       {error && <p className="text-sm text-destructive">{error}</p>}

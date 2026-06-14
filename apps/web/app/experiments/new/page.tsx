@@ -1,7 +1,6 @@
 "use client";
 
 import { useCallback, useEffect, useState } from "react";
-import Link from "next/link";
 import { useRouter } from "next/navigation";
 import {
   AlertCircle,
@@ -10,6 +9,7 @@ import {
   ChevronRight,
   Upload,
 } from "lucide-react";
+import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -26,6 +26,12 @@ import {
   PLATFORM_NAME,
 } from "@shared/constants";
 import type { AlgorithmParams, GAParams, ImageRecord } from "@shared/types";
+import {
+  COMPARISON_WORKFLOW_LABEL,
+  EVALUATION_MODE_LABELS,
+  FAIR_PROTOCOL_LABEL,
+  GT_PAIRING_LABELS,
+} from "@/lib/user-labels";
 import { cn, formatBytes } from "@/lib/utils";
 
 const ALLOWED_TYPES = ["image/jpeg", "image/png", "image/webp"];
@@ -53,6 +59,7 @@ export default function NewExperimentPage() {
 
   const hasGroundTruth = Boolean(image?.has_ground_truth);
   const evaluationMode = hasGroundTruth ? "supervised" : "heuristic";
+  const gtPendingUpload = Boolean(gtFile && !hasGroundTruth);
 
   useEffect(() => {
     if (!title && file) {
@@ -76,6 +83,10 @@ export default function NewExperimentPage() {
 
   const uploadOriginal = async () => {
     if (!file) return;
+    if (image) {
+      setStep(1);
+      return;
+    }
     setBusy(true);
     setError(null);
     try {
@@ -189,8 +200,14 @@ export default function NewExperimentPage() {
               </div>
             </div>
           )}
+          {image && (
+            <div className="space-y-2">
+              <p className="text-sm font-medium text-emerald-600">Serverda saqlangan rasm ko‘rinishi:</p>
+              <ImageCard image={image} />
+            </div>
+          )}
           <Button onClick={uploadOriginal} disabled={!file || busy}>
-            {busy ? "Yuklanmoqda..." : "Davom etish"}
+            {busy ? "Yuklanmoqda..." : image ? "Davom etish" : "Yuklash va davom etish"}
           </Button>
         </div>
       )}
@@ -199,6 +216,30 @@ export default function NewExperimentPage() {
         <div className="scientific-card space-y-4 p-6">
           <h2 className="text-lg font-semibold">2. Ground Truth mask (ixtiyoriy)</h2>
           <ImageCard image={image} />
+
+          <div className="rounded-lg border p-3">
+            {hasGroundTruth ? (
+              <div className="flex items-center gap-2 text-sm text-emerald-600">
+                <CheckCircle2 className="h-4 w-4" />
+                <Badge variant="default">{GT_PAIRING_LABELS.paired}</Badge>
+                <span className="text-muted-foreground">— nazoratli baholash yoqiladi</span>
+              </div>
+            ) : gtFile ? (
+              <div className="flex items-center gap-2 text-sm text-amber-700 dark:text-amber-300">
+                <AlertCircle className="h-4 w-4" />
+                <Badge variant="secondary">{GT_PAIRING_LABELS.selectedNotUploaded}</Badge>
+              </div>
+            ) : (
+              <div className="space-y-2 text-sm">
+                <Badge variant="outline">{GT_PAIRING_LABELS.notPaired}</Badge>
+                <p className="text-muted-foreground">
+                  GT yuklamasangiz, tajriba{" "}
+                  <strong>{EVALUATION_MODE_LABELS.heuristic}</strong> rejimida ishlaydi.
+                </p>
+              </div>
+            )}
+          </div>
+
           <p className="text-sm text-muted-foreground">
             Supervised metrikalar (IoU, F1, Dice) uchun GT mask yuklang. PNG tavsiya etiladi.
           </p>
@@ -211,27 +252,26 @@ export default function NewExperimentPage() {
               onChange={(e) => setGtFile(e.target.files?.[0] ?? null)}
             />
           </div>
-          {image.has_ground_truth && (
-            <div className="flex items-center gap-2 text-sm text-emerald-600">
-              <CheckCircle2 className="h-4 w-4" />
-              GT juftlangan
-            </div>
-          )}
-          <div className="flex gap-2">
+          <div className="flex flex-wrap gap-2">
             <Button variant="outline" onClick={() => setStep(0)}>
               <ChevronLeft className="mr-1 h-4 w-4" />
               Orqaga
             </Button>
-            {gtFile && (
+            {gtFile && !hasGroundTruth && (
               <Button variant="secondary" onClick={uploadGt} disabled={busy}>
-                GT yuklash
+                {busy ? "Yuklanmoqda..." : "GT yuklash"}
               </Button>
             )}
-            <Button onClick={() => setStep(2)}>
+            <Button onClick={() => setStep(2)} disabled={gtPendingUpload}>
               Davom etish
               <ChevronRight className="ml-1 h-4 w-4" />
             </Button>
           </div>
+          {gtPendingUpload && (
+            <p className="text-xs text-amber-700 dark:text-amber-300">
+              GT fayl tanlangan, lekin yuklanmagan. Avval &quot;GT yuklash&quot; tugmasini bosing yoki faylni olib tashlang.
+            </p>
+          )}
         </div>
       )}
 
@@ -239,8 +279,7 @@ export default function NewExperimentPage() {
         <div className="scientific-card space-y-4 p-6">
           <h2 className="text-lg font-semibold">3. Algoritmlar va parametrlar</h2>
           <p className="text-sm text-muted-foreground">
-            Taqqoslash rejimi: <strong>compare_all</strong> — barcha 4 algoritm (Sobel, Prewitt,
-            Canny, GA) fair_v1 protokoli bilan ishlaydi.
+            {COMPARISON_WORKFLOW_LABEL}. {FAIR_PROTOCOL_LABEL}.
           </p>
           <AlgorithmParamsForm
             params={params}
@@ -264,8 +303,7 @@ export default function NewExperimentPage() {
           <EvaluationModeBanner mode={evaluationMode} hasGroundTruth={hasGroundTruth} />
           {!hasGroundTruth && <ScientificDisclaimer />}
           <p className="text-sm text-muted-foreground">
-            Baholash rejimi Ground Truth mavjudligiga qarab avtomatik aniqlanadi (Phase Z+).
-            Foydalanuvchi supervised rejimni GTsiz majburlay olmaydi.
+            Baholash rejimi Ground Truth mavjudligiga qarab avtomatik aniqlanadi.
           </p>
           <div className="flex gap-2">
             <Button variant="outline" onClick={() => setStep(2)}>
@@ -293,14 +331,17 @@ export default function NewExperimentPage() {
               <span className="text-muted-foreground">Rasm:</span> {image.original_name}
             </p>
             <p>
-              <span className="text-muted-foreground">GT:</span>{" "}
-              {hasGroundTruth ? "Juftlangan" : "Yo'q (heuristic)"}
+              <span className="text-muted-foreground">Ground Truth:</span>{" "}
+              {hasGroundTruth ? GT_PAIRING_LABELS.paired : GT_PAIRING_LABELS.notPaired}
             </p>
             <p>
-              <span className="text-muted-foreground">Algoritmlar:</span> compare_all (4 ta)
+              <span className="text-muted-foreground">Algoritmlar:</span> {COMPARISON_WORKFLOW_LABEL}
             </p>
             <p>
-              <span className="text-muted-foreground">Rejim:</span> {evaluationMode}
+              <span className="text-muted-foreground">Baholash:</span>{" "}
+              {hasGroundTruth
+                ? EVALUATION_MODE_LABELS.supervised
+                : EVALUATION_MODE_LABELS.heuristic}
             </p>
           </div>
           <div className="flex gap-2">

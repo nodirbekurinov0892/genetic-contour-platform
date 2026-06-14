@@ -3,7 +3,7 @@ import { PLATFORM_NAME } from "@shared/constants";
 import { Button } from "@/components/ui/button";
 
 const topics = [
-  { title: "Yangi tajriba", href: "/experiments/new", body: "5 bosqichli wizard orqali compare_all ishga tushiring." },
+  { title: "Yangi tajriba", href: "/experiments/new", body: "5 bosqichli wizard orqali barcha algoritmlarni ishga tushiring." },
   { title: "Ground Truth", href: "/ground-truth", body: "GT validatsiya, qayta tekshirish va o&apos;chirish." },
   { title: "Benchmarklar", href: "/benchmarks", body: "Cohort benchmark va leaderboard." },
   { title: "Hisobotlar", href: "/reports", body: "PDF v3 ilmiy hisobotlar." },

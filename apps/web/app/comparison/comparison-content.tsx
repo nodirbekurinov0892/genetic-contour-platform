@@ -22,30 +22,42 @@ export default function ComparisonPageContent() {
   const initialId = searchParams.get("experiment") ?? "";
 
   const [experiments, setExperiments] = useState<ExperimentBrowseItem[]>([]);
-  const [selectedId, setSelectedId] = useState(initialId);
+  const [selectedId, setSelectedId] = useState("");
   const [results, setResults] = useState<ExperimentResults | null>(null);
   const [insights, setInsights] = useState<ScientificInsights | null>(null);
   const [sourceImage, setSourceImage] = useState<ImageRecord | null>(null);
-  const [loading, setLoading] = useState(true);
+  const [loadingList, setLoadingList] = useState(true);
+  const [loadingResults, setLoadingResults] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   const loadExperiments = useCallback(async () => {
-    const browse = await experimentService.browse({
-      status: "completed",
-      sort: "created_at_desc",
-      limit: 50,
-    });
-    setExperiments(browse.items);
-    if (!selectedId && browse.items.length > 0) {
-      setSelectedId(browse.items[0].id);
-    } else if (browse.items.length === 0) {
-      setLoading(false);
+    setLoadingList(true);
+    setError(null);
+    try {
+      const browse = await experimentService.browse({
+        status: "completed",
+        sort: "created_at_desc",
+        limit: 50,
+      });
+      setExperiments(browse.items);
+      const preferred =
+        initialId && browse.items.some((e) => e.id === initialId)
+          ? initialId
+          : browse.items[0]?.id ?? "";
+      setSelectedId(preferred);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Tajribalarni yuklab bo'lmadi");
+    } finally {
+      setLoadingList(false);
     }
-  }, [selectedId]);
+  }, [initialId]);
 
   const loadResults = useCallback(async (id: string) => {
-    if (!id) return;
-    setLoading(true);
+    if (!id) {
+      setResults(null);
+      return;
+    }
+    setLoadingResults(true);
     setError(null);
     try {
       const [res, ins] = await Promise.all([
@@ -60,28 +72,29 @@ export default function ComparisonPageContent() {
       setError(err instanceof Error ? err.message : "Natijalarni yuklab bo'lmadi");
       setResults(null);
     } finally {
-      setLoading(false);
+      setLoadingResults(false);
     }
   }, []);
 
   useEffect(() => {
-    loadExperiments().catch((err) => {
-      setError(err instanceof Error ? err.message : "Tajribalarni yuklab bo'lmadi");
-      setLoading(false);
-    });
+    void loadExperiments();
   }, [loadExperiments]);
 
   useEffect(() => {
-    if (selectedId) loadResults(selectedId);
+    if (selectedId) void loadResults(selectedId);
   }, [selectedId, loadResults]);
 
-  if (error && !results) {
+  if (loadingList) {
+    return <LoadingState message="Tajribalar ro'yxati yuklanmoqda..." />;
+  }
+
+  if (error && !results && experiments.length === 0) {
     return (
       <ErrorState
-        title="Taqqoslash markazini yuklab bo&apos;lmadi"
+        title="Taqqoslash markazini yuklab bo'lmadi"
         message={error}
         hint={`API ${API_BASE}`}
-        onRetry={() => selectedId && loadResults(selectedId)}
+        onRetry={() => void loadExperiments()}
       />
     );
   }
@@ -90,8 +103,8 @@ export default function ComparisonPageContent() {
     <div className="space-y-6">
       <SectionHeader
         title="Taqqoslash markazi"
-        description="Sobel, Prewitt, Canny va Genetic Algorithm natijalarini yonma-yon tahlil qiling"
-        badge="Comparison Center"
+        description="Sobel, Prewitt, Canny va Genetik algoritm natijalarini yonma-yon tahlil qiling"
+        badge="Taqqoslash"
       />
 
       <div className="flex flex-wrap items-center gap-3">
@@ -116,17 +129,20 @@ export default function ComparisonPageContent() {
         </Button>
       </div>
 
-      {experiments.length === 0 && !loading ? (
+      {experiments.length === 0 ? (
         <EmptyState
-          title="Yakunlangan tajribalar yo&apos;q"
+          title="Yakunlangan tajribalar yo'q"
+          description="Taqqoslash uchun avval tajribani yakunlang."
           action={
             <Button asChild>
               <Link href="/experiments/new">Birinchi tajribani boshlash</Link>
             </Button>
           }
         />
-      ) : loading ? (
+      ) : loadingResults ? (
         <LoadingState message="Taqqoslash natijalari yuklanmoqda..." />
+      ) : error && !results ? (
+        <ErrorState message={error} onRetry={() => selectedId && loadResults(selectedId)} />
       ) : results ? (
         <ComparisonCenterView
           data={results}

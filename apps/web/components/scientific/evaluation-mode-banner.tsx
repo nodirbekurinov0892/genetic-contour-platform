@@ -3,6 +3,10 @@
 import { Badge } from "@/components/ui/badge";
 import type { EvaluationMode } from "@shared/types";
 import { ScientificDisclaimer } from "@/components/scientific/scientific-disclaimer";
+import {
+  EVALUATION_MODE_DESCRIPTIONS,
+  EVALUATION_MODE_LABELS,
+} from "@/lib/user-labels";
 
 interface EvaluationModeBannerProps {
   mode: EvaluationMode;
@@ -17,17 +21,15 @@ export function EvaluationModeBanner({ mode, hasGroundTruth }: EvaluationModeBan
       <div className="flex flex-wrap items-center gap-2">
         <span className="text-sm font-medium">Baholash rejimi:</span>
         <Badge variant={isSupervised ? "default" : "secondary"}>
-          {isSupervised ? "Supervised Evaluation" : "Heuristic Evaluation"}
+          {isSupervised
+            ? EVALUATION_MODE_LABELS.supervised
+            : EVALUATION_MODE_LABELS.heuristic}
         </Badge>
-        {isSupervised ? (
-          <span className="text-xs text-muted-foreground">
-            Ground Truth mavjud — IoU/F1/Dice orqali o&apos;lchanadi
-          </span>
-        ) : (
-          <span className="text-xs text-muted-foreground">
-            Ground Truth yo&apos;q — g&apos;olib aniqlanmaydi
-          </span>
-        )}
+        <span className="text-xs text-muted-foreground">
+          {isSupervised
+            ? EVALUATION_MODE_DESCRIPTIONS.supervised
+            : EVALUATION_MODE_DESCRIPTIONS.heuristic}
+        </span>
       </div>
       {!isSupervised && <ScientificDisclaimer />}
     </div>

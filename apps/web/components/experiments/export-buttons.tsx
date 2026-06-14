@@ -4,19 +4,22 @@ import { useState } from "react";
 import { FileText, FileJson, FileSpreadsheet, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { experimentService } from "@/services/experimentService";
+import { EXPERIMENT_STATUS_MESSAGES } from "@/lib/user-labels";
 import { cn } from "@/lib/utils";
 
 interface ExportButtonsProps {
   experimentId: string;
-  disabled?: boolean;
+  status?: string;
   className?: string;
 }
 
 type ExportType = "pdf" | "json" | "csv" | null;
 
-export function ExportButtons({ experimentId, disabled, className }: ExportButtonsProps) {
+export function ExportButtons({ experimentId, status = "completed", className }: ExportButtonsProps) {
   const [loading, setLoading] = useState<ExportType>(null);
   const [error, setError] = useState<string | null>(null);
+
+  const isCompleted = status === "completed";
 
   const handleExport = async (type: ExportType) => {
     if (!type) return;
@@ -37,13 +40,22 @@ export function ExportButtons({ experimentId, disabled, className }: ExportButto
     }
   };
 
+  if (!isCompleted) {
+    return (
+      <p className={cn("text-xs text-muted-foreground", className)}>
+        {EXPERIMENT_STATUS_MESSAGES[status] ??
+          "Hisobotlar faqat yakunlangan tajribalar uchun mavjud."}
+      </p>
+    );
+  }
+
   return (
     <div className={cn("space-y-2", className)}>
       <div className="flex flex-wrap gap-2">
         <Button
           variant="default"
           size="sm"
-          disabled={disabled || loading !== null}
+          disabled={loading !== null}
           onClick={() => handleExport("pdf")}
           className="gap-2"
         >
@@ -52,12 +64,12 @@ export function ExportButtons({ experimentId, disabled, className }: ExportButto
           ) : (
             <FileText className="h-4 w-4" />
           )}
-          PDF hisobotni yuklab olish
+          PDF hisobot
         </Button>
         <Button
           variant="outline"
           size="sm"
-          disabled={disabled || loading !== null}
+          disabled={loading !== null}
           onClick={() => handleExport("json")}
           className="gap-2"
         >
@@ -66,12 +78,12 @@ export function ExportButtons({ experimentId, disabled, className }: ExportButto
           ) : (
             <FileJson className="h-4 w-4" />
           )}
-          JSON yuklab olish
+          JSON
         </Button>
         <Button
           variant="outline"
           size="sm"
-          disabled={disabled || loading !== null}
+          disabled={loading !== null}
           onClick={() => handleExport("csv")}
           className="gap-2"
         >
@@ -80,7 +92,7 @@ export function ExportButtons({ experimentId, disabled, className }: ExportButto
           ) : (
             <FileSpreadsheet className="h-4 w-4" />
           )}
-          CSV yuklab olish
+          CSV
         </Button>
       </div>
       {error && <p className="text-xs text-destructive">{error}</p>}
