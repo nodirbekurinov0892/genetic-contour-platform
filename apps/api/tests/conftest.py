@@ -36,7 +36,12 @@ from app.utils.rate_limit import limiter  # noqa: E402
 limiter.enabled = False
 
 settings = get_settings()
-test_engine = create_async_engine(settings.async_database_url, echo=False)
+test_engine = create_async_engine(
+    settings.async_database_url,
+    echo=False,
+    pool_size=10,
+    max_overflow=10,
+)
 TestSessionLocal = async_sessionmaker(test_engine, class_=AsyncSession, expire_on_commit=False)
 
 # Route workers through the same engine/pool as the test client (avoids CI deadlocks).

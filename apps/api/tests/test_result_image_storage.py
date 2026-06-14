@@ -66,8 +66,8 @@ async def test_sobel_results_use_storage_keys(client: AsyncClient):
     assert run.json()["status"] == "queued"
 
     # Run worker after the HTTP transaction commits (enqueue is stubbed in tests).
-    await asyncio.sleep(0)
-    await run_experiment_job(uuid.UUID(experiment_id))
+    await asyncio.sleep(0.05)
+    await asyncio.wait_for(run_experiment_job(uuid.UUID(experiment_id)), timeout=90.0)
 
     status_resp = await client.get(
         f"/api/experiments/{experiment_id}/status",
