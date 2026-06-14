@@ -22,8 +22,8 @@ export function ResultGrid({ runs }: ResultGridProps) {
   if (edgeRuns.length === 0) {
     return (
       <EmptyState
-        title="Hali natijalar yo'q"
-        description="Algoritm natijalarini ko'rish uchun tajriba ishga tushiring."
+        title="Hali natijalar yo&apos;q"
+        description="Algoritm natijalarini ko&apos;rish uchun tajriba ishga tushiring."
       />
     );
   }

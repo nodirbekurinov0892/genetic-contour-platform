@@ -40,7 +40,7 @@ export function ReproducibilityPanel({ data }: ReproducibilityPanelProps) {
     <section>
       <SectionHeader
         title="Reproducibility"
-        description="Tajriba muhiti, parametrlar va seed ma'lumotlari"
+        description="Tajriba muhiti, parametrlar va seed ma&apos;lumotlari"
         badge="Science"
       />
       <div className="overflow-x-auto rounded-lg border">

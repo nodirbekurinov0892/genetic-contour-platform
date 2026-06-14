@@ -54,7 +54,7 @@ export function ComparisonCenterView({
   if (experiment.status !== "completed" || edgeRuns.length === 0) {
     return (
       <EmptyState
-        title="Taqqoslash uchun natijalar yo'q"
+        title="Taqqoslash uchun natijalar yo&apos;q"
         description="Yakunlangan compare_all tajribasini tanlang yoki yangi tajriba ishga tushiring."
       />
     );

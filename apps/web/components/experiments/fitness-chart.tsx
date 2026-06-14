@@ -90,7 +90,7 @@ export function FitnessChart({ history }: FitnessChartProps) {
               stroke="hsl(var(--muted-foreground))"
               strokeWidth={1.5}
               strokeDasharray="5 5"
-              name="O'rtacha fitness"
+              name="O&apos;rtacha fitness"
               dot={false}
             />
           </LineChart>

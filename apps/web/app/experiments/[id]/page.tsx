@@ -225,7 +225,7 @@ export default function ExperimentDetailPage() {
   if (error && !jobStatus) {
     return (
       <ErrorState
-        title="Tajribani yuklab bo'lmadi"
+        title="Tajribani yuklab bo&apos;lmadi"
         message={error}
         hint={`API ${API_BASE} manzilida ishlayotganini tekshiring`}
         onRetry={load}

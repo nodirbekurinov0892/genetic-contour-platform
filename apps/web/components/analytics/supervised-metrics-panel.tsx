@@ -64,7 +64,7 @@ export function SupervisedMetricsPanel({
     <section className="space-y-4">
       <SectionHeader
         title="Supervised metrikalar"
-        description="Ground Truth asosida o'lchanadigan metrikalar — g'olib faqat shu blokda"
+        description="Ground Truth asosida o&apos;lchanadigan metrikalar — g&apos;olib faqat shu blokda"
         badge="Supervised"
       />
       <WinnerPanel winner={winner} hasGroundTruth={hasGroundTruth} />

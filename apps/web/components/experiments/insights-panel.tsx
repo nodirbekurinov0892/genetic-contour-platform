@@ -34,7 +34,7 @@ export function InsightsPanel({ insights, loading }: InsightsPanelProps) {
     <section className="space-y-4">
       <SectionHeader
         title="Ilmiy tahlil"
-        description="Ma'lumotlarga asoslangan kuzatuvlar — narrativsiz"
+        description="Ma&apos;lumotlarga asoslangan kuzatuvlar — narrativsiz"
         badge="Science"
       />
       <EvaluationModeBanner

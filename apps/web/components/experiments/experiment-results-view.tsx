@@ -104,7 +104,7 @@ export function ExperimentResultsView({
     return (
       <EmptyState
         title="Tajriba bekor qilindi"
-        description="Natijalar hosil bo'lishidan oldin bajarish to'xtatildi."
+        description="Natijalar hosil bo&apos;lishidan oldin bajarish to&apos;xtatildi."
       />
     );
   }
@@ -113,7 +113,7 @@ export function ExperimentResultsView({
     return (
       <EmptyState
         title="Tajriba muvaffaqiyatsiz"
-        description="Qayta ishlash yakunlanmadi. Boshqa parametrlar bilan qayta urinib ko'ring."
+        description="Qayta ishlash yakunlanmadi. Boshqa parametrlar bilan qayta urinib ko&apos;ring."
       />
     );
   }
@@ -201,8 +201,8 @@ export function ExperimentResultsView({
             <ScientificImageCard
               filePath={originalFromPipeline.file_path}
               url={originalFromPipeline.url}
-              alt="O'lchami o'zgartirilgan asl rasm"
-              title="O'lcham o'zgartirilgan"
+              alt="O&apos;lchami o&apos;zgartirilgan asl rasm"
+              title="O&apos;lcham o&apos;zgartirilgan"
               subtitle="Nisbat saqlangan"
             />
           )}
@@ -236,7 +236,7 @@ export function ExperimentResultsView({
         />
         {edgeRuns.length === 0 ? (
           <EmptyState
-            title="Algoritm natijalari yo'q"
+            title="Algoritm natijalari yo&apos;q"
             description="Natijalarni olish uchun tajribani ishga tushiring."
           />
         ) : (
@@ -268,7 +268,7 @@ export function ExperimentResultsView({
       <section>
         <SectionHeader
           title="Batafsil natijalar"
-          description="Chekka xaritalari, qoplama rasmlar va algoritm bo'yicha metrikalar"
+          description="Chekka xaritalari, qoplama rasmlar va algoritm bo&apos;yicha metrikalar"
         />
         <div className="grid gap-6 lg:grid-cols-2">
           {edgeRuns.map((run) => {
@@ -385,7 +385,7 @@ export function ExperimentResultsView({
       {conclusion && (
         <section>
           <SectionHeader
-            title="Ma'lumotlarga asoslangan xulosa"
+            title="Ma&apos;lumotlarga asoslangan xulosa"
             description="Narrativsiz, faqat metrikalar faktlari"
           />
           <Card className="scientific-card border-primary/20 bg-primary/5">

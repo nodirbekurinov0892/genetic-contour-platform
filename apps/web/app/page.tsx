@@ -104,7 +104,7 @@ export default function DashboardPage() {
   if (error) {
     return (
       <ErrorState
-        title="Boshqaruv panelini yuklab bo'lmadi"
+        title="Boshqaruv panelini yuklab bo&apos;lmadi"
         message={error}
         hint={`API ${API_BASE} manzilida ishlayotganini tekshiring`}
       />
@@ -157,18 +157,18 @@ export default function DashboardPage() {
           accent="green"
         />
         <StatCard
-          title="Eng ko'p algoritm"
+          title="Eng ko&apos;p algoritm"
           value={
             stats?.most_used_algorithm
               ? ALGO_LABELS[stats.most_used_algorithm] ?? stats.most_used_algorithm
               : "—"
           }
-          subtitle="Platforma bo'ylab"
+          subtitle="Platforma bo&apos;ylab"
           icon={Activity}
           accent="amber"
         />
         <StatCard
-          title="O'rtacha runtime"
+          title="O&apos;rtacha runtime"
           value={stats?.avg_runtime_ms != null ? `${stats.avg_runtime_ms} ms` : "—"}
           subtitle="Barcha algoritmlar"
           icon={Timer}
@@ -178,10 +178,10 @@ export default function DashboardPage() {
 
       <div className="grid gap-6 lg:grid-cols-3">
         <section className="scientific-card p-4 lg:col-span-2">
-          <SectionHeader title="So'nggi tajribalar" description="Eng yangi tahlillar" />
+          <SectionHeader title="So&apos;nggi tajribalar" description="Eng yangi tahlillar" />
           {experiments.length === 0 ? (
             <EmptyState
-              title="Hali tajribalar yo'q"
+              title="Hali tajribalar yo&apos;q"
               action={
                 <Button asChild size="sm">
                   <Link href="/experiments/new">Birinchi tajriba</Link>
@@ -226,7 +226,7 @@ export default function DashboardPage() {
               <p className="font-semibold">{stats?.total_images ?? 0}</p>
             </div>
             <div>
-              <p className="text-muted-foreground">O'rtacha IoU</p>
+              <p className="text-muted-foreground">O&apos;rtacha IoU</p>
               <p className="font-semibold">{stats?.avg_iou?.toFixed(3) ?? "—"}</p>
             </div>
           </div>

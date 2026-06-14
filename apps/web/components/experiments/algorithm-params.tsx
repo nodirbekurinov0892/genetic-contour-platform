@@ -47,7 +47,7 @@ export function AlgorithmParamsForm({
       <div>
         <SectionHeader
           title="Oldindan qayta ishlash va klassik parametrlar"
-          description="Kulrangga o'tkazish, xiralashtirish, o'lchamni o'zgartirish va klassik chekka detektorlariga qo'llanadi"
+          description="Kulrangga o&apos;tkazish, xiralashtirish, o&apos;lchamni o&apos;zgartirish va klassik chekka detektorlariga qo&apos;llanadi"
           badge="Umumiy"
           className="mb-4"
         />
@@ -73,7 +73,7 @@ export function AlgorithmParamsForm({
               onChange={(e) => onParamsChange({ ...params, blur_kernel: parseInt(e.target.value) })}
             />
           </ParamField>
-          <ParamField id="resize_width" label="Kenglik o'lchami" hint="Maqsad kengligi (piksel)">
+          <ParamField id="resize_width" label="Kenglik o&apos;lchami" hint="Maqsad kengligi (piksel)">
             <Input
               id="resize_width"
               type="number"
@@ -106,7 +106,7 @@ export function AlgorithmParamsForm({
         <div>
           <SectionHeader
             title="Genetic Algorithm parametrlari"
-            description="Ko'p mezonli kontur optimallashtirish uchun populyatsiya evolyutsiyasi sozlamalari"
+            description="Ko&apos;p mezonli kontur optimallashtirish uchun populyatsiya evolyutsiyasi sozlamalari"
             badge="GA"
             className="mb-4"
           />

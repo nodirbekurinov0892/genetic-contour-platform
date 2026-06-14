@@ -44,7 +44,7 @@ export default function AnalyticsPage() {
   if (error || !stats) {
     return (
       <ErrorState
-        title="Analitika markazini yuklab bo'lmadi"
+        title="Analitika markazini yuklab bo&apos;lmadi"
         message={error ?? "Ma'lumot yo'q"}
         hint={`API ${API_BASE}`}
       />
@@ -66,7 +66,7 @@ export default function AnalyticsPage() {
     <div className="space-y-8">
       <SectionHeader
         title="Analitika markazi"
-        description="Platforma bo'ylab tajribalar, GT qamrovi va o'rtacha metrikalar"
+        description="Platforma bo&apos;ylab tajribalar, GT qamrovi va o&apos;rtacha metrikalar"
         badge="Analytics Center"
       />
 
@@ -86,14 +86,14 @@ export default function AnalyticsPage() {
           accent="green"
         />
         <StatCard
-          title="O'rtacha runtime"
+          title="O&apos;rtacha runtime"
           value={stats.avg_runtime_ms != null ? `${stats.avg_runtime_ms} ms` : "—"}
-          subtitle="Barcha algoritmlar bo'yicha"
+          subtitle="Barcha algoritmlar bo&apos;yicha"
           icon={Timer}
           accent="amber"
         />
         <StatCard
-          title="Eng ko'p ishlatilgan"
+          title="Eng ko&apos;p ishlatilgan"
           value={
             stats.most_used_algorithm
               ? ALGO_LABELS[stats.most_used_algorithm] ?? stats.most_used_algorithm
@@ -108,7 +108,7 @@ export default function AnalyticsPage() {
       <div className="grid gap-6 lg:grid-cols-2">
         <section className="scientific-card p-4">
           <SectionHeader
-            title="Supervised o'rtachalar"
+            title="Supervised o&apos;rtachalar"
             description="Faqat Ground Truth bilan hisoblangan metrikalar"
             badge="GT"
           />
@@ -151,22 +151,22 @@ export default function AnalyticsPage() {
       </div>
 
       <section className="scientific-card p-4">
-        <SectionHeader title="Platforma ko'rsatkichlari" />
+        <SectionHeader title="Platforma ko&apos;rsatkichlari" />
         <dl className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3 text-sm">
           <div>
             <dt className="text-muted-foreground">Yuklangan rasmlar</dt>
             <dd className="text-lg font-semibold">{stats.total_images}</dd>
           </div>
           <div>
-            <dt className="text-muted-foreground">O'rtacha IoU</dt>
+            <dt className="text-muted-foreground">O&apos;rtacha IoU</dt>
             <dd className="text-lg font-semibold">{stats.avg_iou?.toFixed(4) ?? "—"}</dd>
           </div>
           <div>
-            <dt className="text-muted-foreground">O'rtacha F1</dt>
+            <dt className="text-muted-foreground">O&apos;rtacha F1</dt>
             <dd className="text-lg font-semibold">{stats.avg_f1?.toFixed(4) ?? "—"}</dd>
           </div>
           <div>
-            <dt className="text-muted-foreground">O'rtacha Dice</dt>
+            <dt className="text-muted-foreground">O&apos;rtacha Dice</dt>
             <dd className="text-lg font-semibold">{stats.avg_dice?.toFixed(4) ?? "—"}</dd>
           </div>
           <div>

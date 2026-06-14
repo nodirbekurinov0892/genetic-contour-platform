@@ -76,7 +76,7 @@ export default function ComparisonPageContent() {
   if (error && !results) {
     return (
       <ErrorState
-        title="Taqqoslash markazini yuklab bo'lmadi"
+        title="Taqqoslash markazini yuklab bo&apos;lmadi"
         message={error}
         hint={`API ${API_BASE}`}
         onRetry={() => selectedId && loadResults(selectedId)}
@@ -116,7 +116,7 @@ export default function ComparisonPageContent() {
 
       {experiments.length === 0 && !loading ? (
         <EmptyState
-          title="Yakunlangan tajribalar yo'q"
+          title="Yakunlangan tajribalar yo&apos;q"
           action={
             <Button asChild>
               <Link href="/experiments/new">Birinchi tajribani boshlash</Link>

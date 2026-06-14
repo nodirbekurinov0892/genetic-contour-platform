@@ -64,7 +64,7 @@ export default function ReportsPage() {
         <ErrorState title="Xato" message={error} onRetry={load} />
       ) : items.length === 0 ? (
         <EmptyState
-          title="Yakunlangan tajribalar yo'q"
+          title="Yakunlangan tajribalar yo&apos;q"
           description="Ilmiy hisobot yaratish uchun avval tajribani yakunlang."
         />
       ) : (

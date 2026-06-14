@@ -89,8 +89,8 @@ export default function UploadPage() {
     <div className="mx-auto max-w-3xl space-y-8">
       <SectionHeader
         title="Rasm yuklash"
-        description="Kontur aniqlash tajribalari uchun test rasmlarini yuklang. Qo'llab-quvvatlanadi: JPG, PNG, WebP — maks. 10 MB."
-        badge="Kirish ma'lumoti"
+        description="Kontur aniqlash tajribalari uchun test rasmlarini yuklang. Qo&apos;llab-quvvatlanadi: JPG, PNG, WebP — maks. 10 MB."
+        badge="Kirish ma&apos;lumoti"
       />
 
       <div className="scientific-card overflow-hidden">
@@ -131,7 +131,7 @@ export default function UploadPage() {
             <div className="flex items-start gap-4">
               <div className="relative shrink-0 overflow-hidden rounded-lg border bg-background">
                 {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img src={preview} alt="Ko'rib chiqish" className="h-32 w-32 object-contain p-1" />
+                <img src={preview} alt="Ko&apos;rib chiqish" className="h-32 w-32 object-contain p-1" />
               </div>
               <div className="flex-1 space-y-3">
                 <div className="flex items-start justify-between">

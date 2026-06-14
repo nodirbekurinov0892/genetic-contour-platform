@@ -63,7 +63,7 @@ export function RedirectIfAuthenticated({ next, children }: RedirectIfAuthentica
     return (
       <div className="flex flex-col items-center gap-4 text-center">
         {!showFallback ? (
-          <LoadingState message="Yo'naltirilmoqda..." className="h-32" />
+          <LoadingState message="Yo&apos;naltirilmoqda..." className="h-32" />
         ) : (
           <p className="text-sm text-muted-foreground">
             Avtomatik yo&apos;naltirish ishlamadi. Davom etish tugmasini bosing.

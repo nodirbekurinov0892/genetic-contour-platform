@@ -120,7 +120,7 @@ export default function ExperimentsPage() {
   if (loadError && images.length === 0) {
     return (
       <ErrorState
-        title="Tajribalarni yuklab bo'lmadi"
+        title="Tajribalarni yuklab bo&apos;lmadi"
         message={loadError}
         hint={`API ${API_BASE} manzilida ishlayotganini tekshiring`}
         onRetry={loadData}
