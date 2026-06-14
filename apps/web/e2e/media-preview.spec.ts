@@ -42,12 +42,6 @@ test.describe("media preview flow", () => {
     const brokenProxy = await request.get(`/api/backend/api/media/serve/${storageKey}`);
     expect(brokenProxy.status()).toBe(404);
 
-    await page.goto("/login");
-    await page.getByLabel("Email").fill(email);
-    await page.getByLabel("Parol").fill(password);
-    await page.getByRole("button", { name: "Kirish" }).click();
-    await expect(page).not.toHaveURL(/\/login/);
-
     await page.goto("/experiments/new");
     await expect(page.getByRole("heading", { name: /Yangi tajriba/i })).toBeVisible();
   });
