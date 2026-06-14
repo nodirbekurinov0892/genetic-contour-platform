@@ -32,6 +32,9 @@ import app.jobs.recovery as recovery_module  # noqa: E402
 import app.services.experiment_worker as experiment_worker_module  # noqa: E402
 from app.utils.rate_limit import limiter  # noqa: E402
 
+# Pytest issues many auth requests in one process; never rate-limit in tests.
+limiter.enabled = False
+
 settings = get_settings()
 test_engine = create_async_engine(settings.async_database_url, echo=False)
 TestSessionLocal = async_sessionmaker(test_engine, class_=AsyncSession, expire_on_commit=False)
@@ -82,14 +85,6 @@ async def db_session() -> AsyncGenerator[AsyncSession, None]:
     async with TestSessionLocal() as session:
         yield session
         await session.rollback()
-
-
-@pytest.fixture(autouse=True)
-def _disable_rate_limiter():
-    """CI runs many register/login calls in one process; disable SlowAPI limits."""
-    limiter.enabled = False
-    yield
-    limiter.enabled = True
 
 
 @pytest.fixture(autouse=True)
