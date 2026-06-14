@@ -40,7 +40,9 @@ async def _verify_storage_access(
     if storage_key.startswith("uploads/"):
         result = await db.execute(
             select(Image).where(
-                (Image.storage_key == storage_key) | (Image.file_path == storage_key)
+                (Image.storage_key == storage_key)
+                | (Image.file_path == storage_key)
+                | (Image.ground_truth_storage_key == storage_key)
             )
         )
         image = result.scalar_one_or_none()

@@ -2,19 +2,9 @@
 
 import {
   BarChart3,
-  FlaskConical,
-  GitCompare,
-  HelpCircle,
-  Home,
-  ImageIcon,
-  LineChart,
-  FileText,
-  Layers,
   LogIn,
   LogOut,
-  PlusCircle,
-  Target,
-  Trophy,
+  Layers,
 } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
@@ -23,19 +13,7 @@ import { cn } from "@/lib/utils";
 import { ThemeToggle } from "@/components/layout/theme-toggle";
 import { useAuth } from "@/components/providers/auth-provider";
 import { Button } from "@/components/ui/button";
-
-const mainNav = [
-  { href: "/", label: "Boshqaruv paneli", icon: Home },
-  { href: "/library", label: "Rasm kutubxonasi", icon: ImageIcon },
-  { href: "/ground-truth", label: "Ground Truth", icon: Target },
-  { href: "/experiments/new", label: "Yangi tajriba", icon: PlusCircle },
-  { href: "/experiments", label: "Tajribalar", icon: FlaskConical },
-  { href: "/comparison", label: "Taqqoslash markazi", icon: GitCompare },
-  { href: "/benchmarks", label: "Benchmarklar", icon: Trophy },
-  { href: "/analytics", label: "Analitika markazi", icon: LineChart },
-  { href: "/reports", label: "Hisobotlar", icon: FileText },
-  { href: "/help", label: "Yordam", icon: HelpCircle },
-];
+import { enterpriseNav, isNavItemActive } from "@/lib/navigation";
 
 export function Sidebar() {
   const pathname = usePathname();
@@ -57,20 +35,10 @@ export function Sidebar() {
 
       <nav className="flex-1 space-y-1 overflow-y-auto p-3">
         <p className="px-3 pb-1 text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
-          Asosiy
+          Ilmiy ish oqimi
         </p>
-        {mainNav.map(({ href, label, icon: Icon }) => {
-          const active =
-            pathname === href ||
-            (href === "/experiments/new" && pathname === "/experiments/new") ||
-            (href === "/experiments" &&
-              (pathname === "/experiments" ||
-                (pathname.startsWith("/experiments/") &&
-                  !pathname.startsWith("/experiments/new")))) ||
-            (href !== "/" &&
-              href !== "/experiments" &&
-              href !== "/experiments/new" &&
-              pathname.startsWith(href));
+        {enterpriseNav.map(({ href, label, icon: Icon }) => {
+          const active = isNavItemActive(pathname, href);
           return (
             <Link
               key={href}

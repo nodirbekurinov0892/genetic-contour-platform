@@ -157,14 +157,19 @@ function normalizeStorageKey(pathOrKey: string): string {
   return pathOrKey.replace(/\\/g, "/").replace(/^\//, "");
 }
 
+function stripStaticPrefix(pathOrKey: string): string {
+  const normalized = normalizeStorageKey(pathOrKey);
+  return normalized.startsWith("static/") ? normalized.slice("static/".length) : normalized;
+}
+
 export function resolveStorageKey(filePath: string, url?: string | null): string {
-  const key = normalizeStorageKey(filePath);
+  const key = stripStaticPrefix(filePath);
   if (key.startsWith("uploads/") || key.startsWith("results/")) {
     return key;
   }
   if (url) {
     try {
-      const pathname = new URL(url).pathname.replace(/^\//, "");
+      const pathname = stripStaticPrefix(new URL(url).pathname);
       if (pathname.startsWith("uploads/") || pathname.startsWith("results/")) {
         return pathname;
       }
@@ -176,9 +181,12 @@ export function resolveStorageKey(filePath: string, url?: string | null): string
 }
 
 export function resolveMediaProxyUrl(storageKey: string): string {
-  const key = normalizeStorageKey(storageKey);
+  const key = stripStaticPrefix(storageKey);
   if (!key) return "";
-  return `${API_BASE}/api/media/serve/${key}`;
+  if (USE_BFF) {
+    return `${API_BASE}/media/serve/${key}`;
+  }
+  return `${DIRECT_API}/api/media/serve/${key}`;
 }
 
 export function staticUrl(filePath: string): string {
@@ -215,6 +223,7 @@ export async function fetchAuthenticatedBlob(pathOrUrl: string): Promise<string>
   const url = pathOrUrl.startsWith("http") ? pathOrUrl : `${API_BASE}${pathOrUrl}`;
   const res = await fetch(url, {
     headers: accessToken ? { Authorization: `Bearer ${accessToken}` } : {},
+    credentials: USE_BFF ? "include" : "same-origin",
   });
 
   if (res.status === 401) {

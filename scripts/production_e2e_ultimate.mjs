@@ -102,6 +102,43 @@ async function main() {
 
     const dash = await fetch(`${WEB}/`);
     record("WEB dashboard /", "200", String(dash.status), WEB, dash.ok ? "PASS" : "FAIL");
+
+    const png = Buffer.from(
+      "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwAEhQGAhKmMIQAAAABJRU5ErkJggg==",
+      "base64",
+    );
+    const form = new FormData();
+    form.append("file", new Blob([png], { type: "image/png" }), "bff-media.png");
+    const upload = await fetch(`${WEB}/api/backend/images/upload`, {
+      method: "POST",
+      headers: cookieHeader ? { Cookie: cookieHeader } : {},
+      body: form,
+    });
+    const uploadJson = upload.ok ? await upload.json() : null;
+    const storageKey = uploadJson?.image?.storage_key || "";
+    record("BFF image upload", "200 + storage_key", String(upload.status), storageKey, upload.ok && storageKey ? "PASS" : "FAIL");
+
+    const mediaOk = await fetch(`${WEB}/api/backend/media/serve/${storageKey}`, {
+      headers: cookieHeader ? { Cookie: cookieHeader } : {},
+    });
+    record(
+      "BFF media proxy",
+      "200 image bytes",
+      String(mediaOk.status),
+      mediaOk.headers.get("content-type") || "",
+      mediaOk.ok ? "PASS" : "FAIL",
+    );
+
+    const broken = await fetch(`${WEB}/api/backend/api/media/serve/${storageKey}`, {
+      headers: cookieHeader ? { Cookie: cookieHeader } : {},
+    });
+    record(
+      "BFF double-api path blocked",
+      "404",
+      String(broken.status),
+      "/api/backend/api/media/serve",
+      broken.status === 404 ? "PASS" : "FAIL",
+    );
   }
 
   // Register + login (direct API)

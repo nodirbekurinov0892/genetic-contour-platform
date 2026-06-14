@@ -130,12 +130,18 @@ export default function DashboardPage() {
           <h1 className="text-3xl font-bold tracking-tight">Boshqaruv paneli</h1>
           <p className="text-muted-foreground">{PLATFORM_SUBTITLE}</p>
         </div>
-        <div className="flex gap-2">
-          <Button variant="outline" asChild>
-            <Link href="/comparison">Taqqoslash</Link>
-          </Button>
+        <div className="flex flex-wrap gap-2">
           <Button asChild>
             <Link href="/experiments/new">Yangi tajriba</Link>
+          </Button>
+          <Button variant="outline" asChild>
+            <Link href="/experiments">Tajribalar</Link>
+          </Button>
+          <Button variant="outline" asChild>
+            <Link href="/comparison">Taqqoslash markazi</Link>
+          </Button>
+          <Button variant="outline" asChild>
+            <Link href="/ground-truth">Ground Truth</Link>
           </Button>
         </div>
       </div>
