@@ -24,6 +24,8 @@ def schedule_experiment_run(experiment_id: uuid.UUID) -> str:
     loop = asyncio.get_running_loop()
 
     async def _wrapper() -> None:
+        # Yield once so the HTTP handler can commit before the worker claims the row.
+        await asyncio.sleep(0)
         try:
             await run_experiment_job(experiment_id)
         except asyncio.CancelledError:

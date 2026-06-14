@@ -3,22 +3,21 @@ from collections.abc import AsyncGenerator
 
 import pytest
 import pytest_asyncio
-from fastapi import HTTPException
 from httpx import ASGITransport, AsyncClient
 from sqlalchemy import text
 from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker, create_async_engine
 
-os.environ.setdefault(
+os.environ["DATABASE_URL"] = os.environ.get(
     "DATABASE_URL",
     "postgresql+asyncpg://genetic_contour:genetic_contour_secret@localhost:5432/genetic_contour_test",
 )
-os.environ.setdefault("SECRET_KEY", "test-secret-key-for-pytest-only-32chars")
-os.environ.setdefault("JWT_SECRET", "test-jwt-secret-for-pytest-only-32chars")
-os.environ.setdefault("API_DEBUG", "true")
-os.environ.setdefault("TRUSTED_HOSTS", "testserver,localhost,127.0.0.1")
-os.environ.setdefault("REDIS_URL", "redis://localhost:6379/0")
-os.environ.setdefault("EXPERIMENT_QUEUE_BACKEND", "asyncio")
-os.environ.setdefault("CELERY_TASK_ALWAYS_EAGER", "false")
+os.environ["SECRET_KEY"] = os.environ.get("SECRET_KEY", "test-secret-key-for-pytest-only-32chars")
+os.environ["JWT_SECRET"] = os.environ.get("JWT_SECRET", "test-jwt-secret-for-pytest-only-32chars")
+os.environ["API_DEBUG"] = "true"
+os.environ["TRUSTED_HOSTS"] = os.environ.get("TRUSTED_HOSTS", "testserver,localhost,127.0.0.1")
+os.environ["REDIS_URL"] = os.environ.get("REDIS_URL", "redis://localhost:6379/0")
+os.environ["EXPERIMENT_QUEUE_BACKEND"] = os.environ.get("EXPERIMENT_QUEUE_BACKEND", "asyncio")
+os.environ["CELERY_TASK_ALWAYS_EAGER"] = os.environ.get("CELERY_TASK_ALWAYS_EAGER", "false")
 
 from app.config import get_settings  # noqa: E402
 
@@ -92,17 +91,15 @@ def _stub_celery_queue(monkeypatch):
 
 
 @pytest_asyncio.fixture
-async def client(db_session: AsyncSession) -> AsyncGenerator[AsyncClient, None]:
+async def client() -> AsyncGenerator[AsyncClient, None]:
     async def override_get_db():
-        try:
-            yield db_session
-            await db_session.commit()
-        except HTTPException:
-            await db_session.commit()
-            raise
-        except Exception:
-            await db_session.rollback()
-            raise
+        async with TestSessionLocal() as session:
+            try:
+                yield session
+                await session.commit()
+            except Exception:
+                await session.rollback()
+                raise
 
     app.dependency_overrides[get_db] = override_get_db
 
