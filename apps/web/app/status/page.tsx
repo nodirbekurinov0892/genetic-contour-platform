@@ -107,7 +107,7 @@ export default async function StatusPage() {
         {checks.redis?.detail?.includes("asyncio") && (
           <p className="text-xs text-muted-foreground">
             Redis skipped — expected when <code>EXPERIMENT_QUEUE_BACKEND=asyncio</code>. See{" "}
-            <code>docs/deployment.md</code> for scaling to Celery + Redis.
+            <code>docs/queue-scalability.md</code> for scaling to Celery + Redis.
           </p>
         )}
       </section>

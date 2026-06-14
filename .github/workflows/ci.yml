@@ -50,31 +50,7 @@ jobs:
           REDIS_URL: redis://localhost:6379/0
           EXPERIMENT_QUEUE_BACKEND: asyncio
           MPLBACKEND: Agg
-        run: |
-          set +e
-          pytest -q --tb=short --timeout=90 --junit-xml=pytest-results.xml
-          code=$?
-          if [ $code -ne 0 ]; then
-            python - <<'PY'
-          import xml.etree.ElementTree as ET
-          try:
-              root = ET.parse("pytest-results.xml").getroot()
-          except Exception as exc:
-              print("Could not parse junit xml:", exc)
-          else:
-              for case in root.iter("testcase"):
-                  failure = case.find("failure")
-                  error = case.find("error")
-                  if failure is None and error is None:
-                      continue
-                  print("FAILED:", case.get("classname"), case.get("name"))
-                  node = failure if failure is not None else error
-                  text = (node.text or "").strip()
-                  if text:
-                      print(text[:1200])
-          PY
-            exit $code
-          fi
+        run: pytest -q --tb=short --timeout=90
 
   web-lint-build:
     runs-on: ubuntu-latest

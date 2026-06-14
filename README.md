@@ -15,7 +15,7 @@ Dissertatsiya III bob: *"Intellektual dasturiy tizim ishlab chiqish"*
 
 - Health: `GET /health` · `GET /health/ready`
 - E2E gate: `node scripts/production_e2e_ultimate.mjs` (23 checks)
-- Full status: [docs/production-status.md](docs/production-status.md)
+- Full status: [docs/production-status.md](docs/production-status.md) · live page: `/status`
 - Queue scalability (asyncio vs Celery): [docs/queue-scalability.md](docs/queue-scalability.md)
 
 > **Current queue mode:** `EXPERIMENT_QUEUE_BACKEND=asyncio` on Render. Redis shows as *skipped* in `/health/ready` — expected for single-process deployments. Upgrade path documented in [queue-scalability.md](docs/queue-scalability.md).
