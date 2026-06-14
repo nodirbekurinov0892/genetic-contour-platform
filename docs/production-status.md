@@ -67,6 +67,8 @@ cd apps/api && pytest -q
 
 ## CI
 
+![CI](https://github.com/nodirbekurinov0892/genetic-contour-platform/actions/workflows/ci.yml/badge.svg)
+
 GitHub Actions workflow `.github/workflows/ci.yml`:
 
 - `api-tests` — PostgreSQL 16 service + pytest

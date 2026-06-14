@@ -6,6 +6,8 @@ Dissertatsiya III bob: *"Intellektual dasturiy tizim ishlab chiqish"*
 
 ## Production Status (Phase Ultimate)
 
+[![CI](https://github.com/nodirbekurinov0892/genetic-contour-platform/actions/workflows/ci.yml/badge.svg)](https://github.com/nodirbekurinov0892/genetic-contour-platform/actions/workflows/ci.yml)
+
 | Service | URL |
 |---------|-----|
 | **Web** | https://genetic-contour-platform-web.vercel.app |
