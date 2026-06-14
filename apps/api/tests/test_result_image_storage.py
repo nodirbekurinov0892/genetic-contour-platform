@@ -2,7 +2,6 @@
 
 import asyncio
 import io
-import threading
 import time
 
 import pytest
@@ -10,30 +9,18 @@ from httpx import AsyncClient
 from PIL import Image as PILImage
 
 from app.config import get_settings
-from app.services.experiment_worker import run_experiment_job
+from app.jobs.background import schedule_experiment_run
 from app.services.storage import StorageService
 
 
 @pytest.fixture
 def inline_worker(monkeypatch):
-    """Run experiment jobs inline (no Celery broker) for integration tests."""
+    """Run experiment jobs on the API event loop (asyncio backend)."""
 
-    def inline_enqueue(experiment_id):
-        def _run_in_thread() -> None:
-            asyncio.run(run_experiment_job(experiment_id))
-
-        thread = threading.Thread(
-            target=_run_in_thread,
-            name=f"inline-worker-{experiment_id}",
-            daemon=True,
-        )
-        thread.start()
-        return f"inline-{experiment_id}"
-
-    monkeypatch.setattr("app.jobs.queue.enqueue_experiment_run", inline_enqueue)
+    monkeypatch.setattr("app.jobs.queue.enqueue_experiment_run", schedule_experiment_run)
     monkeypatch.setattr(
         "app.services.experiment_service.enqueue_experiment_run",
-        inline_enqueue,
+        schedule_experiment_run,
     )
 
 
@@ -69,7 +56,7 @@ async def _register_upload_experiment(client: AsyncClient) -> tuple[dict, str]:
 
 
 async def _wait_for_completion(
-    client: AsyncClient, headers: dict, experiment_id: str, timeout: float = 90.0
+    client: AsyncClient, headers: dict, experiment_id: str, timeout: float = 60.0
 ) -> str:
     deadline = time.monotonic() + timeout
     while time.monotonic() < deadline:
