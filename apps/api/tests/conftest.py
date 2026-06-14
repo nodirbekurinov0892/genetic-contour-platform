@@ -16,6 +16,7 @@ os.environ["DATABASE_URL"] = os.environ.get(
 os.environ["SECRET_KEY"] = os.environ.get("SECRET_KEY", "test-secret-key-for-pytest-only-32chars")
 os.environ["JWT_SECRET"] = os.environ.get("JWT_SECRET", "test-jwt-secret-for-pytest-only-32chars")
 os.environ["API_DEBUG"] = "true"
+os.environ["API_PUBLIC_URL"] = os.environ.get("API_PUBLIC_URL", "http://testserver")
 os.environ["TESTING"] = "true"
 os.environ["TRUSTED_HOSTS"] = os.environ.get("TRUSTED_HOSTS", "testserver,localhost,127.0.0.1")
 os.environ["REDIS_URL"] = os.environ.get("REDIS_URL", "redis://localhost:6379/0")

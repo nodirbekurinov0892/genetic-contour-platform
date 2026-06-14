@@ -49,7 +49,7 @@ async def test_enqueue_stores_celery_task_id(client: AsyncClient, db_session):
     assert response.status_code == 200
     assert response.json()["status"] == ExperimentStatus.QUEUED.value
 
-    await db_session.expire_all()
+    db_session.expire_all()
     result = await db_session.execute(
         select(Experiment).where(Experiment.id == experiment_id)
     )

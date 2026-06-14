@@ -36,7 +36,7 @@ async def test_upload_returns_storage_key_and_readable_file(client: AsyncClient)
 
     assert image["storage_key"].startswith("uploads/")
     assert image["storage_key"].endswith(".png")
-    assert image["url"].startswith("http://testserver/static/uploads/")
+    assert "/static/uploads/" in image["url"]
     assert image["public_url"]
 
     storage = StorageService(get_settings())

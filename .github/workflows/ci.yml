@@ -47,6 +47,7 @@ jobs:
           JWT_SECRET: test-jwt-secret-for-ci-only-32chars
           API_DEBUG: "true"
           TESTING: "true"
+          API_PUBLIC_URL: http://testserver
           STORAGE_BACKEND: local
           TRUSTED_HOSTS: testserver,localhost,127.0.0.1
           REDIS_URL: redis://localhost:6379/0
