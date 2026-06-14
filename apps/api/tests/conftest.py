@@ -1,6 +1,7 @@
 import os
 from collections.abc import AsyncGenerator
 
+import asyncio
 import pytest
 import pytest_asyncio
 from fastapi import HTTPException
@@ -46,9 +47,11 @@ async def prepare_database():
 async def _cancel_background_tasks_after_test():
     """Prevent orphan worker transactions from blocking TRUNCATE in the next test."""
     yield
-    for task in list(background._background_tasks.values()):
-        if not task.done():
-            task.cancel()
+    pending = [task for task in background._background_tasks.values() if not task.done()]
+    for task in pending:
+        task.cancel()
+    if pending:
+        await asyncio.wait(pending, timeout=2.0)
     background._background_tasks.clear()
 
 
@@ -60,6 +63,7 @@ async def _isolate_test_data(prepare_database):
     )
     if table_names:
         async with test_engine.begin() as conn:
+            await conn.execute(text("SET lock_timeout = '10s'"))
             await conn.execute(
                 text(f"TRUNCATE {table_names} RESTART IDENTITY CASCADE")
             )

@@ -1,5 +1,6 @@
 """Integration test: experiment results are stored with storage_key."""
 
+import asyncio
 import io
 import uuid
 
@@ -65,7 +66,14 @@ async def test_sobel_results_use_storage_keys(client: AsyncClient):
     assert run.json()["status"] == "queued"
 
     # Run worker after the HTTP transaction commits (enqueue is called mid-request).
-    await run_experiment_job(uuid.UUID(experiment_id))
+    await asyncio.wait_for(run_experiment_job(uuid.UUID(experiment_id)), timeout=30.0)
+
+    status_resp = await client.get(
+        f"/api/experiments/{experiment_id}/status",
+        headers=headers,
+    )
+    assert status_resp.status_code == 200
+    assert status_resp.json()["status"] == "completed", status_resp.json()
 
     results = await client.get(
         f"/api/experiments/{experiment_id}/results",

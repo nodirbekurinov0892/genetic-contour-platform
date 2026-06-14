@@ -54,7 +54,7 @@ jobs:
         run: |
           set -o pipefail
           python -c "from importlib.metadata import version; print('pytest-timeout', version('pytest-timeout'))"
-          pytest -vv --tb=short --junitxml=junit.xml 2>&1 | tee pytest.log
+          pytest -vv --tb=short --junitxml=junit.xml --durations=15 2>&1 | tee pytest.log
           pytest_exit=${PIPESTATUS[0]}
           echo "## Pytest output (tail)" >> "$GITHUB_STEP_SUMMARY"
           tail -80 pytest.log >> "$GITHUB_STEP_SUMMARY"
