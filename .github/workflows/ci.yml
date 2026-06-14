@@ -54,11 +54,21 @@ jobs:
         run: |
           set -o pipefail
           python -c "import pytest_timeout; print('pytest-timeout', pytest_timeout.__version__)"
-          pytest -vv --tb=short 2>&1 | tee pytest.log
+          pytest -vv --tb=short --junitxml=junit.xml 2>&1 | tee pytest.log
           pytest_exit=${PIPESTATUS[0]}
           echo "## Pytest output (tail)" >> "$GITHUB_STEP_SUMMARY"
           tail -80 pytest.log >> "$GITHUB_STEP_SUMMARY"
+          echo "" >> "$GITHUB_STEP_SUMMARY"
+          echo "## Failed / errored tests" >> "$GITHUB_STEP_SUMMARY"
+          grep -E "^(FAILED|ERROR|tests/.*::)" pytest.log | tail -40 >> "$GITHUB_STEP_SUMMARY" || true
           exit $pytest_exit
+      - name: Upload pytest results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: pytest-results
+          path: apps/api/junit.xml
+          if-no-files-found: ignore
 
   web-lint-build:
     runs-on: ubuntu-latest
