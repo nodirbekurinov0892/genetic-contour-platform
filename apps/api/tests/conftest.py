@@ -107,7 +107,6 @@ async def _isolate_test_data(prepare_database):
 async def db_session() -> AsyncGenerator[AsyncSession, None]:
     async with TestSessionLocal() as session:
         yield session
-        await session.rollback()
 
 
 @pytest.fixture(autouse=True)
