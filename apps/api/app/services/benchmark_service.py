@@ -90,7 +90,7 @@ class BenchmarkService:
                     )
                 )
             await self.db.flush()
-        return benchmark
+        return await self.get_benchmark(benchmark.id)
 
     async def add_dataset_image(
         self, benchmark_id: uuid.UUID, image_id: uuid.UUID, user: User

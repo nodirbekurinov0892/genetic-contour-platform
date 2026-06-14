@@ -200,7 +200,14 @@ async function main() {
       json?.comparison_protocol === "fair_v1" ? "PASS" : "FAIL",
     );
     const pdf = await fetch(`${API}/api/experiments/${experimentId}/report/pdf`, { headers: auth });
-    record("PDF v3 download", "200 pdf", String(pdf.status), `bytes=${pdf.headers.get("content-length")}`, pdf.ok ? "PASS" : "FAIL");
+    const pdfCt = pdf.headers.get("content-type") || "";
+    record(
+      "PDF v3 download",
+      "200 application/pdf",
+      `${pdf.status} ${pdfCt}`,
+      `bytes=${pdf.headers.get("content-length")}`,
+      pdf.ok && pdfCt.includes("pdf") ? "PASS" : "FAIL",
+    );
   }
 
   // Benchmark create + run
@@ -216,7 +223,7 @@ async function main() {
       }),
     });
     const benchId = json?.id;
-    record("Benchmark create", "200", String(res.status), benchId || "", res.ok && benchId ? "PASS" : "FAIL");
+    record("Benchmark create", "200", String(res.status), benchId || JSON.stringify(json), res.ok && benchId ? "PASS" : "FAIL");
     if (benchId) {
       const runRes = await api(`/api/benchmarks/${benchId}/runs`, {
         method: "POST",
