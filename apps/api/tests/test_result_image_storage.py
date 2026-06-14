@@ -72,14 +72,12 @@ async def _wait_for_completion(
     raise TimeoutError("Experiment did not finish in time")
 
 
-async def _drain_background_tasks(timeout: float = 60.0) -> None:
-    deadline = time.monotonic() + timeout
-    while time.monotonic() < deadline:
-        pending = [task for task in background._background_tasks.values() if not task.done()]
-        if not pending:
-            return
-        await asyncio.wait(pending, timeout=min(2.0, deadline - time.monotonic()))
-    raise TimeoutError("Background experiment tasks did not finish")
+async def _await_scheduled_job(experiment_id: str, timeout: float = 30.0) -> None:
+    """Await the single job task directly — avoids asyncio.wait() loop deadlock."""
+    task = background._background_tasks.get(experiment_id)
+    if task is None:
+        raise AssertionError(f"No background task registered for experiment {experiment_id}")
+    await asyncio.wait_for(asyncio.shield(task), timeout=timeout)
 
 
 @pytest.mark.asyncio
@@ -102,7 +100,7 @@ async def test_sobel_results_use_storage_keys(client: AsyncClient, inline_worker
     )
     assert run.status_code == 200
 
-    await _drain_background_tasks()
+    await _await_scheduled_job(experiment_id)
     final_status = await _wait_for_completion(client, headers, experiment_id, timeout=5.0)
     assert final_status == "completed"
 

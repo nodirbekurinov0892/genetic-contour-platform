@@ -24,6 +24,7 @@ from app.config import get_settings  # noqa: E402
 get_settings.cache_clear()
 
 from app.database import Base, get_db  # noqa: E402
+from app.jobs import background  # noqa: E402
 from app.main import app  # noqa: E402
 
 settings = get_settings()
@@ -38,6 +39,16 @@ async def prepare_database():
         await conn.run_sync(Base.metadata.create_all)
     yield
     await test_engine.dispose()
+
+
+@pytest_asyncio.fixture(autouse=True)
+async def _cancel_background_tasks_after_test():
+    """Prevent orphan worker transactions from blocking TRUNCATE in the next test."""
+    yield
+    for task in list(background._background_tasks.values()):
+        if not task.done():
+            task.cancel()
+    background._background_tasks.clear()
 
 
 @pytest_asyncio.fixture(autouse=True)
