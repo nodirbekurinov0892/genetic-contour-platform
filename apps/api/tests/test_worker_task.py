@@ -20,5 +20,5 @@ def test_run_experiment_task_calls_async_worker(mock_asyncio_run):
     import inspect
 
     assert inspect.iscoroutine(passed_coro)
-    assert passed_coro.cr_code.co_qualname == "run_experiment_job"
+    assert passed_coro.cr_code.co_name == "run_experiment_job"
     passed_coro.close()

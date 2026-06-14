@@ -30,6 +30,7 @@ from app.main import app  # noqa: E402
 import app.database as db_module  # noqa: E402
 import app.jobs.recovery as recovery_module  # noqa: E402
 import app.services.experiment_worker as experiment_worker_module  # noqa: E402
+from app.utils.rate_limit import limiter  # noqa: E402
 
 settings = get_settings()
 test_engine = create_async_engine(settings.async_database_url, echo=False)
@@ -81,6 +82,14 @@ async def db_session() -> AsyncGenerator[AsyncSession, None]:
     async with TestSessionLocal() as session:
         yield session
         await session.rollback()
+
+
+@pytest.fixture(autouse=True)
+def _disable_rate_limiter():
+    """CI runs many register/login calls in one process; disable SlowAPI limits."""
+    limiter.enabled = False
+    yield
+    limiter.enabled = True
 
 
 @pytest.fixture(autouse=True)
