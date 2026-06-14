@@ -39,21 +39,20 @@ from app.models.report import Report
 from app.models.result_image import ResultImage
 from app.models.user import User
 from app.services.storage import StorageService
+from app.core.platform import PLATFORM_NAME, PLATFORM_SUBTITLE
 from app.core.scientific_evaluation import build_scientific_context
 from app.utils.ownership import ensure_owner
 
 logger = logging.getLogger(__name__)
 
-PROJECT_TITLE = "Genetic Contour Detection Platform"
-PROJECT_SUBTITLE = (
-    "Genetik algoritmlar asosida tasvirlardagi obyektlar konturlarini aniqlash"
-)
+PROJECT_TITLE = PLATFORM_NAME
+PROJECT_SUBTITLE = PLATFORM_SUBTITLE
 EDGE_ALGORITHMS = ["sobel", "prewitt", "canny", "genetic"]
 ALGO_LABELS = {
     "sobel": "Sobel",
     "prewitt": "Prewitt",
     "canny": "Canny",
-    "genetic": "Genetik algoritm (GA)",
+    "genetic": "Genetic Algorithm (GA)",
     "pipeline": "Preprocessing",
 }
 _MISSING_IMAGE_LABEL = "Rasm mavjud emas"
@@ -323,7 +322,7 @@ class ReportService:
         output = io.StringIO()
         writer = csv.writer(output)
 
-        writer.writerow(["# Genetic Contour Detection Platform — Experiment Report"])
+        writer.writerow([f"# {PLATFORM_NAME} — Experiment Report"])
         writer.writerow(["Project", report_data["meta"]["project_title"]])
         writer.writerow(["Experiment ID", report_data["experiment"]["id"]])
         writer.writerow(["Title", report_data["experiment"]["title"]])

@@ -11,6 +11,7 @@ from slowapi.middleware import SlowAPIMiddleware
 from starlette.middleware.trustedhost import TrustedHostMiddleware
 
 from app.config import get_settings
+from app.core.platform import API_SERVICE_NAME, PLATFORM_NAME, PLATFORM_SUBTITLE
 from app.database import engine
 import app.models  # noqa: F401 — register ORM models with Base.metadata
 from app.middleware.request_id import RequestIdMiddleware
@@ -44,9 +45,9 @@ async def lifespan(app: FastAPI):
 
 
 app = FastAPI(
-    title="Genetic Contour Detection API",
-    description="Scientific platform for genetic algorithm based contour detection",
-    version="0.2.0",
+    title=f"{PLATFORM_NAME} API",
+    description=PLATFORM_SUBTITLE,
+    version="0.3.0",
     lifespan=lifespan,
 )
 

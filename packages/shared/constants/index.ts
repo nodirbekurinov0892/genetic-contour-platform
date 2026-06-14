@@ -1,3 +1,10 @@
+export {
+  PLATFORM_NAME,
+  PLATFORM_SUBTITLE,
+  PLATFORM_VERSION,
+  API_SERVICE_NAME,
+} from "./platform";
+
 export const ALGORITHMS = [
   { id: "sobel", label: "Sobel", description: "Gradient asosidagi chekka aniqlash" },
   { id: "prewitt", label: "Prewitt", description: "Konvolyutsiya asosidagi chekka aniqlash" },

@@ -1,1 +1,1 @@
-"""Genetic Contour Detection API."""
+"""Contour Analytics Platform API."""

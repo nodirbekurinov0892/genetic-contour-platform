@@ -1,6 +1,6 @@
-# Genetic Contour Detection Platform
+# Contour Analytics Platform
 
-**Genetik algoritmlar asosida tasvirlardagi obyektlar konturlarini aniqlash** — ilmiy tadqiqot va dissertatsiya uchun professional web-platforma.
+**Ko'p algoritmli kontur va chegaralarni tahlil qilish platformasi** — ilmiy tadqiqot va dissertatsiya uchun professional web-platforma.
 
 Dissertatsiya III bob: *"Intellektual dasturiy tizim ishlab chiqish"*
 

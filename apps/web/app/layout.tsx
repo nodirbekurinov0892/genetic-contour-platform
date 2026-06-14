@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
+import { PLATFORM_NAME, PLATFORM_SUBTITLE } from "@shared/constants";
 import { ThemeProvider } from "@/components/providers/theme-provider";
 import { AuthProvider } from "@/components/providers/auth-provider";
 import { AppShell } from "@/components/layout/app-shell";
@@ -16,8 +17,8 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Genetik kontur aniqlash platformasi",
-  description: "Rasmlarda genetik algoritm asosida kontur aniqlash uchun ilmiy platforma",
+  title: PLATFORM_NAME,
+  description: PLATFORM_SUBTITLE,
 };
 
 export default function RootLayout({

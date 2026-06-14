@@ -175,7 +175,7 @@ export default function UploadPage() {
               Muvaffaqiyatli yuklandi
             </div>
             <Button size="sm" variant="outline" asChild>
-              <Link href="/experiments">Tajriba ishga tushirish</Link>
+              <Link href="/experiments/new">Tajriba ishga tushirish</Link>
             </Button>
           </div>
         )}

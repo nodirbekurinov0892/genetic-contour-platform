@@ -2,7 +2,7 @@
 
 ## Overview
 
-Genetic Contour Detection Platform is a monorepo for scientific research on contour detection using classical edge detectors and genetic algorithms.
+Contour Analytics Platform is a monorepo for scientific research on multi-algorithm contour detection and edge analysis.
 
 ```
 genetic-contour-platform/

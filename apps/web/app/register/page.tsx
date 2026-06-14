@@ -2,7 +2,8 @@
 
 import { useState } from "react";
 import Link from "next/link";
-import { Dna } from "lucide-react";
+import { Layers } from "lucide-react";
+import { PLATFORM_NAME, PLATFORM_SUBTITLE } from "@shared/constants";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -36,12 +37,11 @@ export default function RegisterPage() {
       <RedirectIfAuthenticated next="/">
         <div className="scientific-card p-8">
           <div className="mb-6 flex items-center gap-2">
-            <Dna className="h-6 w-6 text-primary" />
+            <Layers className="h-6 w-6 text-primary" />
             <div>
               <h1 className="text-2xl font-bold">Hisob yaratish</h1>
-              <p className="text-sm text-muted-foreground">
-                Kontur aniqlash tajribalarini boshlash
-              </p>
+              <p className="text-sm text-muted-foreground">{PLATFORM_NAME}</p>
+              <p className="text-xs text-muted-foreground">{PLATFORM_SUBTITLE}</p>
             </div>
           </div>
 

@@ -3,7 +3,14 @@ import type { NextRequest } from "next/server";
 
 import { AUTH_SESSION_COOKIE } from "@/lib/auth-storage";
 
-const PROTECTED_PREFIXES = ["/upload", "/experiments", "/reports"];
+const PROTECTED_PREFIXES = [
+  "/upload",
+  "/library",
+  "/experiments",
+  "/comparison",
+  "/analytics",
+  "/reports",
+];
 
 function isProtectedPath(pathname: string): boolean {
   return PROTECTED_PREFIXES.some(
@@ -33,8 +40,14 @@ export const config = {
   matcher: [
     "/upload",
     "/upload/:path*",
+    "/library",
+    "/library/:path*",
     "/experiments",
     "/experiments/:path*",
+    "/comparison",
+    "/comparison/:path*",
+    "/analytics",
+    "/analytics/:path*",
     "/reports",
     "/reports/:path*",
   ],
