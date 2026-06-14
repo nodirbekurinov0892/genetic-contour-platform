@@ -60,14 +60,17 @@ jobs:
           tail -80 pytest.log >> "$GITHUB_STEP_SUMMARY"
           echo "" >> "$GITHUB_STEP_SUMMARY"
           echo "## Failed / errored tests" >> "$GITHUB_STEP_SUMMARY"
-          grep -E "^(FAILED|ERROR|tests/.*::)" pytest.log | tail -40 >> "$GITHUB_STEP_SUMMARY" || true
+          grep -E "^(FAILED|ERROR|=+ FAILURES|=+ ERRORS)" pytest.log >> "$GITHUB_STEP_SUMMARY" || true
+          grep -E "^tests/.*::" pytest.log | grep -E "FAILED|ERROR|Timeout" >> "$GITHUB_STEP_SUMMARY" || true
           exit $pytest_exit
       - name: Upload pytest results
         if: always()
         uses: actions/upload-artifact@v4
         with:
           name: pytest-results
-          path: apps/api/junit.xml
+          path: |
+            apps/api/junit.xml
+            apps/api/pytest.log
           if-no-files-found: ignore
 
   web-lint-build:
