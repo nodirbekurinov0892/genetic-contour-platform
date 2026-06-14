@@ -44,13 +44,13 @@ jobs:
           DATABASE_URL: postgresql+asyncpg://genetic_contour:genetic_contour_secret@localhost:5432/genetic_contour_test
           SECRET_KEY: test-secret-key-for-ci-only-32chars
           JWT_SECRET: test-jwt-secret-for-ci-only-32chars
-          API_DEBUG: "true"
+          API_DEBUG: "false"
           STORAGE_BACKEND: local
           TRUSTED_HOSTS: testserver,localhost,127.0.0.1
           REDIS_URL: redis://localhost:6379/0
           EXPERIMENT_QUEUE_BACKEND: asyncio
           MPLBACKEND: Agg
-        run: pytest -q --tb=short
+        run: pytest -q --tb=short --timeout=90
 
   web-lint-build:
     runs-on: ubuntu-latest

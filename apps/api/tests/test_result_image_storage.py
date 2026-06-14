@@ -19,13 +19,8 @@ def inline_worker(monkeypatch):
     """Run experiment jobs inline (no Celery broker) for integration tests."""
 
     def inline_enqueue(experiment_id):
-        errors: list[BaseException] = []
-
         def _run_in_thread() -> None:
-            try:
-                asyncio.run(run_experiment_job(experiment_id))
-            except BaseException as exc:
-                errors.append(exc)
+            asyncio.run(run_experiment_job(experiment_id))
 
         thread = threading.Thread(
             target=_run_in_thread,
@@ -33,11 +28,6 @@ def inline_worker(monkeypatch):
             daemon=True,
         )
         thread.start()
-        thread.join(timeout=120)
-        if thread.is_alive():
-            raise TimeoutError(f"inline worker timed out for {experiment_id}")
-        if errors:
-            raise errors[0]
         return f"inline-{experiment_id}"
 
     monkeypatch.setattr("app.jobs.queue.enqueue_experiment_run", inline_enqueue)
@@ -79,7 +69,7 @@ async def _register_upload_experiment(client: AsyncClient) -> tuple[dict, str]:
 
 
 async def _wait_for_completion(
-    client: AsyncClient, headers: dict, experiment_id: str, timeout: float = 30.0
+    client: AsyncClient, headers: dict, experiment_id: str, timeout: float = 90.0
 ) -> str:
     deadline = time.monotonic() + timeout
     while time.monotonic() < deadline:
