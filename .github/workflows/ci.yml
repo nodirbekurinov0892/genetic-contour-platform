@@ -44,6 +44,10 @@ jobs:
           JWT_SECRET: test-jwt-secret-for-ci-only-32chars
           API_DEBUG: "true"
           STORAGE_BACKEND: local
+          TRUSTED_HOSTS: testserver,localhost,127.0.0.1
+          REDIS_URL: redis://localhost:6379/0
+          EXPERIMENT_QUEUE_BACKEND: asyncio
+          MPLBACKEND: Agg
         run: pytest -q --tb=short
 
   web-lint-build:
