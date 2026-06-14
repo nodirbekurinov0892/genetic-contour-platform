@@ -103,13 +103,6 @@ async def _isolate_test_data(prepare_database):
     yield
 
 
-@pytest_asyncio.fixture
-async def db_session() -> AsyncGenerator[AsyncSession, None]:
-    async with TestSessionLocal() as session:
-        yield session
-
-
-@pytest.fixture(autouse=True)
 def _stub_celery_queue(monkeypatch):
     """Avoid real Redis/Celery during API tests; recovery is a no-op."""
 

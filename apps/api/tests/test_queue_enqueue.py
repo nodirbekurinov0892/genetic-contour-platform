@@ -8,6 +8,7 @@ from httpx import AsyncClient
 from PIL import Image as PILImage
 from sqlalchemy import select
 
+from app.database import AsyncSessionLocal
 from app.models.experiment import Experiment, ExperimentStatus
 
 
@@ -19,7 +20,7 @@ def _make_test_image_bytes() -> bytes:
 
 
 @pytest.mark.asyncio
-async def test_enqueue_stores_celery_task_id(client: AsyncClient, db_session):
+async def test_enqueue_stores_celery_task_id(client: AsyncClient):
     reg = await client.post(
         "/api/auth/register",
         json={"email": "enqueue@example.com", "password": "securepass123"},
@@ -49,10 +50,10 @@ async def test_enqueue_stores_celery_task_id(client: AsyncClient, db_session):
     assert response.status_code == 200
     assert response.json()["status"] == ExperimentStatus.QUEUED.value
 
-    db_session.expire_all()
-    result = await db_session.execute(
-        select(Experiment).where(Experiment.id == experiment_id)
-    )
-    experiment = result.scalar_one()
+    async with AsyncSessionLocal() as session:
+        result = await session.execute(
+            select(Experiment).where(Experiment.id == experiment_id)
+        )
+        experiment = result.scalar_one()
     assert experiment.celery_task_id == f"test-task-{experiment_id}"
     assert experiment.cancel_requested is False
