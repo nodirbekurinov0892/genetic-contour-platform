@@ -7,6 +7,7 @@ from fastapi import HTTPException
 from httpx import ASGITransport, AsyncClient
 from sqlalchemy import text
 from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker, create_async_engine
+from sqlalchemy.pool import NullPool
 
 os.environ["DATABASE_URL"] = os.environ.get(
     "DATABASE_URL",
@@ -25,10 +26,13 @@ from app.config import get_settings  # noqa: E402
 
 get_settings.cache_clear()
 
+import app.models  # noqa: E402, F401 — register all tables before create_all
+
 from app.database import Base, get_db  # noqa: E402
 from app.jobs import background  # noqa: E402
 from app.main import app  # noqa: E402
 import app.database as db_module  # noqa: E402
+import app.database_sync as db_sync_module  # noqa: E402
 import app.jobs.recovery as recovery_module  # noqa: E402
 import app.services.experiment_worker as experiment_worker_module  # noqa: E402
 from app.utils.rate_limit import limiter  # noqa: E402
@@ -40,8 +44,7 @@ settings = get_settings()
 test_engine = create_async_engine(
     settings.async_database_url,
     echo=False,
-    pool_size=10,
-    max_overflow=10,
+    poolclass=NullPool,
 )
 TestSessionLocal = async_sessionmaker(test_engine, class_=AsyncSession, expire_on_commit=False)
 
@@ -50,6 +53,19 @@ db_module.engine = test_engine
 db_module.AsyncSessionLocal = TestSessionLocal
 experiment_worker_module.AsyncSessionLocal = TestSessionLocal
 recovery_module.AsyncSessionLocal = TestSessionLocal
+
+from sqlalchemy import create_engine  # noqa: E402
+from sqlalchemy.orm import sessionmaker  # noqa: E402
+
+db_sync_module.sync_engine = create_engine(
+    settings.sync_database_url,
+    pool_pre_ping=True,
+    poolclass=NullPool,
+)
+db_sync_module.SyncSessionLocal = sessionmaker(
+    bind=db_sync_module.sync_engine,
+    expire_on_commit=False,
+)
 
 
 @pytest_asyncio.fixture(scope="session", autouse=True)
