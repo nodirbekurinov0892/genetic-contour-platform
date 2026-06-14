@@ -29,19 +29,21 @@ async function authBffFetch(
   body: unknown,
   fallbackError: string,
 ): Promise<void> {
+  let res: Response;
   try {
-    const res = await fetch(path, {
+    res = await fetch(path, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(body),
       credentials: "include",
     });
-    if (!res.ok) {
-      const payload = (await res.json().catch(() => ({}))) as Record<string, unknown>;
-      throw new Error(detailFromBody(payload, fallbackError));
-    }
   } catch (err) {
     throw toUserFacingNetworkError(err, fallbackError);
+  }
+
+  if (!res.ok) {
+    const payload = (await res.json().catch(() => ({}))) as Record<string, unknown>;
+    throw new Error(detailFromBody(payload, fallbackError));
   }
 }
 

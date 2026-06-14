@@ -6,6 +6,7 @@ import {
   getBackendApiBase,
   parseBackendJson,
 } from "@/lib/bff-backend";
+import { buildProxyResponse } from "@/lib/bff-proxy-response";
 
 export const maxDuration = 60;
 
@@ -47,9 +48,9 @@ async function proxyRequest(request: NextRequest, path: string) {
           headers.Authorization = `Bearer ${newAccess}`;
         }
         res = await fetchBackend(url, { method: request.method, headers, body });
-        const secure = request.nextUrl.protocol === "https:";
-        const out = new NextResponse(res.body, { status: res.status, headers: res.headers });
+        const out = await buildProxyResponse(res);
         if (typeof newAccess === "string" && typeof newRefresh === "string") {
+          const secure = request.nextUrl.protocol === "https:";
           out.cookies.set("gc_access_token", newAccess, {
             httpOnly: true,
             secure,
@@ -69,7 +70,7 @@ async function proxyRequest(request: NextRequest, path: string) {
       }
     }
 
-    return new NextResponse(res.body, { status: res.status, headers: res.headers });
+    return buildProxyResponse(res);
   } catch (err) {
     return NextResponse.json(
       { detail: bffNetworkErrorDetail(err) },

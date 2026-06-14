@@ -1,5 +1,5 @@
 import { getAccessToken, getRefreshToken, setTokens, clearTokens } from "@/lib/auth-storage";
-import { toUserFacingNetworkError } from "@/lib/network-errors";
+import { mapAuthErrorMessage, toUserFacingNetworkError } from "@/lib/network-errors";
 
 const DIRECT_API = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
 const USE_BFF = typeof window !== "undefined";
@@ -112,7 +112,11 @@ export async function apiFetch<T>(
 
   if (!res.ok) {
     const body = await res.json().catch(() => ({ detail: res.statusText }));
-    throw new ApiError(res.status, formatDetail(body.detail));
+    const message = formatDetail(body.detail);
+    throw new ApiError(
+      res.status,
+      res.status === 401 ? mapAuthErrorMessage(message) : message,
+    );
   }
 
   return res.json() as Promise<T>;

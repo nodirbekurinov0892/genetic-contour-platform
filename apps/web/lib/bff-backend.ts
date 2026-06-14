@@ -1,5 +1,5 @@
 const PRODUCTION_API = "https://genetic-contour-platform.onrender.com";
-const BACKEND_TIMEOUT_MS = 25_000;
+const BACKEND_TIMEOUT_MS = 45_000;
 const MAX_ATTEMPTS = 3;
 
 function sleep(ms: number): Promise<void> {

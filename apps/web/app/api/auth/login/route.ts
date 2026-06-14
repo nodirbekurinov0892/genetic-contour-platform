@@ -5,6 +5,7 @@ import {
   fetchBackend,
   parseBackendJson,
 } from "@/lib/bff-backend";
+import { mapAuthErrorMessage } from "@/lib/network-errors";
 
 const ACCESS_COOKIE = "gc_access_token";
 const REFRESH_COOKIE = "gc_refresh_token";
@@ -21,6 +22,10 @@ export async function POST(request: NextRequest) {
     });
     const data = await parseBackendJson(res);
     if (!res.ok) {
+      const detail = data.detail;
+      if (typeof detail === "string") {
+        data.detail = mapAuthErrorMessage(detail);
+      }
       return NextResponse.json(data, { status: res.status });
     }
 
