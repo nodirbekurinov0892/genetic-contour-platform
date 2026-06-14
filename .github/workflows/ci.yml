@@ -63,6 +63,29 @@ jobs:
           grep -E "^(FAILED|ERROR|=+ FAILURES|=+ ERRORS)" pytest.log >> "$GITHUB_STEP_SUMMARY" || true
           grep -E "^tests/.*::" pytest.log | grep -E "FAILED|ERROR|Timeout" >> "$GITHUB_STEP_SUMMARY" || true
           exit $pytest_exit
+      - name: Annotate pytest failures
+        if: failure()
+        working-directory: apps/api
+        run: |
+          python <<'PY'
+          import pathlib
+          import xml.etree.ElementTree as ET
+
+          junit = pathlib.Path("junit.xml")
+          log = pathlib.Path("pytest.log")
+          if junit.exists():
+              root = ET.parse(junit).getroot()
+              for case in root.iter("testcase"):
+                  name = f"{case.get('classname')}::{case.get('name')}"
+                  for child in case:
+                      if child.tag in ("failure", "error"):
+                          msg = (child.get("message") or child.text or "failed").replace("\n", " ")[:500]
+                          print(f"::error title=Pytest::{name}::{msg}")
+          elif log.exists():
+              for line in log.read_text(encoding="utf-8", errors="replace").splitlines():
+                  if line.startswith("FAILED ") or line.startswith("ERROR "):
+                      print(f"::error title=Pytest::{line}")
+          PY
       - name: Upload pytest results
         if: always()
         uses: actions/upload-artifact@v4
