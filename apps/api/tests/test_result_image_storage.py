@@ -65,16 +65,9 @@ async def test_sobel_results_use_storage_keys(client: AsyncClient):
     assert run.status_code == 200
     assert run.json()["status"] == "queued"
 
-    # Run worker after the HTTP transaction commits (enqueue is called mid-request).
-    # Use a fresh event loop in a worker thread to avoid pytest-asyncio loop deadlocks.
-    import concurrent.futures
-
-    def _run_worker_sync(exp_id: uuid.UUID) -> None:
-        asyncio.run(run_experiment_job(exp_id))
-
-    loop = asyncio.get_running_loop()
-    with concurrent.futures.ThreadPoolExecutor(max_workers=1) as pool:
-        await loop.run_in_executor(pool, _run_worker_sync, uuid.UUID(experiment_id))
+    # Run worker after the HTTP transaction commits (enqueue is stubbed in tests).
+    await asyncio.sleep(0)
+    await run_experiment_job(uuid.UUID(experiment_id))
 
     status_resp = await client.get(
         f"/api/experiments/{experiment_id}/status",
