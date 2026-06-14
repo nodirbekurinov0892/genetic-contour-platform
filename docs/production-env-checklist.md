@@ -7,7 +7,8 @@ Use before every beta/production deploy. All values must be set unless marked op
 | Variable | Required | Example / notes |
 |----------|----------|-----------------|
 | `DATABASE_URL` | Yes | From Render PostgreSQL |
-| `REDIS_URL` | Yes | `redis://` or `rediss://` |
+| `REDIS_URL` | `redis://` or `rediss://` | Required when `EXPERIMENT_QUEUE_BACKEND=celery` |
+| `EXPERIMENT_QUEUE_BACKEND` | `asyncio` or `celery` | Yes — see [queue-scalability.md](queue-scalability.md) |
 | `API_DEBUG` | Yes | `false` |
 | `API_PUBLIC_URL` | Yes | `https://genetic-contour-platform.onrender.com` |
 | `CORS_ORIGINS` | Yes | Vercel URL(s), comma-separated |
@@ -56,3 +57,7 @@ Worker does not need `CORS_ORIGINS` or `API_PUBLIC_URL` when using S3.
 - [ ] Result images load from R2 URL
 - [ ] PDF export downloads
 - [ ] Sentry receives a test error (if configured)
+
+## Experiment queue (scalability)
+
+Render free/starter deployments commonly use `EXPERIMENT_QUEUE_BACKEND=asyncio`. This is valid for low traffic but does not scale horizontally. Before public beta with concurrent users, switch to `celery` + Redis + a dedicated worker. Details: [docs/queue-scalability.md](queue-scalability.md).

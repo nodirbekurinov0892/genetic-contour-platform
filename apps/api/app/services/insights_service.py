@@ -70,13 +70,14 @@ def generate_insights(
 
     if scientific["has_ground_truth"] and scientific["winner"]:
         w = scientific["winner"]
+        iou_text = f"{w['iou']:.4f}" if w.get("iou") is not None else "N/A"
         if w.get("tie"):
             observations.append(
-                f"IoU ({w['iou']:.4f}) bo'yicha teng natija: {w['algorithm']}."
+                f"IoU ({iou_text}) bo'yicha teng natija: {w['algorithm']}."
             )
         else:
             observations.append(
-                f"IoU bo'yicha eng yuqori overlap: {w['algorithm']} ({w['iou']:.4f})."
+                f"IoU bo'yicha eng yuqori overlap: {w['algorithm']} ({iou_text})."
             )
         for field, label in (
             ("f1_score", "F1"),

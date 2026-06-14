@@ -4,23 +4,19 @@
 
 Dissertatsiya III bob: *"Intellektual dasturiy tizim ishlab chiqish"*
 
-## Production (Phase Ultimate)
+## Production Status (Phase Ultimate)
 
 | Service | URL |
 |---------|-----|
-| Frontend | https://genetic-contour-platform-web.vercel.app |
-| API | https://genetic-contour-platform.onrender.com |
-| Status page | https://genetic-contour-platform-web.vercel.app/status |
-| API health | https://genetic-contour-platform.onrender.com/health/ready |
-| OpenAPI | https://genetic-contour-platform.onrender.com/docs |
+| **Web** | https://genetic-contour-platform-web.vercel.app |
+| **API** | https://genetic-contour-platform.onrender.com |
 
-**Live checks:** register/login · ground truth · `compare_all` + `fair_v1` · PDF v3 · benchmarks · legal/onboarding pages.
+- Health: `GET /health` · `GET /health/ready`
+- E2E gate: `node scripts/production_e2e_ultimate.mjs` (23 checks)
+- Full status: [docs/production-status.md](docs/production-status.md)
+- Queue scalability (asyncio vs Celery): [docs/queue-scalability.md](docs/queue-scalability.md)
 
-**Queue mode:** `EXPERIMENT_QUEUE_BACKEND=asyncio` on Render (Redis check skipped in `/health/ready` — expected). For multi-user scale, migrate to Celery + Redis — see [docs/deployment.md](docs/deployment.md) (Asyncio queue mode section).
-
-**Auth:** SMTP optional; production uses degraded mode when unset (registration works; password reset returns 503).
-
-**CI:** GitHub Actions — PostgreSQL service + `pytest` + web lint/build.
+> **Current queue mode:** `EXPERIMENT_QUEUE_BACKEND=asyncio` on Render. Redis shows as *skipped* in `/health/ready` — expected for single-process deployments. Upgrade path documented in [queue-scalability.md](docs/queue-scalability.md).
 
 ## Features
 
@@ -215,7 +211,8 @@ Vercel (Frontend)  →  Render (FastAPI API)  →  Render PostgreSQL
 | `S3_BUCKET_NAME` | bucket name | When `STORAGE_BACKEND=s3` |
 | `S3_REGION` | `auto` (R2) or AWS region | When `STORAGE_BACKEND=s3` |
 | `S3_PUBLIC_BASE_URL` | public CDN/base URL | When `STORAGE_BACKEND=s3` |
-| `REDIS_URL` | `redis://host:6379/0` | Yes (Celery broker) |
+| `REDIS_URL` | `redis://host:6379/0` | Required when `EXPERIMENT_QUEUE_BACKEND=celery` |
+| `EXPERIMENT_QUEUE_BACKEND` | `asyncio` (default) or `celery` | Yes — see [queue-scalability.md](docs/queue-scalability.md) |
 
 > `DATABASE_URL` is auto-converted from `postgresql://` to `postgresql+asyncpg://`.
 >
@@ -260,8 +257,6 @@ postgresql+asyncpg://user:pass@ep-xxx.neon.tech/genetic_contour?sslmode=require
 | Method | Endpoint | Description |
 |--------|----------|-------------|
 | GET | `/health` | Health check |
-| GET | `/health/ready` | Readiness (PostgreSQL, Redis/storage) |
-| GET | `/api/auth/config` | SMTP / degraded auth mode |
 | POST | `/api/auth/register` | Register user |
 | POST | `/api/auth/login` | Login (rate limit: 5/min) |
 | POST | `/api/auth/refresh` | Refresh access token |
@@ -277,22 +272,6 @@ postgresql+asyncpg://user:pass@ep-xxx.neon.tech/genetic_contour?sslmode=require
 | GET | `/api/experiments/{id}/report` | Enriched JSON report |
 | GET | `/api/experiments/{id}/report/csv` | CSV download |
 | GET | `/api/experiments/{id}/report/pdf` | PDF download |
-| GET | `/api/ground-truth/coverage` | GT coverage summary |
-| GET/POST | `/api/benchmarks` | Benchmark datasets & runs |
-
----
-
-## Production verification
-
-```bash
-# API + frontend E2E (23 checks)
-node scripts/production_e2e_ultimate.mjs
-
-# API unit/integration tests (requires PostgreSQL)
-cd apps/api && pytest -q
-```
-
-Human-readable status: [/status](https://genetic-contour-platform-web.vercel.app/status) on the deployed frontend.
 
 ---
 
@@ -319,6 +298,8 @@ docs/         Architecture, algorithm, API, deployment
 
 ## Documentation
 
+- [Production status](docs/production-status.md)
+- [Queue scalability (asyncio vs Celery)](docs/queue-scalability.md)
 - [Architecture](docs/architecture.md)
 - [Algorithm](docs/algorithm.md)
 - [API Reference](docs/api.md)
