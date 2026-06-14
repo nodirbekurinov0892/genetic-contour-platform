@@ -36,7 +36,7 @@ jobs:
       - name: Install dependencies
         run: |
           python -m pip install --upgrade pip
-          pip install -r requirements.txt -r requirements-dev.txt
+          pip install -r requirements.txt
       - name: Run pytest
         env:
           DATABASE_URL: postgresql+asyncpg://genetic_contour:genetic_contour_secret@localhost:5432/genetic_contour_test
@@ -56,9 +56,7 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: "20"
-          cache: npm
-          cache-dependency-path: apps/web/package-lock.json
-      - run: npm ci
+      - run: npm install
       - run: npm run lint
       - run: npm run build
         env:
