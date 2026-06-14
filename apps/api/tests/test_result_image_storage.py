@@ -64,7 +64,7 @@ async def _register_upload_experiment(client: AsyncClient) -> tuple[dict, str]:
 
 
 async def _wait_for_completion(
-    client: AsyncClient, headers: dict, experiment_id: str, timeout: float = 30.0
+    client: AsyncClient, headers: dict, experiment_id: str, timeout: float = 60.0
 ) -> str:
     deadline = time.monotonic() + timeout
     while time.monotonic() < deadline:
