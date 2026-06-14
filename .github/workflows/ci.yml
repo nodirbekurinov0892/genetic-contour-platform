@@ -44,7 +44,7 @@ jobs:
           DATABASE_URL: postgresql+asyncpg://genetic_contour:genetic_contour_secret@localhost:5432/genetic_contour_test
           SECRET_KEY: test-secret-key-for-ci-only-32chars
           JWT_SECRET: test-jwt-secret-for-ci-only-32chars
-          API_DEBUG: "false"
+          API_DEBUG: "true"
           STORAGE_BACKEND: local
           TRUSTED_HOSTS: testserver,localhost,127.0.0.1
           REDIS_URL: redis://localhost:6379/0
