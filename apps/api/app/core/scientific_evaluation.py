@@ -135,6 +135,10 @@ def detect_metric_inconsistencies(metrics_rows: list[dict[str, Any]]) -> list[di
     return warnings
 
 
+def _fmt_metric(value: float | None) -> str:
+    return f"{value:.4f}" if value is not None else "N/A"
+
+
 def generate_data_driven_summary(
     metrics_rows: list[dict[str, Any]],
     *,
@@ -153,14 +157,15 @@ def generate_data_driven_summary(
     if has_ground_truth and winner:
         if winner.get("tie"):
             parts.append(
-                f"IoU ({winner['iou']:.4f}) bo'yicha bir nechta algoritm teng natija ko'rsatdi: "
+                f"IoU ({_fmt_metric(winner.get('iou'))}) bo'yicha bir nechta algoritm teng natija ko'rsatdi: "
                 f"{winner['algorithm']}."
             )
         else:
             parts.append(
                 f"Ground Truth mavjud. IoU bo'yicha eng yuqori overlap "
-                f"{winner['algorithm']} algoritmida ({winner['iou']:.4f}). "
-                f"F1={winner.get('f1_score', 0):.4f}, Dice={winner.get('dice_coefficient', 0):.4f}."
+                f"{winner['algorithm']} algoritmida ({_fmt_metric(winner.get('iou'))}). "
+                f"F1={_fmt_metric(winner.get('f1_score'))}, "
+                f"Dice={_fmt_metric(winner.get('dice_coefficient'))}."
             )
     else:
         parts.append(

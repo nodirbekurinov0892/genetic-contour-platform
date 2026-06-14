@@ -6,6 +6,7 @@ from app.core.scientific_evaluation import (
     build_scientific_context,
     determine_winner,
     detect_metric_inconsistencies,
+    generate_data_driven_summary,
 )
 
 
@@ -92,3 +93,20 @@ def test_insights_noise_wording_lowest_penalty():
     assert noise_obs
     assert "eng past penalty" in noise_obs[0]
     assert "eng yuqori" not in noise_obs[0].lower() or "eng past" in noise_obs[0]
+
+
+def test_summary_handles_null_winner_metrics():
+    rows = [_row("Sobel", "sobel", iou=0.5, f1_score=0.6, dice_coefficient=0.55)]
+    summary = generate_data_driven_summary(
+        rows,
+        has_ground_truth=True,
+        winner={
+            "algorithm": "Sobel",
+            "iou": None,
+            "f1_score": None,
+            "dice_coefficient": None,
+            "tie": True,
+        },
+    )
+    assert "N/A" in summary
+    assert "TypeError" not in summary
