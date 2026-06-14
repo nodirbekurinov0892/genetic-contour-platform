@@ -143,6 +143,10 @@ class ReportService:
             normalized = normalized.replace(source, replacement)
         return normalized
 
+    @staticmethod
+    def _fmt_optional_metric(value: float | None) -> str:
+        return f"{value:.4f}" if value is not None else "-"
+
     def _pdf_paragraph(self, text: str, style: ParagraphStyle) -> Paragraph:
         safe = escape(self._sanitize_pdf_text(text))
         return Paragraph(safe, style)
@@ -644,8 +648,9 @@ class ReportService:
             story.append(Paragraph(
                 f"<b>Supervised g'olib (IoU/F1/Dice):</b> "
                 f"{self._sanitize_pdf_text(winner['algorithm'])} "
-                f"(IoU={winner.get('iou', 0):.4f}, F1={winner.get('f1_score', 0):.4f}, "
-                f"Dice={winner.get('dice_coefficient', 0):.4f}).",
+                f"(IoU={self._fmt_optional_metric(winner.get('iou'))}, "
+                f"F1={self._fmt_optional_metric(winner.get('f1_score'))}, "
+                f"Dice={self._fmt_optional_metric(winner.get('dice_coefficient'))}).",
                 body_style,
             ))
             story.append(Spacer(1, 0.2 * cm))
