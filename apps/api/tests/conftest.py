@@ -1,7 +1,6 @@
 import os
 from collections.abc import AsyncGenerator
 
-import asyncio
 import pytest
 import pytest_asyncio
 from fastapi import HTTPException
@@ -28,10 +27,19 @@ get_settings.cache_clear()
 from app.database import Base, get_db  # noqa: E402
 from app.jobs import background  # noqa: E402
 from app.main import app  # noqa: E402
+import app.database as db_module  # noqa: E402
+import app.jobs.recovery as recovery_module  # noqa: E402
+import app.services.experiment_worker as experiment_worker_module  # noqa: E402
 
 settings = get_settings()
 test_engine = create_async_engine(settings.async_database_url, echo=False)
 TestSessionLocal = async_sessionmaker(test_engine, class_=AsyncSession, expire_on_commit=False)
+
+# Route workers through the same engine/pool as the test client (avoids CI deadlocks).
+db_module.engine = test_engine
+db_module.AsyncSessionLocal = TestSessionLocal
+experiment_worker_module.AsyncSessionLocal = TestSessionLocal
+recovery_module.AsyncSessionLocal = TestSessionLocal
 
 
 @pytest_asyncio.fixture(scope="session", autouse=True)
@@ -47,11 +55,9 @@ async def prepare_database():
 async def _cancel_background_tasks_after_test():
     """Prevent orphan worker transactions from blocking TRUNCATE in the next test."""
     yield
-    pending = [task for task in background._background_tasks.values() if not task.done()]
-    for task in pending:
-        task.cancel()
-    if pending:
-        await asyncio.wait(pending, timeout=2.0)
+    for task in list(background._background_tasks.values()):
+        if not task.done():
+            task.cancel()
     background._background_tasks.clear()
 
 

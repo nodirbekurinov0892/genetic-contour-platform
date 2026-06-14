@@ -62,6 +62,36 @@ jobs:
           echo "## Failed / errored tests" >> "$GITHUB_STEP_SUMMARY"
           grep -E "^(FAILED|ERROR|=+ FAILURES|=+ ERRORS)" pytest.log >> "$GITHUB_STEP_SUMMARY" || true
           grep -E "^tests/.*::" pytest.log | grep -E "FAILED|ERROR|Timeout" >> "$GITHUB_STEP_SUMMARY" || true
+          python <<'PY'
+          import os
+          import pathlib
+          import xml.etree.ElementTree as ET
+
+          junit = pathlib.Path("junit.xml")
+          log = pathlib.Path("pytest.log")
+          summary = os.environ.get("GITHUB_STEP_SUMMARY")
+          if summary and junit.exists():
+              root = ET.parse(junit).getroot()
+              failures: list[str] = []
+              for case in root.iter("testcase"):
+                  name = f"{case.get('classname')}::{case.get('name')}"
+                  for child in case:
+                      if child.tag in ("failure", "error"):
+                          msg = (child.get("message") or child.text or "failed").replace("\n", " ")[:300]
+                          failures.append(f"{name} — {msg}")
+              if failures:
+                  with open(summary, "a", encoding="utf-8") as fh:
+                      fh.write("\n## JUnit failures\n")
+                      for item in failures:
+                          fh.write(f"- {item}\n")
+          elif summary and log.exists():
+              failed = [line for line in log.read_text(encoding="utf-8", errors="replace").splitlines() if line.startswith(("FAILED ", "ERROR "))]
+              if failed:
+                  with open(summary, "a", encoding="utf-8") as fh:
+                      fh.write("\n## Pytest failures\n")
+                      for line in failed:
+                          fh.write(f"- {line}\n")
+          PY
           exit $pytest_exit
       - name: Annotate pytest failures
         if: failure()
@@ -79,12 +109,12 @@ jobs:
                   name = f"{case.get('classname')}::{case.get('name')}"
                   for child in case:
                       if child.tag in ("failure", "error"):
-                          msg = (child.get("message") or child.text or "failed").replace("\n", " ")[:500]
-                          print(f"::error title=Pytest::{name}::{msg}")
+                          msg = (child.get("message") or child.text or "failed").replace("\n", " ")[:300]
+                          print(f"::error::{name} — {msg}")
           elif log.exists():
               for line in log.read_text(encoding="utf-8", errors="replace").splitlines():
                   if line.startswith("FAILED ") or line.startswith("ERROR "):
-                      print(f"::error title=Pytest::{line}")
+                      print(f"::error::{line}")
           PY
       - name: Upload pytest results
         if: always()
