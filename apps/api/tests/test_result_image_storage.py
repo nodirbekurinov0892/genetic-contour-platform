@@ -1,8 +1,6 @@
 """Integration test: experiment results are stored with storage_key."""
 
-import asyncio
 import io
-import time
 import uuid
 
 import pytest
@@ -12,28 +10,6 @@ from PIL import Image as PILImage
 from app.config import get_settings
 from app.services.experiment_worker import run_experiment_job
 from app.services.storage import StorageService
-
-
-@pytest.fixture
-def inline_worker(monkeypatch):
-    """Defer worker until after request commit; poll /status for completion."""
-
-    def inline_enqueue(experiment_id: uuid.UUID):
-        async def _run():
-            await asyncio.sleep(0)
-            await run_experiment_job(experiment_id)
-
-        asyncio.get_running_loop().create_task(
-            _run(),
-            name=f"inline-worker-{experiment_id}",
-        )
-        return str(experiment_id)
-
-    monkeypatch.setattr("app.jobs.queue.enqueue_experiment_run", inline_enqueue)
-    monkeypatch.setattr(
-        "app.services.experiment_service.enqueue_experiment_run",
-        inline_enqueue,
-    )
 
 
 def _make_test_image_bytes() -> bytes:
@@ -67,24 +43,8 @@ async def _register_upload_experiment(client: AsyncClient) -> tuple[dict, str]:
     return headers, experiment_id
 
 
-async def _wait_for_completion(
-    client: AsyncClient, headers: dict, experiment_id: str, timeout: float = 30.0
-) -> str:
-    deadline = time.monotonic() + timeout
-    while time.monotonic() < deadline:
-        status = await client.get(
-            f"/api/experiments/{experiment_id}/status",
-            headers=headers,
-        )
-        body = status.json()
-        if body["status"] in {"completed", "failed", "cancelled"}:
-            return body["status"]
-        await asyncio.sleep(0.25)
-    raise TimeoutError("Experiment did not finish in time")
-
-
 @pytest.mark.asyncio
-async def test_sobel_results_use_storage_keys(client: AsyncClient, inline_worker):
+async def test_sobel_results_use_storage_keys(client: AsyncClient):
     headers, experiment_id = await _register_upload_experiment(client)
 
     run = await client.post(
@@ -102,9 +62,10 @@ async def test_sobel_results_use_storage_keys(client: AsyncClient, inline_worker
         },
     )
     assert run.status_code == 200
+    assert run.json()["status"] == "queued"
 
-    final_status = await _wait_for_completion(client, headers, experiment_id, timeout=30.0)
-    assert final_status == "completed"
+    # Run worker after the HTTP transaction commits (enqueue is called mid-request).
+    await run_experiment_job(uuid.UUID(experiment_id))
 
     results = await client.get(
         f"/api/experiments/{experiment_id}/results",
