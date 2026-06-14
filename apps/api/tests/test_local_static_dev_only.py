@@ -30,6 +30,7 @@ def test_local_static_enabled_in_dev(monkeypatch: pytest.MonkeyPatch):
 def test_local_static_disabled_in_production(monkeypatch: pytest.MonkeyPatch):
     _base_env(monkeypatch)
     monkeypatch.setenv("API_DEBUG", "false")
+    monkeypatch.setenv("API_PUBLIC_URL", "https://api.example.com")
     monkeypatch.setenv("CELERY_TASK_ALWAYS_EAGER", "true")
     settings = Settings()
     assert settings.use_local_static_files is False

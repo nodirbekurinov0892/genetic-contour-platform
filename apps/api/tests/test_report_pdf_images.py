@@ -3,22 +3,31 @@
 import io
 
 import pytest
+from PIL import Image as PILImage
 from reportlab.lib.pagesizes import A4
 from reportlab.platypus import Image as RLImage, SimpleDocTemplate
 
+from app.config import Settings
 from app.services.report_service import ReportService
 
 
-_MINIMAL_PNG = (
-    b"\x89PNG\r\n\x1a\n\x00\x00\x00\rIHDR\x00\x00\x00\x01\x00\x00\x00\x01"
-    b"\x08\x02\x00\x00\x00\x90wS\xde\x00\x00\x00\x0cIDATx\x9cc\xf8\x0f"
-    b"\x00\x01\x01\x01\x00\x18\xdd\x8d\xb4\x00\x00\x00\x00IEND\xaeB`\x82"
-)
+def _minimal_png() -> bytes:
+    img = PILImage.new("RGB", (8, 8), color=(255, 0, 0))
+    buf = io.BytesIO()
+    img.save(buf, format="PNG")
+    return buf.getvalue()
 
 
 def test_rl_image_from_bytes_builds_pdf_without_type_error():
-    service = ReportService(db=None, settings=None)  # type: ignore[arg-type]
-    image = service._rl_image_from_bytes(_MINIMAL_PNG, width=50, height=50)
+    settings = Settings(
+        database_url="postgresql://user:pass@localhost/db",
+        secret_key="test-secret-key-32chars-minimum!!",
+        jwt_secret="test-jwt-secret-32chars-minimum!!!",
+        storage_backend="local",
+        api_debug=True,
+    )
+    service = ReportService(db=None, settings=settings)  # type: ignore[arg-type]
+    image = service._rl_image_from_bytes(_minimal_png(), width=50, height=50)
     assert image is not None
 
     buffer = io.BytesIO()

@@ -41,8 +41,9 @@ def test_recovery_second_call_skipped_with_redis_lock(monkeypatch):
     with patch("app.jobs.recovery_lock.redis.from_url", return_value=fake_client):
         with patch("app.jobs.recovery.reset_stale_running_jobs", return_value=[]):
             with patch("app.jobs.recovery.requeue_queued_experiments", mock_requeue):
-                first = run_startup_recovery()
-                second = run_startup_recovery()
+                with patch("app.jobs.recovery.release_recovery_lock", lambda _settings: None):
+                    first = run_startup_recovery()
+                    second = run_startup_recovery()
 
     assert first.get("skipped") is False
     assert second.get("skipped") is True

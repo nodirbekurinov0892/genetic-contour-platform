@@ -11,6 +11,7 @@ def _set_required_env(monkeypatch: pytest.MonkeyPatch) -> None:
     monkeypatch.setenv("JWT_SECRET", "prod-jwt-secret-with-enough-entropy-32")
     monkeypatch.setenv("STORAGE_BACKEND", "local")
     monkeypatch.setenv("API_DEBUG", "false")
+    monkeypatch.setenv("API_PUBLIC_URL", "https://api.example.com")
 
 
 @pytest.fixture(autouse=True)

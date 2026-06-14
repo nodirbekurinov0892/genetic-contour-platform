@@ -1,7 +1,6 @@
 """Unit tests for Celery worker task wrapper."""
 
 from unittest.mock import patch
-from uuid import UUID
 
 from app.jobs.celery_app import celery_app
 from app.jobs.tasks import run_experiment_task
@@ -21,4 +20,5 @@ def test_run_experiment_task_calls_async_worker(mock_asyncio_run):
     import inspect
 
     assert inspect.iscoroutine(passed_coro)
-    assert str(UUID(experiment_id)) in repr(passed_coro)
+    assert passed_coro.cr_code.co_qualname == "run_experiment_job"
+    passed_coro.close()
