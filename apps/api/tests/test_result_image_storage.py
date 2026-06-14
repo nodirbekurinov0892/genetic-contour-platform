@@ -18,7 +18,23 @@ def inline_worker(monkeypatch):
     """Run experiment jobs inline (no Celery broker) for integration tests."""
 
     def inline_enqueue(experiment_id):
-        asyncio.run(run_experiment_job(experiment_id))
+        import threading
+
+        errors: list[BaseException] = []
+
+        def _run() -> None:
+            try:
+                asyncio.run(run_experiment_job(experiment_id))
+            except BaseException as exc:  # noqa: BLE001 — propagate to test thread
+                errors.append(exc)
+
+        thread = threading.Thread(target=_run, name=f"inline-worker-{experiment_id}")
+        thread.start()
+        thread.join(timeout=120)
+        if thread.is_alive():
+            raise TimeoutError(f"Inline worker timed out for experiment {experiment_id}")
+        if errors:
+            raise errors[0]
         return f"inline-{experiment_id}"
 
     monkeypatch.setattr("app.jobs.queue.enqueue_experiment_run", inline_enqueue)
