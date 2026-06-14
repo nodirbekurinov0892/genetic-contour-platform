@@ -82,15 +82,13 @@ async def prepare_database():
 async def _cancel_background_tasks_after_test():
     """Prevent orphan worker transactions from blocking TRUNCATE in the next test."""
     yield
-    for task in list(background._background_tasks.values()):
-        if not task.done():
-            task.cancel()
-    background._background_tasks.clear()
+    await background.drain_background_tasks()
 
 
 @pytest_asyncio.fixture(autouse=True)
 async def _isolate_test_data(prepare_database):
     """Truncate between tests — sync recovery tests commit outside the shared session."""
+    await background.drain_background_tasks()
     table_names = ", ".join(
         f'"{table.name}"' for table in Base.metadata.sorted_tables
     )
@@ -101,8 +99,10 @@ async def _isolate_test_data(prepare_database):
                 text(f"TRUNCATE {table_names} RESTART IDENTITY CASCADE")
             )
     yield
+    await background.drain_background_tasks()
 
 
+@pytest.fixture(autouse=True)
 def _stub_celery_queue(monkeypatch):
     """Avoid real Redis/Celery during API tests; recovery is a no-op."""
 

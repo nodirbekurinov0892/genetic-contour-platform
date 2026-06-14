@@ -11,6 +11,23 @@ logger = logging.getLogger(__name__)
 _background_tasks: dict[str, asyncio.Task[None]] = {}
 
 
+async def drain_background_tasks() -> None:
+    """Cancel and await in-process workers so DB rows are not left locked."""
+    pending = [task for task in _background_tasks.values() if not task.done()]
+    for task in pending:
+        loop = task.get_loop()
+        if loop.is_closed():
+            continue
+        task.cancel()
+    if pending:
+        open_loop_tasks = [
+            task for task in pending if not task.get_loop().is_closed()
+        ]
+        if open_loop_tasks:
+            await asyncio.gather(*open_loop_tasks, return_exceptions=True)
+    _background_tasks.clear()
+
+
 def schedule_experiment_run(experiment_id: uuid.UUID) -> str:
     """Schedule experiment on the current FastAPI event loop. Returns task id."""
     from app.services.experiment_worker import run_experiment_job
