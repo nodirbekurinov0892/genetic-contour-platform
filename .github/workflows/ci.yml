@@ -50,7 +50,11 @@ jobs:
           REDIS_URL: redis://localhost:6379/0
           EXPERIMENT_QUEUE_BACKEND: asyncio
           MPLBACKEND: Agg
-        run: pytest -q --tb=short --timeout=90
+        run: |
+          set -o pipefail
+          pytest -q --tb=line 2>&1 | tee pytest.log
+          echo "## Pytest output (tail)" >> "$GITHUB_STEP_SUMMARY"
+          tail -40 pytest.log >> "$GITHUB_STEP_SUMMARY"
 
   web-lint-build:
     runs-on: ubuntu-latest
