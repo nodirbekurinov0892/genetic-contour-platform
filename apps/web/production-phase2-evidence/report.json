@@ -1,0 +1,16 @@
+{
+  "web": "https://genetic-contour-platform-web.vercel.app",
+  "api": "https://genetic-contour-platform.onrender.com",
+  "startedAt": "2026-06-15T13:00:37.118Z",
+  "deployWait": null,
+  "apiPatchFix": {
+    "ok": false,
+    "status": 500,
+    "body": "{\"detail\":\"Internal server error\",\"request_id\":\"-\"}"
+  },
+  "checks": {},
+  "profileSave": null,
+  "meAfterRefresh": null,
+  "screenshots": [],
+  "error": "Error: API patch fix not deployed within timeout"
+}
