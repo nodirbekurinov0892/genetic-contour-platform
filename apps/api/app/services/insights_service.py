@@ -6,7 +6,8 @@ from typing import Any
 
 from app.core.scientific_evaluation import (
     build_scientific_context,
-    has_supervised_metrics,
+    warnings_from_gt_verification,
+    warnings_from_reproducibility,
 )
 
 ALGO_LABELS = {
@@ -40,6 +41,8 @@ def generate_insights(
     metrics_rows: list[dict[str, Any]],
     *,
     has_ground_truth: bool = False,
+    reproducibility_json: dict[str, Any] | None = None,
+    gt_verification: dict[str, Any] | None = None,
 ) -> dict[str, Any]:
     if not metrics_rows:
         return {
@@ -62,7 +65,13 @@ def generate_insights(
             },
         }
 
-    scientific = build_scientific_context(metrics_rows)
+    scientific = build_scientific_context(
+        metrics_rows,
+        extra_warnings=(
+            warnings_from_reproducibility(reproducibility_json)
+            + warnings_from_gt_verification(gt_verification)
+        ),
+    )
 
     observations: list[str] = []
     limitations: list[str] = []
@@ -149,4 +158,18 @@ def generate_insights(
         "weaknesses": [l for l in limitations if l],
         "winner_logic": scientific["winner_logic"],
         "metric_taxonomy": scientific["metric_taxonomy"],
+        "ground_truth_verification": (
+            {
+                "ground_truth_storage_status": gt_verification.get("ground_truth_storage_status"),
+                "ground_truth_file_exists": gt_verification.get("ground_truth_file_exists"),
+                "effective_ground_truth_key": gt_verification.get("effective_ground_truth_key"),
+                "metrics_independently_verifiable": gt_verification.get(
+                    "metrics_independently_verifiable"
+                ),
+                "inconsistency_detected": gt_verification.get("inconsistency_detected"),
+                "warning": gt_verification.get("warning"),
+            }
+            if gt_verification
+            else None
+        ),
     }

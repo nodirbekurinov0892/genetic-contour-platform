@@ -25,6 +25,7 @@ from app.schemas.experiment import (
     MetricResponse,
     ResultImageResponse,
 )
+from app.schemas.verification import ExperimentVerificationResponse
 from app.services.experiment_service import ExperimentService
 from app.services.insights_service import generate_insights
 from app.services.report_service import ReportService
@@ -208,7 +209,41 @@ async def get_experiment_insights(
         }
         for row in report_data["metrics"]
     ]
-    return generate_insights(metrics_rows)
+    return generate_insights(
+        metrics_rows,
+        reproducibility_json=report_data.get("experiment", {}).get("reproducibility"),
+        gt_verification=report_data.get("ground_truth_verification"),
+    )
+
+
+@router.get("/{experiment_id}/verification", response_model=ExperimentVerificationResponse)
+async def get_experiment_verification(
+    experiment_id: uuid.UUID,
+    db: AsyncSession = Depends(get_db),
+    settings: Settings = Depends(get_settings),
+    current_user: User = Depends(get_current_active_user),
+):
+    report_service = ReportService(db, settings)
+    report_data = await report_service.build_report_data(experiment_id, current_user)
+    verification = report_data["ground_truth_verification"]
+    return ExperimentVerificationResponse(
+        experiment_id=experiment_id,
+        image_id=uuid.UUID(str(verification["image_id"])),
+        ground_truth_storage_key=verification.get("ground_truth_storage_key"),
+        canonical_ground_truth_key=verification["canonical_ground_truth_key"],
+        effective_ground_truth_key=verification.get("effective_ground_truth_key"),
+        ground_truth_storage_status=verification["ground_truth_storage_status"],
+        ground_truth_file_exists=verification["ground_truth_file_exists"],
+        run_time_had_ground_truth=verification["run_time_had_ground_truth"],
+        run_time_ground_truth_checksum_sha256=verification.get(
+            "run_time_ground_truth_checksum_sha256"
+        ),
+        current_gt_checksum=verification.get("current_gt_checksum"),
+        has_supervised_metrics=verification["has_supervised_metrics"],
+        metrics_independently_verifiable=verification["metrics_independently_verifiable"],
+        inconsistency_detected=verification["inconsistency_detected"],
+        warning=verification.get("warning"),
+    )
 
 
 @router.post("/{experiment_id}/clone", response_model=ExperimentResponse)

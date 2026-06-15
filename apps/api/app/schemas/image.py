@@ -18,6 +18,9 @@ class ImageResponse(BaseModel):
     size: int
     mime_type: str
     has_ground_truth: bool = False
+    ground_truth_storage_key: str | None = None
+    storage_status: str = "unknown"
+    ground_truth_storage_status: str = "not_paired"
     ground_truth_url: str | None = None
     ground_truth_uploaded_at: datetime | None = None
     content_checksum: str | None = None

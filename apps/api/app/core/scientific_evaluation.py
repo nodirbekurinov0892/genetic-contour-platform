@@ -186,6 +186,7 @@ def build_scientific_context(
     metrics_rows: list[dict[str, Any]],
     *,
     has_ground_truth: bool | None = None,
+    extra_warnings: list[dict[str, str]] | None = None,
 ) -> dict[str, Any]:
     # Run-time truth: only experiments that computed supervised metrics used GT.
     run_had_ground_truth = has_supervised_metrics(metrics_rows)
@@ -194,6 +195,8 @@ def build_scientific_context(
     warnings = (
         detect_metric_inconsistencies(metrics_rows) if run_had_ground_truth else []
     )
+    if extra_warnings:
+        warnings = extra_warnings + warnings
     summary = generate_data_driven_summary(
         metrics_rows,
         has_ground_truth=run_had_ground_truth,
@@ -224,3 +227,37 @@ def build_scientific_context(
             )
         ),
     }
+
+
+def warnings_from_reproducibility(reproducibility: dict[str, Any] | None) -> list[dict[str, str]]:
+    if not reproducibility:
+        return []
+    items: list[dict[str, str]] = []
+    for message in reproducibility.get("evaluation_warnings") or []:
+        items.append(
+            {
+                "type": "gt_file_missing",
+                "algorithm": "all",
+                "message": str(message),
+            }
+        )
+    if reproducibility.get("gt_reference_present") and not reproducibility.get("gt_file_available"):
+        msg = "Ground Truth fayli topilmadi, tajriba evristik rejimda baholandi"
+        if not any(w.get("message") == msg for w in items):
+            items.append({"type": "gt_file_missing", "algorithm": "all", "message": msg})
+    return items
+
+
+def warnings_from_gt_verification(verification: dict[str, Any] | None) -> list[dict[str, str]]:
+    if not verification or not verification.get("inconsistency_detected"):
+        return []
+    message = verification.get("warning") or (
+        "GT artifact missing; metrics cannot be independently verified."
+    )
+    return [
+        {
+            "type": "gt_artifact_inconsistent",
+            "algorithm": "all",
+            "message": str(message),
+        }
+    ]

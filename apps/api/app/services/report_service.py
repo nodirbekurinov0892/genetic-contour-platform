@@ -40,7 +40,12 @@ from app.models.result_image import ResultImage
 from app.models.user import User
 from app.services.storage import StorageService
 from app.core.platform import PLATFORM_NAME, PLATFORM_SUBTITLE
-from app.core.scientific_evaluation import build_scientific_context
+from app.core.scientific_evaluation import (
+    build_scientific_context,
+    warnings_from_gt_verification,
+    warnings_from_reproducibility,
+)
+from app.services.gt_verification_service import build_gt_verification_status
 from app.utils.ownership import ensure_owner
 
 logger = logging.getLogger(__name__)
@@ -257,7 +262,21 @@ class ReportService:
                 }
             )
 
-        scientific = build_scientific_context(metrics_rows)
+        storage = StorageService(self.settings)
+        gt_verification = build_gt_verification_status(
+            experiment=experiment,
+            image=image,
+            storage=storage,
+            metrics_rows=metrics_rows,
+        )
+
+        scientific = build_scientific_context(
+            metrics_rows,
+            extra_warnings=(
+                warnings_from_reproducibility(experiment.reproducibility_json)
+                + warnings_from_gt_verification(gt_verification)
+            ),
+        )
         conclusion = scientific["summary"]
 
         return {
@@ -283,7 +302,13 @@ class ReportService:
                 "height": image.height,
                 "size_bytes": image.size,
                 "mime_type": image.mime_type,
+                "ground_truth_storage_key": image.ground_truth_storage_key,
+                "canonical_ground_truth_key": gt_verification["canonical_ground_truth_key"],
+                "effective_ground_truth_key": gt_verification["effective_ground_truth_key"],
+                "ground_truth_storage_status": gt_verification["ground_truth_storage_status"],
+                "ground_truth_file_exists": gt_verification["ground_truth_file_exists"],
             },
+            "ground_truth_verification": gt_verification,
             "parameters": {
                 run.algorithm_name: run.parameters_json
                 for run in edge_runs
