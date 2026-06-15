@@ -2,6 +2,9 @@ from datetime import datetime
 from uuid import UUID
 
 from pydantic import BaseModel, ConfigDict, EmailStr, Field
+from sqlalchemy.ext.asyncio import AsyncSession
+
+from app.models.user import User
 
 
 class RegisterRequest(BaseModel):
@@ -88,6 +91,30 @@ class UserResponse(BaseModel):
     last_login_at: datetime | None = None
     created_at: datetime
     updated_at: datetime
+
+
+def user_to_response(user: User) -> UserResponse:
+    """Build UserResponse from eagerly loaded columns (no ORM lazy IO)."""
+    profile_data = user.profile_data
+    return UserResponse(
+        id=user.id,
+        email=user.email,
+        name=user.name,
+        role=user.role,
+        is_active=user.is_active,
+        email_verified=user.email_verified,
+        onboarding_completed_at=user.onboarding_completed_at,
+        profile_data=dict(profile_data) if profile_data is not None else None,
+        last_login_at=user.last_login_at,
+        created_at=user.created_at,
+        updated_at=user.updated_at,
+    )
+
+
+async def build_user_response(db: AsyncSession, user: User) -> UserResponse:
+    """Refresh user in the active async session, then return a safe DTO."""
+    await db.refresh(user)
+    return user_to_response(user)
 
 
 class VerifyEmailRequest(BaseModel):

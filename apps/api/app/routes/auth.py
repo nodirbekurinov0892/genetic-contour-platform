@@ -17,6 +17,7 @@ from app.schemas.auth import (
     TokenResponse,
     UserResponse,
     VerifyEmailRequest,
+    build_user_response,
 )
 from app.services.auth_service import AuthService
 from app.utils.rate_limit import limiter
@@ -86,8 +87,11 @@ async def logout(
 
 
 @router.get("/me", response_model=UserResponse)
-async def get_me(current_user: User = Depends(get_current_active_user)):
-    return UserResponse.model_validate(current_user)
+async def get_me(
+    current_user: User = Depends(get_current_active_user),
+    db: AsyncSession = Depends(get_db),
+):
+    return await build_user_response(db, current_user)
 
 
 @router.patch("/me", response_model=UserResponse)
@@ -101,7 +105,7 @@ async def update_me(
 ):
     service = AuthService(db, settings)
     user = await service.update_profile(current_user, data)
-    return UserResponse.model_validate(user)
+    return await build_user_response(db, user)
 
 
 @router.post("/me/password")
@@ -129,7 +133,7 @@ async def upload_avatar(
 ):
     service = AuthService(db, settings)
     user = await service.upload_avatar(current_user, file)
-    return UserResponse.model_validate(user)
+    return await build_user_response(db, user)
 
 
 @router.delete("/me/avatar", response_model=UserResponse)
@@ -142,7 +146,7 @@ async def delete_avatar(
 ):
     service = AuthService(db, settings)
     user = await service.delete_avatar(current_user)
-    return UserResponse.model_validate(user)
+    return await build_user_response(db, user)
 
 
 @router.post("/verify-email")
@@ -195,4 +199,4 @@ async def complete_onboarding(
 ):
     service = AuthService(db, settings)
     user = await service.complete_onboarding(current_user)
-    return UserResponse.model_validate(user)
+    return await build_user_response(db, user)
