@@ -39,6 +39,7 @@ npm-debug.log*
 .coverage
 htmlcov/
 .pytest_cache/
+apps/web/test-results/
 
 # TypeScript
 next-env.d.ts
