@@ -1,0 +1,57 @@
+﻿2026-06-14T17:11:16.6620064Z ##[group]Run sudo apt-get update && sudo apt-get install -y libmagic1
+2026-06-14T17:11:16.6620614Z [36;1msudo apt-get update && sudo apt-get install -y libmagic1[0m
+2026-06-14T17:11:16.6663275Z shell: /usr/bin/bash -e {0}
+2026-06-14T17:11:16.6663553Z env:
+2026-06-14T17:11:16.6663826Z   pythonLocation: /opt/hostedtoolcache/Python/3.12.13/x64
+2026-06-14T17:11:16.6664284Z   PKG_CONFIG_PATH: /opt/hostedtoolcache/Python/3.12.13/x64/lib/pkgconfig
+2026-06-14T17:11:16.6664932Z   Python_ROOT_DIR: /opt/hostedtoolcache/Python/3.12.13/x64
+2026-06-14T17:11:16.6665482Z   Python2_ROOT_DIR: /opt/hostedtoolcache/Python/3.12.13/x64
+2026-06-14T17:11:16.6665996Z   Python3_ROOT_DIR: /opt/hostedtoolcache/Python/3.12.13/x64
+2026-06-14T17:11:16.6666398Z   LD_LIBRARY_PATH: /opt/hostedtoolcache/Python/3.12.13/x64/lib
+2026-06-14T17:11:16.6666849Z ##[endgroup]
+2026-06-14T17:11:16.7634692Z Get:1 file:/etc/apt/apt-mirrors.txt Mirrorlist [144 B]
+2026-06-14T17:11:16.8004566Z Hit:2 http://azure.archive.ubuntu.com/ubuntu noble InRelease
+2026-06-14T17:11:16.8017645Z Hit:6 https://packages.microsoft.com/repos/azure-cli noble InRelease
+2026-06-14T17:11:16.8018650Z Get:7 https://packages.microsoft.com/ubuntu/24.04/prod noble InRelease [3600 B]
+2026-06-14T17:11:16.8027334Z Get:3 http://azure.archive.ubuntu.com/ubuntu noble-updates InRelease [126 kB]
+2026-06-14T17:11:16.8061056Z Get:4 http://azure.archive.ubuntu.com/ubuntu noble-backports InRelease [126 kB]
+2026-06-14T17:11:16.8127851Z Get:5 http://azure.archive.ubuntu.com/ubuntu noble-security InRelease [126 kB]
+2026-06-14T17:11:16.8710290Z Get:8 https://dl.google.com/linux/chrome-stable/deb stable InRelease [1825 B]
+2026-06-14T17:11:16.9770265Z Get:9 https://packages.microsoft.com/ubuntu/24.04/prod noble/main amd64 Packages [175 kB]
+2026-06-14T17:11:16.9924876Z Get:10 https://packages.microsoft.com/ubuntu/24.04/prod noble/main arm64 Packages [146 kB]
+2026-06-14T17:11:17.0270844Z Get:11 http://azure.archive.ubuntu.com/ubuntu noble-updates/main amd64 Packages [1723 kB]
+2026-06-14T17:11:17.0383962Z Get:12 http://azure.archive.ubuntu.com/ubuntu noble-updates/main Translation-en [331 kB]
+2026-06-14T17:11:17.0403776Z Get:13 http://azure.archive.ubuntu.com/ubuntu noble-updates/main amd64 Components [181 kB]
+2026-06-14T17:11:17.0414371Z Get:14 http://azure.archive.ubuntu.com/ubuntu noble-updates/main amd64 c-n-f Metadata [17.4 kB]
+2026-06-14T17:11:17.0443783Z Get:15 http://azure.archive.ubuntu.com/ubuntu noble-updates/universe amd64 Packages [1689 kB]
+2026-06-14T17:11:17.0513658Z Get:16 http://azure.archive.ubuntu.com/ubuntu noble-updates/universe Translation-en [331 kB]
+2026-06-14T17:11:17.0539670Z Get:17 http://azure.archive.ubuntu.com/ubuntu noble-updates/universe amd64 Components [388 kB]
+2026-06-14T17:11:17.0571726Z Get:18 http://azure.archive.ubuntu.com/ubuntu noble-updates/universe amd64 c-n-f Metadata [34.7 kB]
+2026-06-14T17:11:17.0583397Z Get:19 http://azure.archive.ubuntu.com/ubuntu noble-updates/restricted amd64 Packages [2733 kB]
+2026-06-14T17:11:17.0734362Z Get:20 http://azure.archive.ubuntu.com/ubuntu noble-updates/restricted Translation-en [649 kB]
+2026-06-14T17:11:17.1218288Z Get:21 http://azure.archive.ubuntu.com/ubuntu noble-updates/multiverse amd64 Components [940 B]
+2026-06-14T17:11:17.1236861Z Get:22 http://azure.archive.ubuntu.com/ubuntu noble-backports/main amd64 Packages [40.6 kB]
+2026-06-14T17:11:17.1246553Z Get:23 http://azure.archive.ubuntu.com/ubuntu noble-backports/main amd64 Components [5760 B]
+2026-06-14T17:11:17.1259325Z Get:24 http://azure.archive.ubuntu.com/ubuntu noble-backports/main amd64 c-n-f Metadata [368 B]
+2026-06-14T17:11:17.1272369Z Get:25 http://azure.archive.ubuntu.com/ubuntu noble-backports/universe amd64 Packages [31.0 kB]
+2026-06-14T17:11:17.1290596Z Get:26 http://azure.archive.ubuntu.com/ubuntu noble-backports/universe amd64 Components [10.6 kB]
+2026-06-14T17:11:17.1313633Z Get:27 http://azure.archive.ubuntu.com/ubuntu noble-backports/universe amd64 c-n-f Metadata [1588 B]
+2026-06-14T17:11:17.1527273Z Get:28 http://azure.archive.ubuntu.com/ubuntu noble-security/main amd64 Packages [1424 kB]
+2026-06-14T17:11:17.1614229Z Get:29 http://azure.archive.ubuntu.com/ubuntu noble-security/main Translation-en [245 kB]
+2026-06-14T17:11:17.1632328Z Get:30 http://azure.archive.ubuntu.com/ubuntu noble-security/main amd64 Components [44.9 kB]
+2026-06-14T17:11:17.1641598Z Get:31 http://azure.archive.ubuntu.com/ubuntu noble-security/main amd64 c-n-f Metadata [11.4 kB]
+2026-06-14T17:11:17.1655628Z Get:32 http://azure.archive.ubuntu.com/ubuntu noble-security/universe amd64 Packages [1186 kB]
+2026-06-14T17:11:17.1733073Z Get:33 http://azure.archive.ubuntu.com/ubuntu noble-security/universe Translation-en [231 kB]
+2026-06-14T17:11:17.1761784Z Get:34 http://azure.archive.ubuntu.com/ubuntu noble-security/universe amd64 Components [76.3 kB]
+2026-06-14T17:11:17.1779881Z Get:35 http://azure.archive.ubuntu.com/ubuntu noble-security/universe amd64 c-n-f Metadata [23.3 kB]
+2026-06-14T17:11:17.1795989Z Get:36 http://azure.archive.ubuntu.com/ubuntu noble-security/restricted amd64 Packages [2573 kB]
+2026-06-14T17:11:17.1933372Z Get:37 http://azure.archive.ubuntu.com/ubuntu noble-security/restricted Translation-en [615 kB]
+2026-06-14T17:11:17.2456755Z Get:38 https://dl.google.com/linux/chrome-stable/deb stable/main amd64 Packages [1215 B]
+2026-06-14T17:11:22.6515218Z Fetched 15.3 MB in 2s (8172 kB/s)
+2026-06-14T17:11:23.3816387Z Reading package lists...
+2026-06-14T17:11:23.4142439Z Reading package lists...
+2026-06-14T17:11:23.5774688Z Building dependency tree...
+2026-06-14T17:11:23.5781237Z Reading state information...
+2026-06-14T17:11:23.7626270Z libmagic1t64 is already the newest version (1:5.45-3build1).
+2026-06-14T17:11:23.7627077Z libmagic1t64 set to manually installed.
+2026-06-14T17:11:23.7627814Z 0 upgraded, 0 newly installed, 0 to remove and 34 not upgraded.

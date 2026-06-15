@@ -1,0 +1,35 @@
+﻿2026-06-14T16:50:26.7344049Z ##[group]Run npm run lint
+2026-06-14T16:50:26.7344528Z [36;1mnpm run lint[0m
+2026-06-14T16:50:26.7394344Z shell: /usr/bin/bash -e {0}
+2026-06-14T16:50:26.7394769Z ##[endgroup]
+2026-06-14T16:50:26.8775080Z 
+2026-06-14T16:50:26.8775531Z > @genetic-contour/web@0.1.0 lint
+2026-06-14T16:50:26.8776014Z > next lint
+2026-06-14T16:50:26.8776203Z 
+2026-06-14T16:50:27.0588759Z `next lint` is deprecated and will be removed in Next.js 16.
+2026-06-14T16:50:27.0589799Z For new projects, use create-next-app to choose your preferred linter.
+2026-06-14T16:50:27.0590665Z For existing projects, migrate to the ESLint CLI:
+2026-06-14T16:50:27.0591418Z npx @next/codemod@canary next-lint-to-eslint-cli .
+2026-06-14T16:50:27.0591846Z 
+2026-06-14T16:50:27.4591575Z [next.config] NEXT_PUBLIC_STORAGE_PUBLIC_URL is not set. R2/S3 result images will be blocked by next/image unless API serves /static URLs.
+2026-06-14T16:50:29.8660412Z Attention: Next.js now collects completely anonymous telemetry regarding usage.
+2026-06-14T16:50:29.8661670Z This information is used to shape Next.js' roadmap and prioritize features.
+2026-06-14T16:50:29.8674908Z You can learn more, including how to opt-out if you'd not like to participate in this anonymous program, by visiting the following URL:
+2026-06-14T16:50:29.8676120Z https://nextjs.org/telemetry
+2026-06-14T16:50:29.8676450Z 
+2026-06-14T16:50:30.0917831Z 
+2026-06-14T16:50:30.0918238Z ./app/analytics/page.tsx
+2026-06-14T16:50:30.0918985Z 20:24  Warning: 'ImageIcon' is defined but never used.  @typescript-eslint/no-unused-vars
+2026-06-14T16:50:30.0919422Z 
+2026-06-14T16:50:30.0919922Z ./app/experiments/[id]/page.tsx
+2026-06-14T16:50:30.0920809Z 22:20  Warning: 'ApiError' is defined but never used.  @typescript-eslint/no-unused-vars
+2026-06-14T16:50:30.0922147Z 23:10  Warning: 'safeRedirectPath' is defined but never used.  @typescript-eslint/no-unused-vars
+2026-06-14T16:50:30.0924164Z 172:6  Warning: React Hook useEffect has a missing dependency: 'jobStatus'. Either include it or remove the dependency array.  react-hooks/exhaustive-deps
+2026-06-14T16:50:30.0925467Z 
+2026-06-14T16:50:30.0927961Z ./app/experiments/new/page.tsx
+2026-06-14T16:50:30.0929687Z 4:8  Warning: 'Link' is defined but never used.  @typescript-eslint/no-unused-vars
+2026-06-14T16:50:30.0930317Z 
+2026-06-14T16:50:30.0930819Z ./components/providers/auth-provider.tsx
+2026-06-14T16:50:30.0931950Z 15:3  Warning: 'setTokens' is defined but never used.  @typescript-eslint/no-unused-vars
+2026-06-14T16:50:30.0932550Z 
+2026-06-14T16:50:30.0933744Z info  - Need to disable some ESLint rules? Learn more here: https://nextjs.org/docs/app/api-reference/config/eslint#disabling-rules

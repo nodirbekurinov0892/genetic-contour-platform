@@ -1,0 +1,1235 @@
+﻿2026-06-14T17:06:32.9882993Z Current runner version: '2.335.1'
+2026-06-14T17:06:32.9912404Z ##[group]Runner Image Provisioner
+2026-06-14T17:06:32.9913268Z Hosted Compute Agent
+2026-06-14T17:06:32.9913968Z Version: 20260527.539
+2026-06-14T17:06:32.9915086Z Commit: a891dd388383b896fa6ac04a82c0b75cec981078
+2026-06-14T17:06:32.9916134Z Build Date: 2026-05-27T21:39:57Z
+2026-06-14T17:06:32.9916888Z Worker ID: {f7aa954f-a7cf-4574-ad82-70763a372fbc}
+2026-06-14T17:06:32.9917617Z Azure Region: eastus2
+2026-06-14T17:06:32.9918261Z ##[endgroup]
+2026-06-14T17:06:32.9920534Z ##[group]Operating System
+2026-06-14T17:06:32.9921195Z Ubuntu
+2026-06-14T17:06:32.9921843Z 24.04.4
+2026-06-14T17:06:32.9922523Z LTS
+2026-06-14T17:06:32.9923116Z ##[endgroup]
+2026-06-14T17:06:32.9923753Z ##[group]Runner Image
+2026-06-14T17:06:32.9924389Z Image: ubuntu-24.04
+2026-06-14T17:06:32.9925248Z Version: 20260607.184.1
+2026-06-14T17:06:32.9926589Z Included Software: https://github.com/actions/runner-images/blob/ubuntu24/20260607.184/images/ubuntu/Ubuntu2404-Readme.md
+2026-06-14T17:06:32.9928174Z Image Release: https://github.com/actions/runner-images/releases/tag/ubuntu24%2F20260607.184
+2026-06-14T17:06:32.9929172Z ##[endgroup]
+2026-06-14T17:06:32.9930452Z ##[group]GITHUB_TOKEN Permissions
+2026-06-14T17:06:32.9932714Z Contents: read
+2026-06-14T17:06:32.9933474Z Metadata: read
+2026-06-14T17:06:32.9934064Z Packages: read
+2026-06-14T17:06:32.9934865Z ##[endgroup]
+2026-06-14T17:06:32.9937264Z Secret source: Actions
+2026-06-14T17:06:32.9938093Z Prepare workflow directory
+2026-06-14T17:06:33.0388961Z Prepare all required actions
+2026-06-14T17:06:33.0428564Z Getting action download info
+2026-06-14T17:06:33.3559576Z Download action repository 'actions/checkout@v4' (SHA:34e114876b0b11c390a56381ad16ebd13914f8d5)
+2026-06-14T17:06:33.4448615Z Download action repository 'actions/setup-python@v5' (SHA:a26af69be951a213d495a4c3e4e4022e16d87065)
+2026-06-14T17:06:33.5283694Z Download action repository 'actions/upload-artifact@v4' (SHA:ea165f8d65b6e75b540449e92b4886f43607fa02)
+2026-06-14T17:06:33.7640236Z Complete job name: api-tests
+2026-06-14T17:06:33.8143309Z ##[group]Checking docker version
+2026-06-14T17:06:33.8157407Z ##[command]/usr/bin/docker version --format '{{.Server.APIVersion}}'
+2026-06-14T17:06:33.8976634Z '1.48'
+2026-06-14T17:06:33.8991395Z Docker daemon API version: '1.48'
+2026-06-14T17:06:33.8992184Z ##[command]/usr/bin/docker version --format '{{.Client.APIVersion}}'
+2026-06-14T17:06:33.9160810Z '1.48'
+2026-06-14T17:06:33.9175001Z Docker client API version: '1.48'
+2026-06-14T17:06:33.9180367Z ##[endgroup]
+2026-06-14T17:06:33.9182806Z ##[group]Clean up resources from previous jobs
+2026-06-14T17:06:33.9188380Z ##[command]/usr/bin/docker ps --all --quiet --no-trunc --filter "label=610b46"
+2026-06-14T17:06:33.9335851Z ##[command]/usr/bin/docker network prune --force --filter "label=610b46"
+2026-06-14T17:06:33.9482431Z ##[endgroup]
+2026-06-14T17:06:33.9482961Z ##[group]Create local container network
+2026-06-14T17:06:33.9493684Z ##[command]/usr/bin/docker network create --label 610b46 github_network_825641a0b40148f89aa3732b796337d1
+2026-06-14T17:06:34.0151146Z 8eb588be9b554d584ce9952597adae9bf3c68e64b4946317ee55b70865439344
+2026-06-14T17:06:34.0198466Z ##[endgroup]
+2026-06-14T17:06:34.0223811Z ##[group]Starting postgres service container
+2026-06-14T17:06:34.0246298Z ##[command]/usr/bin/docker pull postgres:16-alpine
+2026-06-14T17:06:34.3034107Z 16-alpine: Pulling from library/postgres
+2026-06-14T17:06:34.4123636Z 6a0ac1617861: Already exists
+2026-06-14T17:06:34.4150560Z cdda83573b7e: Pulling fs layer
+2026-06-14T17:06:34.4151814Z bba062d0aaf6: Pulling fs layer
+2026-06-14T17:06:34.4153013Z 2eeda6440fdc: Pulling fs layer
+2026-06-14T17:06:34.4154413Z 377e1ef4f477: Pulling fs layer
+2026-06-14T17:06:34.4155638Z 3709d6f016e4: Pulling fs layer
+2026-06-14T17:06:34.4156548Z d9c20c681f9b: Pulling fs layer
+2026-06-14T17:06:34.4157571Z 7b77effdbf0f: Pulling fs layer
+2026-06-14T17:06:34.4158390Z ae6182536390: Pulling fs layer
+2026-06-14T17:06:34.4159255Z 24c411bedd9e: Pulling fs layer
+2026-06-14T17:06:34.4161961Z ca93057fc4d5: Pulling fs layer
+2026-06-14T17:06:34.4162971Z 7b77effdbf0f: Waiting
+2026-06-14T17:06:34.4163731Z 377e1ef4f477: Waiting
+2026-06-14T17:06:34.4164388Z 3709d6f016e4: Waiting
+2026-06-14T17:06:34.4165262Z d9c20c681f9b: Waiting
+2026-06-14T17:06:34.4166107Z 24c411bedd9e: Waiting
+2026-06-14T17:06:34.4166737Z ae6182536390: Waiting
+2026-06-14T17:06:34.4167367Z ca93057fc4d5: Waiting
+2026-06-14T17:06:34.5440165Z 2eeda6440fdc: Verifying Checksum
+2026-06-14T17:06:34.5442413Z 2eeda6440fdc: Download complete
+2026-06-14T17:06:34.5444198Z cdda83573b7e: Download complete
+2026-06-14T17:06:34.5604933Z cdda83573b7e: Pull complete
+2026-06-14T17:06:34.5829534Z bba062d0aaf6: Verifying Checksum
+2026-06-14T17:06:34.5831475Z bba062d0aaf6: Download complete
+2026-06-14T17:06:34.5909839Z 377e1ef4f477: Download complete
+2026-06-14T17:06:34.6400493Z d9c20c681f9b: Download complete
+2026-06-14T17:06:34.6451283Z 7b77effdbf0f: Verifying Checksum
+2026-06-14T17:06:34.6453745Z 7b77effdbf0f: Download complete
+2026-06-14T17:06:34.7139466Z 24c411bedd9e: Download complete
+2026-06-14T17:06:34.7142255Z ae6182536390: Verifying Checksum
+2026-06-14T17:06:34.7144298Z ae6182536390: Download complete
+2026-06-14T17:06:34.7682565Z ca93057fc4d5: Verifying Checksum
+2026-06-14T17:06:34.7684055Z ca93057fc4d5: Download complete
+2026-06-14T17:06:35.3872674Z 3709d6f016e4: Verifying Checksum
+2026-06-14T17:06:35.3873295Z 3709d6f016e4: Download complete
+2026-06-14T17:06:36.3181095Z bba062d0aaf6: Pull complete
+2026-06-14T17:06:36.3316075Z 2eeda6440fdc: Pull complete
+2026-06-14T17:06:36.3405458Z 377e1ef4f477: Pull complete
+2026-06-14T17:06:38.7123547Z 3709d6f016e4: Pull complete
+2026-06-14T17:06:38.7279432Z d9c20c681f9b: Pull complete
+2026-06-14T17:06:38.7408915Z 7b77effdbf0f: Pull complete
+2026-06-14T17:06:38.7628013Z ae6182536390: Pull complete
+2026-06-14T17:06:38.7726891Z 24c411bedd9e: Pull complete
+2026-06-14T17:06:38.7928256Z ca93057fc4d5: Pull complete
+2026-06-14T17:06:38.7966573Z Digest: sha256:16bc17c64a573ef34162af9298258d1aec548232985b33ed7b1eac33ba35c229
+2026-06-14T17:06:38.7978840Z Status: Downloaded newer image for postgres:16-alpine
+2026-06-14T17:06:38.7997147Z docker.io/library/postgres:16-alpine
+2026-06-14T17:06:38.8066724Z ##[command]/usr/bin/docker create --name 08fe77746dfc45d195460c181f23192c_postgres16alpine_f5daa1 --label 610b46 --network github_network_825641a0b40148f89aa3732b796337d1 --network-alias postgres -p 5432:5432 --health-cmd "pg_isready -U genetic_contour" --health-interval 5s --health-timeout 5s --health-retries 10 -e "POSTGRES_USER=genetic_contour" -e "POSTGRES_PASSWORD=genetic_contour_secret" -e "POSTGRES_DB=genetic_contour_test" -e GITHUB_ACTIONS=true -e CI=true postgres:16-alpine
+2026-06-14T17:06:38.8319619Z b6dd7c728ae0449203f2486008ed02668fd04ef2ff1d767299b33820516a6551
+2026-06-14T17:06:38.8345441Z ##[command]/usr/bin/docker start b6dd7c728ae0449203f2486008ed02668fd04ef2ff1d767299b33820516a6551
+2026-06-14T17:06:39.0463685Z b6dd7c728ae0449203f2486008ed02668fd04ef2ff1d767299b33820516a6551
+2026-06-14T17:06:39.0485974Z ##[command]/usr/bin/docker ps --all --filter id=b6dd7c728ae0449203f2486008ed02668fd04ef2ff1d767299b33820516a6551 --filter status=running --no-trunc --format "{{.ID}} {{.Status}}"
+2026-06-14T17:06:39.0623496Z b6dd7c728ae0449203f2486008ed02668fd04ef2ff1d767299b33820516a6551 Up Less than a second (health: starting)
+2026-06-14T17:06:39.0653510Z ##[command]/usr/bin/docker port b6dd7c728ae0449203f2486008ed02668fd04ef2ff1d767299b33820516a6551
+2026-06-14T17:06:39.0784085Z 5432/tcp -> 0.0.0.0:5432
+2026-06-14T17:06:39.0784944Z 5432/tcp -> [::]:5432
+2026-06-14T17:06:39.0831517Z ##[endgroup]
+2026-06-14T17:06:39.0840684Z ##[group]Waiting for all services to be ready
+2026-06-14T17:06:39.0854985Z ##[command]/usr/bin/docker inspect --format="{{if .Config.Healthcheck}}{{print .State.Health.Status}}{{end}}" b6dd7c728ae0449203f2486008ed02668fd04ef2ff1d767299b33820516a6551
+2026-06-14T17:06:39.0987946Z starting
+2026-06-14T17:06:39.1008837Z postgres service is starting, waiting 2 seconds before checking again.
+2026-06-14T17:06:41.1009629Z ##[command]/usr/bin/docker inspect --format="{{if .Config.Healthcheck}}{{print .State.Health.Status}}{{end}}" b6dd7c728ae0449203f2486008ed02668fd04ef2ff1d767299b33820516a6551
+2026-06-14T17:06:41.1151840Z starting
+2026-06-14T17:06:41.1165691Z postgres service is starting, waiting 4 seconds before checking again.
+2026-06-14T17:06:45.4473940Z ##[command]/usr/bin/docker inspect --format="{{if .Config.Healthcheck}}{{print .State.Health.Status}}{{end}}" b6dd7c728ae0449203f2486008ed02668fd04ef2ff1d767299b33820516a6551
+2026-06-14T17:06:45.4624038Z healthy
+2026-06-14T17:06:45.4642059Z postgres service is healthy.
+2026-06-14T17:06:45.4642914Z ##[endgroup]
+2026-06-14T17:06:45.4987634Z ##[group]Run actions/checkout@v4
+2026-06-14T17:06:45.4988230Z with:
+2026-06-14T17:06:45.4988524Z   repository: nodirbekurinov0892/genetic-contour-platform
+2026-06-14T17:06:45.4991818Z   token: ***
+2026-06-14T17:06:45.4992040Z   ssh-strict: true
+2026-06-14T17:06:45.4992261Z   ssh-user: git
+2026-06-14T17:06:45.4992488Z   persist-credentials: true
+2026-06-14T17:06:45.4992749Z   clean: true
+2026-06-14T17:06:45.4992976Z   sparse-checkout-cone-mode: true
+2026-06-14T17:06:45.4993236Z   fetch-depth: 1
+2026-06-14T17:06:45.4993450Z   fetch-tags: false
+2026-06-14T17:06:45.4993678Z   show-progress: true
+2026-06-14T17:06:45.4993906Z   lfs: false
+2026-06-14T17:06:45.4994121Z   submodules: false
+2026-06-14T17:06:45.4994350Z   set-safe-directory: true
+2026-06-14T17:06:45.4994985Z ##[endgroup]
+2026-06-14T17:06:45.6150359Z Syncing repository: nodirbekurinov0892/genetic-contour-platform
+2026-06-14T17:06:45.6151733Z ##[group]Getting Git version info
+2026-06-14T17:06:45.6152297Z Working directory is '/home/runner/work/genetic-contour-platform/genetic-contour-platform'
+2026-06-14T17:06:45.6152992Z [command]/usr/bin/git version
+2026-06-14T17:06:45.6222624Z git version 2.54.0
+2026-06-14T17:06:45.6247194Z ##[endgroup]
+2026-06-14T17:06:45.6268698Z Temporarily overriding HOME='/home/runner/work/_temp/a76276ae-2b3f-45ad-b704-9fd59f71758b' before making global git config changes
+2026-06-14T17:06:45.6269597Z Adding repository directory to the temporary git global config as a safe directory
+2026-06-14T17:06:45.6274304Z [command]/usr/bin/git config --global --add safe.directory /home/runner/work/genetic-contour-platform/genetic-contour-platform
+2026-06-14T17:06:45.6322575Z Deleting the contents of '/home/runner/work/genetic-contour-platform/genetic-contour-platform'
+2026-06-14T17:06:45.6326200Z ##[group]Initializing the repository
+2026-06-14T17:06:45.6330448Z [command]/usr/bin/git init /home/runner/work/genetic-contour-platform/genetic-contour-platform
+2026-06-14T17:06:45.6431435Z hint: Using 'master' as the name for the initial branch. This default branch name
+2026-06-14T17:06:45.6432200Z hint: will change to "main" in Git 3.0. To configure the initial branch name
+2026-06-14T17:06:45.6432700Z hint: to use in all of your new repositories, which will suppress this warning,
+2026-06-14T17:06:45.6433096Z hint: call:
+2026-06-14T17:06:45.6433301Z hint:
+2026-06-14T17:06:45.6433598Z hint: 	git config --global init.defaultBranch <name>
+2026-06-14T17:06:45.6433939Z hint:
+2026-06-14T17:06:45.6434242Z hint: Names commonly chosen instead of 'master' are 'main', 'trunk' and
+2026-06-14T17:06:45.6434960Z hint: 'development'. The just-created branch can be renamed via this command:
+2026-06-14T17:06:45.6435344Z hint:
+2026-06-14T17:06:45.6435548Z hint: 	git branch -m <name>
+2026-06-14T17:06:45.6435778Z hint:
+2026-06-14T17:06:45.6436086Z hint: Disable this message with "git config set advice.defaultBranchName false"
+2026-06-14T17:06:45.6438396Z Initialized empty Git repository in /home/runner/work/genetic-contour-platform/genetic-contour-platform/.git/
+2026-06-14T17:06:45.6450240Z [command]/usr/bin/git remote add origin https://github.com/nodirbekurinov0892/genetic-contour-platform
+2026-06-14T17:06:45.6492998Z ##[endgroup]
+2026-06-14T17:06:45.6493625Z ##[group]Disabling automatic garbage collection
+2026-06-14T17:06:45.6498042Z [command]/usr/bin/git config --local gc.auto 0
+2026-06-14T17:06:45.6526497Z ##[endgroup]
+2026-06-14T17:06:45.6526885Z ##[group]Setting up auth
+2026-06-14T17:06:45.6534831Z [command]/usr/bin/git config --local --name-only --get-regexp core\.sshCommand
+2026-06-14T17:06:45.6569682Z [command]/usr/bin/git submodule foreach --recursive sh -c "git config --local --name-only --get-regexp 'core\.sshCommand' && git config --local --unset-all 'core.sshCommand' || :"
+2026-06-14T17:06:45.6919732Z [command]/usr/bin/git config --local --name-only --get-regexp http\.https\:\/\/github\.com\/\.extraheader
+2026-06-14T17:06:45.6949276Z [command]/usr/bin/git submodule foreach --recursive sh -c "git config --local --name-only --get-regexp 'http\.https\:\/\/github\.com\/\.extraheader' && git config --local --unset-all 'http.https://github.com/.extraheader' || :"
+2026-06-14T17:06:45.7180231Z [command]/usr/bin/git config --local --name-only --get-regexp ^includeIf\.gitdir:
+2026-06-14T17:06:45.7214390Z [command]/usr/bin/git submodule foreach --recursive git config --local --show-origin --name-only --get-regexp remote.origin.url
+2026-06-14T17:06:45.7449989Z [command]/usr/bin/git config --local http.https://github.com/.extraheader AUTHORIZATION: basic ***
+2026-06-14T17:06:45.7483569Z ##[endgroup]
+2026-06-14T17:06:45.7484161Z ##[group]Fetching the repository
+2026-06-14T17:06:45.7492152Z [command]/usr/bin/git -c protocol.version=2 fetch --no-tags --prune --no-recurse-submodules --depth=1 origin +3ed00d78136f054d878f9fb42dd55098b291aa9e:refs/remotes/origin/main
+2026-06-14T17:06:46.0594246Z From https://github.com/nodirbekurinov0892/genetic-contour-platform
+2026-06-14T17:06:46.0595659Z  * [new ref]         3ed00d78136f054d878f9fb42dd55098b291aa9e -> origin/main
+2026-06-14T17:06:46.0632378Z ##[endgroup]
+2026-06-14T17:06:46.0633108Z ##[group]Determining the checkout info
+2026-06-14T17:06:46.0634363Z ##[endgroup]
+2026-06-14T17:06:46.0640263Z [command]/usr/bin/git sparse-checkout disable
+2026-06-14T17:06:46.0688321Z [command]/usr/bin/git config --local --unset-all extensions.worktreeConfig
+2026-06-14T17:06:46.0717361Z ##[group]Checking out the ref
+2026-06-14T17:06:46.0720482Z [command]/usr/bin/git checkout --progress --force -B main refs/remotes/origin/main
+2026-06-14T17:06:46.0906175Z Switched to a new branch 'main'
+2026-06-14T17:06:46.0908418Z branch 'main' set up to track 'origin/main'.
+2026-06-14T17:06:46.0915575Z ##[endgroup]
+2026-06-14T17:06:46.0957439Z [command]/usr/bin/git log -1 --format=%H
+2026-06-14T17:06:46.0981552Z 3ed00d78136f054d878f9fb42dd55098b291aa9e
+2026-06-14T17:06:46.1208469Z ##[group]Run actions/setup-python@v5
+2026-06-14T17:06:46.1208761Z with:
+2026-06-14T17:06:46.1208969Z   python-version: 3.12
+2026-06-14T17:06:46.1209191Z   cache: pip
+2026-06-14T17:06:46.1209437Z   cache-dependency-path: apps/api/requirements*.txt
+2026-06-14T17:06:46.1209751Z   check-latest: false
+2026-06-14T17:06:46.1212806Z   token: ***
+2026-06-14T17:06:46.1213017Z   update-environment: true
+2026-06-14T17:06:46.1213264Z   allow-prereleases: false
+2026-06-14T17:06:46.1213495Z   freethreaded: false
+2026-06-14T17:06:46.1213712Z ##[endgroup]
+2026-06-14T17:06:46.2881421Z ##[group]Installed versions
+2026-06-14T17:06:46.2978798Z Successfully set up CPython (3.12.13)
+2026-06-14T17:06:46.2979476Z ##[endgroup]
+2026-06-14T17:06:46.3264127Z [command]/opt/hostedtoolcache/Python/3.12.13/x64/bin/pip cache dir
+2026-06-14T17:06:46.6500339Z /home/runner/.cache/pip
+2026-06-14T17:06:46.7726818Z pip cache is not found
+2026-06-14T17:06:46.7841188Z ##[group]Run sudo apt-get update && sudo apt-get install -y libmagic1
+2026-06-14T17:06:46.7841746Z [36;1msudo apt-get update && sudo apt-get install -y libmagic1[0m
+2026-06-14T17:06:46.7884178Z shell: /usr/bin/bash -e {0}
+2026-06-14T17:06:46.7884458Z env:
+2026-06-14T17:06:46.7885048Z   pythonLocation: /opt/hostedtoolcache/Python/3.12.13/x64
+2026-06-14T17:06:46.7885532Z   PKG_CONFIG_PATH: /opt/hostedtoolcache/Python/3.12.13/x64/lib/pkgconfig
+2026-06-14T17:06:46.7885974Z   Python_ROOT_DIR: /opt/hostedtoolcache/Python/3.12.13/x64
+2026-06-14T17:06:46.7886349Z   Python2_ROOT_DIR: /opt/hostedtoolcache/Python/3.12.13/x64
+2026-06-14T17:06:46.7886959Z   Python3_ROOT_DIR: /opt/hostedtoolcache/Python/3.12.13/x64
+2026-06-14T17:06:46.7887333Z   LD_LIBRARY_PATH: /opt/hostedtoolcache/Python/3.12.13/x64/lib
+2026-06-14T17:06:46.7887655Z ##[endgroup]
+2026-06-14T17:06:46.8794127Z Get:1 file:/etc/apt/apt-mirrors.txt Mirrorlist [144 B]
+2026-06-14T17:06:46.9247705Z Hit:6 https://packages.microsoft.com/repos/azure-cli noble InRelease
+2026-06-14T17:06:46.9250019Z Get:7 https://packages.microsoft.com/ubuntu/24.04/prod noble InRelease [3600 B]
+2026-06-14T17:06:46.9502277Z Get:8 https://dl.google.com/linux/chrome-stable/deb stable InRelease [1825 B]
+2026-06-14T17:06:46.9876552Z Hit:2 http://azure.archive.ubuntu.com/ubuntu noble InRelease
+2026-06-14T17:06:46.9888607Z Get:3 http://azure.archive.ubuntu.com/ubuntu noble-updates InRelease [126 kB]
+2026-06-14T17:06:46.9930761Z Get:4 http://azure.archive.ubuntu.com/ubuntu noble-backports InRelease [126 kB]
+2026-06-14T17:06:46.9967511Z Get:5 http://azure.archive.ubuntu.com/ubuntu noble-security InRelease [126 kB]
+2026-06-14T17:06:47.0475659Z Get:9 https://packages.microsoft.com/ubuntu/24.04/prod noble/main amd64 Packages [175 kB]
+2026-06-14T17:06:47.0609059Z Get:10 https://packages.microsoft.com/ubuntu/24.04/prod noble/main arm64 Packages [146 kB]
+2026-06-14T17:06:47.1169489Z Get:11 https://dl.google.com/linux/chrome-stable/deb stable/main amd64 Packages [1215 B]
+2026-06-14T17:06:47.2012704Z Get:12 http://azure.archive.ubuntu.com/ubuntu noble-updates/main amd64 Packages [1723 kB]
+2026-06-14T17:06:47.2107046Z Get:13 http://azure.archive.ubuntu.com/ubuntu noble-updates/main Translation-en [331 kB]
+2026-06-14T17:06:47.2129634Z Get:14 http://azure.archive.ubuntu.com/ubuntu noble-updates/main amd64 Components [181 kB]
+2026-06-14T17:06:47.2145222Z Get:15 http://azure.archive.ubuntu.com/ubuntu noble-updates/main amd64 c-n-f Metadata [17.4 kB]
+2026-06-14T17:06:47.2153470Z Get:16 http://azure.archive.ubuntu.com/ubuntu noble-updates/universe amd64 Packages [1689 kB]
+2026-06-14T17:06:47.2245953Z Get:17 http://azure.archive.ubuntu.com/ubuntu noble-updates/universe Translation-en [331 kB]
+2026-06-14T17:06:47.2266980Z Get:18 http://azure.archive.ubuntu.com/ubuntu noble-updates/universe amd64 Components [388 kB]
+2026-06-14T17:06:47.2295684Z Get:19 http://azure.archive.ubuntu.com/ubuntu noble-updates/universe amd64 c-n-f Metadata [34.7 kB]
+2026-06-14T17:06:47.2311499Z Get:20 http://azure.archive.ubuntu.com/ubuntu noble-updates/restricted amd64 Packages [2733 kB]
+2026-06-14T17:06:47.2446911Z Get:21 http://azure.archive.ubuntu.com/ubuntu noble-updates/restricted Translation-en [649 kB]
+2026-06-14T17:06:47.2897231Z Get:22 http://azure.archive.ubuntu.com/ubuntu noble-updates/multiverse amd64 Components [940 B]
+2026-06-14T17:06:47.2915943Z Get:23 http://azure.archive.ubuntu.com/ubuntu noble-backports/main amd64 Packages [40.6 kB]
+2026-06-14T17:06:47.2930331Z Get:24 http://azure.archive.ubuntu.com/ubuntu noble-backports/main amd64 Components [5760 B]
+2026-06-14T17:06:47.2936960Z Get:25 http://azure.archive.ubuntu.com/ubuntu noble-backports/main amd64 c-n-f Metadata [368 B]
+2026-06-14T17:06:47.2945450Z Get:26 http://azure.archive.ubuntu.com/ubuntu noble-backports/universe amd64 Packages [31.0 kB]
+2026-06-14T17:06:47.2977328Z Get:27 http://azure.archive.ubuntu.com/ubuntu noble-backports/universe amd64 Components [10.6 kB]
+2026-06-14T17:06:47.2978958Z Get:28 http://azure.archive.ubuntu.com/ubuntu noble-backports/universe amd64 c-n-f Metadata [1588 B]
+2026-06-14T17:06:47.3244823Z Get:29 http://azure.archive.ubuntu.com/ubuntu noble-security/main amd64 Packages [1424 kB]
+2026-06-14T17:06:47.3342096Z Get:30 http://azure.archive.ubuntu.com/ubuntu noble-security/main Translation-en [245 kB]
+2026-06-14T17:06:47.3348298Z Get:31 http://azure.archive.ubuntu.com/ubuntu noble-security/main amd64 Components [44.9 kB]
+2026-06-14T17:06:47.3359912Z Get:32 http://azure.archive.ubuntu.com/ubuntu noble-security/main amd64 c-n-f Metadata [11.4 kB]
+2026-06-14T17:06:47.3375579Z Get:33 http://azure.archive.ubuntu.com/ubuntu noble-security/universe amd64 Packages [1186 kB]
+2026-06-14T17:06:47.3450024Z Get:34 http://azure.archive.ubuntu.com/ubuntu noble-security/universe Translation-en [231 kB]
+2026-06-14T17:06:47.3482759Z Get:35 http://azure.archive.ubuntu.com/ubuntu noble-security/universe amd64 Components [76.3 kB]
+2026-06-14T17:06:47.3501564Z Get:36 http://azure.archive.ubuntu.com/ubuntu noble-security/universe amd64 c-n-f Metadata [23.3 kB]
+2026-06-14T17:06:47.3509711Z Get:37 http://azure.archive.ubuntu.com/ubuntu noble-security/restricted amd64 Packages [2573 kB]
+2026-06-14T17:06:47.3635215Z Get:38 http://azure.archive.ubuntu.com/ubuntu noble-security/restricted Translation-en [615 kB]
+2026-06-14T17:06:53.0895744Z Fetched 15.3 MB in 2s (8029 kB/s)
+2026-06-14T17:06:53.9026343Z Reading package lists...
+2026-06-14T17:06:53.9368892Z Reading package lists...
+2026-06-14T17:06:54.1477444Z Building dependency tree...
+2026-06-14T17:06:54.1485442Z Reading state information...
+2026-06-14T17:06:54.3993252Z libmagic1t64 is already the newest version (1:5.45-3build1).
+2026-06-14T17:06:54.3993732Z libmagic1t64 set to manually installed.
+2026-06-14T17:06:54.3994115Z 0 upgraded, 0 newly installed, 0 to remove and 34 not upgraded.
+2026-06-14T17:06:54.4046544Z ##[group]Run python -m pip install --upgrade pip
+2026-06-14T17:06:54.4046958Z [36;1mpython -m pip install --upgrade pip[0m
+2026-06-14T17:06:54.4047276Z [36;1mpip install -r requirements.txt[0m
+2026-06-14T17:06:54.4083251Z shell: /usr/bin/bash -e {0}
+2026-06-14T17:06:54.4083510Z env:
+2026-06-14T17:06:54.4083788Z   pythonLocation: /opt/hostedtoolcache/Python/3.12.13/x64
+2026-06-14T17:06:54.4084229Z   PKG_CONFIG_PATH: /opt/hostedtoolcache/Python/3.12.13/x64/lib/pkgconfig
+2026-06-14T17:06:54.4084797Z   Python_ROOT_DIR: /opt/hostedtoolcache/Python/3.12.13/x64
+2026-06-14T17:06:54.4085187Z   Python2_ROOT_DIR: /opt/hostedtoolcache/Python/3.12.13/x64
+2026-06-14T17:06:54.4085567Z   Python3_ROOT_DIR: /opt/hostedtoolcache/Python/3.12.13/x64
+2026-06-14T17:06:54.4085942Z   LD_LIBRARY_PATH: /opt/hostedtoolcache/Python/3.12.13/x64/lib
+2026-06-14T17:06:54.4086275Z ##[endgroup]
+2026-06-14T17:06:54.9149340Z Requirement already satisfied: pip in /opt/hostedtoolcache/Python/3.12.13/x64/lib/python3.12/site-packages (26.1.2)
+2026-06-14T17:06:55.4878231Z Ignoring python-magic-bin: markers 'sys_platform == "win32"' don't match your environment
+2026-06-14T17:06:55.5940237Z Collecting fastapi==0.115.6 (from -r requirements.txt (line 1))
+2026-06-14T17:06:55.6582060Z   Downloading fastapi-0.115.6-py3-none-any.whl.metadata (27 kB)
+2026-06-14T17:06:55.6948548Z Collecting uvicorn==0.34.0 (from uvicorn[standard]==0.34.0->-r requirements.txt (line 2))
+2026-06-14T17:06:55.7020467Z   Downloading uvicorn-0.34.0-py3-none-any.whl.metadata (6.5 kB)
+2026-06-14T17:06:55.9745768Z Collecting sqlalchemy==2.0.36 (from sqlalchemy[asyncio]==2.0.36->-r requirements.txt (line 3))
+2026-06-14T17:06:55.9822226Z   Downloading SQLAlchemy-2.0.36-cp312-cp312-manylinux_2_17_x86_64.manylinux2014_x86_64.whl.metadata (9.7 kB)
+2026-06-14T17:06:56.0266727Z Collecting asyncpg==0.30.0 (from -r requirements.txt (line 4))
+2026-06-14T17:06:56.0348748Z   Downloading asyncpg-0.30.0-cp312-cp312-manylinux_2_17_x86_64.manylinux2014_x86_64.whl.metadata (5.0 kB)
+2026-06-14T17:06:56.0565795Z Collecting alembic==1.14.0 (from -r requirements.txt (line 5))
+2026-06-14T17:06:56.0642383Z   Downloading alembic-1.14.0-py3-none-any.whl.metadata (7.4 kB)
+2026-06-14T17:06:56.1628960Z Collecting pydantic==2.10.3 (from -r requirements.txt (line 6))
+2026-06-14T17:06:56.1703710Z   Downloading pydantic-2.10.3-py3-none-any.whl.metadata (172 kB)
+2026-06-14T17:06:56.2105191Z Collecting pydantic-settings==2.7.0 (from -r requirements.txt (line 7))
+2026-06-14T17:06:56.2186519Z   Downloading pydantic_settings-2.7.0-py3-none-any.whl.metadata (3.5 kB)
+2026-06-14T17:06:56.2350190Z Collecting python-multipart==0.0.20 (from -r requirements.txt (line 9))
+2026-06-14T17:06:56.2421568Z   Downloading python_multipart-0.0.20-py3-none-any.whl.metadata (1.8 kB)
+2026-06-14T17:06:56.2576895Z Collecting python-magic==0.4.27 (from -r requirements.txt (line 11))
+2026-06-14T17:06:56.2650812Z   Downloading python_magic-0.4.27-py2.py3-none-any.whl.metadata (5.8 kB)
+2026-06-14T17:06:56.3173940Z Collecting opencv-python-headless==4.10.0.84 (from -r requirements.txt (line 12))
+2026-06-14T17:06:56.3254299Z   Downloading opencv_python_headless-4.10.0.84-cp37-abi3-manylinux_2_17_x86_64.manylinux2014_x86_64.whl.metadata (20 kB)
+2026-06-14T17:06:56.5031369Z Collecting numpy==2.2.1 (from -r requirements.txt (line 13))
+2026-06-14T17:06:56.5128016Z   Downloading numpy-2.2.1-cp312-cp312-manylinux_2_17_x86_64.manylinux2014_x86_64.whl.metadata (62 kB)
+2026-06-14T17:06:56.5878039Z Collecting scikit-image==0.25.0 (from -r requirements.txt (line 14))
+2026-06-14T17:06:56.5978165Z   Downloading scikit_image-0.25.0-cp312-cp312-manylinux_2_17_x86_64.manylinux2014_x86_64.whl.metadata (14 kB)
+2026-06-14T17:06:56.7716486Z Collecting Pillow==11.1.0 (from -r requirements.txt (line 15))
+2026-06-14T17:06:56.7799669Z   Downloading pillow-11.1.0-cp312-cp312-manylinux_2_28_x86_64.whl.metadata (9.1 kB)
+2026-06-14T17:06:56.7965901Z Collecting slowapi==0.1.9 (from -r requirements.txt (line 16))
+2026-06-14T17:06:56.8037605Z   Downloading slowapi-0.1.9-py3-none-any.whl.metadata (3.0 kB)
+2026-06-14T17:06:56.8177990Z Collecting aiofiles==24.1.0 (from -r requirements.txt (line 17))
+2026-06-14T17:06:56.8251477Z   Downloading aiofiles-24.1.0-py3-none-any.whl.metadata (10 kB)
+2026-06-14T17:06:56.8439277Z Collecting httpx==0.28.1 (from -r requirements.txt (line 18))
+2026-06-14T17:06:56.8517998Z   Downloading httpx-0.28.1-py3-none-any.whl.metadata (7.1 kB)
+2026-06-14T17:06:56.9476155Z Collecting reportlab==4.2.5 (from -r requirements.txt (line 19))
+2026-06-14T17:06:56.9570044Z   Downloading reportlab-4.2.5-py3-none-any.whl.metadata (1.5 kB)
+2026-06-14T17:06:57.0753185Z Collecting matplotlib==3.10.0 (from -r requirements.txt (line 20))
+2026-06-14T17:06:57.0865607Z   Downloading matplotlib-3.10.0-cp312-cp312-manylinux_2_17_x86_64.manylinux2014_x86_64.whl.metadata (11 kB)
+2026-06-14T17:06:57.1033043Z Collecting passlib==1.7.4 (from passlib[bcrypt]==1.7.4->-r requirements.txt (line 21))
+2026-06-14T17:06:57.1106926Z   Downloading passlib-1.7.4-py2.py3-none-any.whl.metadata (1.7 kB)
+2026-06-14T17:06:57.1255012Z Collecting python-jose==3.3.0 (from python-jose[cryptography]==3.3.0->-r requirements.txt (line 22))
+2026-06-14T17:06:57.1331671Z   Downloading python_jose-3.3.0-py2.py3-none-any.whl.metadata (5.4 kB)
+2026-06-14T17:06:57.1693969Z Collecting bcrypt==4.2.1 (from -r requirements.txt (line 23))
+2026-06-14T17:06:57.1781966Z   Downloading bcrypt-4.2.1-cp39-abi3-manylinux_2_28_x86_64.whl.metadata (9.8 kB)
+2026-06-14T17:06:57.2044009Z Collecting pytest==8.3.4 (from -r requirements.txt (line 24))
+2026-06-14T17:06:57.2117353Z   Downloading pytest-8.3.4-py3-none-any.whl.metadata (7.5 kB)
+2026-06-14T17:06:57.2313944Z Collecting pytest-asyncio==0.25.0 (from -r requirements.txt (line 25))
+2026-06-14T17:06:57.2405969Z   Downloading pytest_asyncio-0.25.0-py3-none-any.whl.metadata (3.9 kB)
+2026-06-14T17:06:57.2556730Z Collecting pytest-timeout==2.3.1 (from -r requirements.txt (line 26))
+2026-06-14T17:06:57.2671056Z   Downloading pytest_timeout-2.3.1-py3-none-any.whl.metadata (20 kB)
+2026-06-14T17:06:57.4599000Z Collecting boto3==1.35.86 (from -r requirements.txt (line 27))
+2026-06-14T17:06:57.4690117Z   Downloading boto3-1.35.86-py3-none-any.whl.metadata (6.7 kB)
+2026-06-14T17:06:57.4953328Z Collecting celery==5.4.0 (from celery[redis]==5.4.0->-r requirements.txt (line 28))
+2026-06-14T17:06:57.5040319Z   Downloading celery-5.4.0-py3-none-any.whl.metadata (21 kB)
+2026-06-14T17:06:57.5405893Z Collecting redis==5.2.1 (from -r requirements.txt (line 29))
+2026-06-14T17:06:57.5526629Z   Downloading redis-5.2.1-py3-none-any.whl.metadata (9.1 kB)
+2026-06-14T17:06:57.6106046Z Collecting psycopg2-binary==2.9.10 (from -r requirements.txt (line 30))
+2026-06-14T17:06:57.6184897Z   Downloading psycopg2_binary-2.9.10-cp312-cp312-manylinux_2_17_x86_64.manylinux2014_x86_64.whl.metadata (4.9 kB)
+2026-06-14T17:06:57.6565963Z Collecting sentry-sdk==2.19.2 (from sentry-sdk[fastapi]==2.19.2->-r requirements.txt (line 31))
+2026-06-14T17:06:57.6722152Z   Downloading sentry_sdk-2.19.2-py2.py3-none-any.whl.metadata (9.9 kB)
+2026-06-14T17:06:57.7050681Z Collecting starlette<0.42.0,>=0.40.0 (from fastapi==0.115.6->-r requirements.txt (line 1))
+2026-06-14T17:06:57.7125279Z   Downloading starlette-0.41.3-py3-none-any.whl.metadata (6.0 kB)
+2026-06-14T17:06:57.7325260Z Collecting typing-extensions>=4.8.0 (from fastapi==0.115.6->-r requirements.txt (line 1))
+2026-06-14T17:06:57.7399668Z   Downloading typing_extensions-4.15.0-py3-none-any.whl.metadata (3.3 kB)
+2026-06-14T17:06:57.7544390Z Collecting annotated-types>=0.6.0 (from pydantic==2.10.3->-r requirements.txt (line 6))
+2026-06-14T17:06:57.7662703Z   Downloading annotated_types-0.7.0-py3-none-any.whl.metadata (15 kB)
+2026-06-14T17:06:58.3792240Z Collecting pydantic-core==2.27.1 (from pydantic==2.10.3->-r requirements.txt (line 6))
+2026-06-14T17:06:58.3871547Z   Downloading pydantic_core-2.27.1-cp312-cp312-manylinux_2_17_x86_64.manylinux2014_x86_64.whl.metadata (6.6 kB)
+2026-06-14T17:06:58.4076208Z Collecting click>=7.0 (from uvicorn==0.34.0->uvicorn[standard]==0.34.0->-r requirements.txt (line 2))
+2026-06-14T17:06:58.4151236Z   Downloading click-8.4.1-py3-none-any.whl.metadata (2.6 kB)
+2026-06-14T17:06:58.4299527Z Collecting h11>=0.8 (from uvicorn==0.34.0->uvicorn[standard]==0.34.0->-r requirements.txt (line 2))
+2026-06-14T17:06:58.4371872Z   Downloading h11-0.16.0-py3-none-any.whl.metadata (8.3 kB)
+2026-06-14T17:06:58.5560020Z Collecting greenlet!=0.4.17 (from sqlalchemy==2.0.36->sqlalchemy[asyncio]==2.0.36->-r requirements.txt (line 3))
+2026-06-14T17:06:58.5636344Z   Downloading greenlet-3.5.1-cp312-cp312-manylinux_2_24_x86_64.manylinux_2_28_x86_64.whl.metadata (3.8 kB)
+2026-06-14T17:06:58.5847614Z Collecting Mako (from alembic==1.14.0->-r requirements.txt (line 5))
+2026-06-14T17:06:58.5922914Z   Downloading mako-1.3.12-py3-none-any.whl.metadata (2.9 kB)
+2026-06-14T17:06:58.6160512Z Collecting python-dotenv>=0.21.0 (from pydantic-settings==2.7.0->-r requirements.txt (line 7))
+2026-06-14T17:06:58.6233605Z   Downloading python_dotenv-1.2.2-py3-none-any.whl.metadata (27 kB)
+2026-06-14T17:06:58.7440242Z Collecting scipy>=1.11.2 (from scikit-image==0.25.0->-r requirements.txt (line 14))
+2026-06-14T17:06:58.7513714Z   Downloading scipy-1.17.1-cp312-cp312-manylinux_2_27_x86_64.manylinux_2_28_x86_64.whl.metadata (62 kB)
+2026-06-14T17:06:58.7887722Z Collecting networkx>=3.0 (from scikit-image==0.25.0->-r requirements.txt (line 14))
+2026-06-14T17:06:58.7982285Z   Downloading networkx-3.6.1-py3-none-any.whl.metadata (6.8 kB)
+2026-06-14T17:06:58.8230805Z Collecting imageio!=2.35.0,>=2.33 (from scikit-image==0.25.0->-r requirements.txt (line 14))
+2026-06-14T17:06:58.8302853Z   Downloading imageio-2.37.3-py3-none-any.whl.metadata (9.7 kB)
+2026-06-14T17:06:58.8663463Z Collecting tifffile>=2022.8.12 (from scikit-image==0.25.0->-r requirements.txt (line 14))
+2026-06-14T17:06:58.8739633Z   Downloading tifffile-2026.6.1-py3-none-any.whl.metadata (33 kB)
+2026-06-14T17:06:58.8995281Z Collecting packaging>=21 (from scikit-image==0.25.0->-r requirements.txt (line 14))
+2026-06-14T17:06:58.9066234Z   Downloading packaging-26.2-py3-none-any.whl.metadata (3.5 kB)
+2026-06-14T17:06:58.9203767Z Collecting lazy-loader>=0.4 (from scikit-image==0.25.0->-r requirements.txt (line 14))
+2026-06-14T17:06:58.9285556Z   Downloading lazy_loader-0.5-py3-none-any.whl.metadata (5.9 kB)
+2026-06-14T17:06:58.9548916Z Collecting limits>=2.3 (from slowapi==0.1.9->-r requirements.txt (line 16))
+2026-06-14T17:06:58.9622492Z   Downloading limits-5.8.0-py3-none-any.whl.metadata (10 kB)
+2026-06-14T17:06:58.9848166Z Collecting anyio (from httpx==0.28.1->-r requirements.txt (line 18))
+2026-06-14T17:06:58.9922102Z   Downloading anyio-4.13.0-py3-none-any.whl.metadata (4.5 kB)
+2026-06-14T17:06:59.0188710Z Collecting certifi (from httpx==0.28.1->-r requirements.txt (line 18))
+2026-06-14T17:06:59.0270010Z   Downloading certifi-2026.5.20-py3-none-any.whl.metadata (2.5 kB)
+2026-06-14T17:06:59.0457229Z Collecting httpcore==1.* (from httpx==0.28.1->-r requirements.txt (line 18))
+2026-06-14T17:06:59.0532619Z   Downloading httpcore-1.0.9-py3-none-any.whl.metadata (21 kB)
+2026-06-14T17:06:59.0713535Z Collecting idna (from httpx==0.28.1->-r requirements.txt (line 18))
+2026-06-14T17:06:59.0784957Z   Downloading idna-3.18-py3-none-any.whl.metadata (6.1 kB)
+2026-06-14T17:06:59.1605462Z Collecting chardet (from reportlab==4.2.5->-r requirements.txt (line 19))
+2026-06-14T17:06:59.1681306Z   Downloading chardet-7.4.3-cp312-cp312-manylinux2014_x86_64.manylinux_2_17_x86_64.manylinux_2_28_x86_64.whl.metadata (9.4 kB)
+2026-06-14T17:06:59.2345826Z Collecting contourpy>=1.0.1 (from matplotlib==3.10.0->-r requirements.txt (line 20))
+2026-06-14T17:06:59.2421061Z   Downloading contourpy-1.3.3-cp312-cp312-manylinux_2_27_x86_64.manylinux_2_28_x86_64.whl.metadata (5.5 kB)
+2026-06-14T17:06:59.2569760Z Collecting cycler>=0.10 (from matplotlib==3.10.0->-r requirements.txt (line 20))
+2026-06-14T17:06:59.2640222Z   Downloading cycler-0.12.1-py3-none-any.whl.metadata (3.8 kB)
+2026-06-14T17:06:59.3900910Z Collecting fonttools>=4.22.0 (from matplotlib==3.10.0->-r requirements.txt (line 20))
+2026-06-14T17:06:59.3977564Z   Downloading fonttools-4.63.0-cp312-cp312-manylinux2014_x86_64.manylinux_2_17_x86_64.whl.metadata (118 kB)
+2026-06-14T17:06:59.4730707Z Collecting kiwisolver>=1.3.1 (from matplotlib==3.10.0->-r requirements.txt (line 20))
+2026-06-14T17:06:59.4808683Z   Downloading kiwisolver-1.5.0-cp312-cp312-manylinux2014_x86_64.manylinux_2_17_x86_64.whl.metadata (5.1 kB)
+2026-06-14T17:06:59.5091130Z Collecting pyparsing>=2.3.1 (from matplotlib==3.10.0->-r requirements.txt (line 20))
+2026-06-14T17:06:59.5165348Z   Downloading pyparsing-3.3.2-py3-none-any.whl.metadata (5.8 kB)
+2026-06-14T17:06:59.5328762Z Collecting python-dateutil>=2.7 (from matplotlib==3.10.0->-r requirements.txt (line 20))
+2026-06-14T17:06:59.5403812Z   Downloading python_dateutil-2.9.0.post0-py2.py3-none-any.whl.metadata (8.4 kB)
+2026-06-14T17:06:59.5579740Z Collecting ecdsa!=0.15 (from python-jose==3.3.0->python-jose[cryptography]==3.3.0->-r requirements.txt (line 22))
+2026-06-14T17:06:59.5656815Z   Downloading ecdsa-0.19.2-py2.py3-none-any.whl.metadata (29 kB)
+2026-06-14T17:06:59.5840368Z Collecting rsa (from python-jose==3.3.0->python-jose[cryptography]==3.3.0->-r requirements.txt (line 22))
+2026-06-14T17:06:59.5923052Z   Downloading rsa-4.9.1-py3-none-any.whl.metadata (5.6 kB)
+2026-06-14T17:06:59.6163904Z Collecting pyasn1 (from python-jose==3.3.0->python-jose[cryptography]==3.3.0->-r requirements.txt (line 22))
+2026-06-14T17:06:59.6236166Z   Downloading pyasn1-0.6.3-py3-none-any.whl.metadata (8.4 kB)
+2026-06-14T17:06:59.6392849Z Collecting iniconfig (from pytest==8.3.4->-r requirements.txt (line 24))
+2026-06-14T17:06:59.6464906Z   Downloading iniconfig-2.3.0-py3-none-any.whl.metadata (2.5 kB)
+2026-06-14T17:06:59.6615053Z Collecting pluggy<2,>=1.5 (from pytest==8.3.4->-r requirements.txt (line 24))
+2026-06-14T17:06:59.6686292Z   Downloading pluggy-1.6.0-py3-none-any.whl.metadata (4.8 kB)
+2026-06-14T17:06:59.8727165Z Collecting botocore<1.36.0,>=1.35.86 (from boto3==1.35.86->-r requirements.txt (line 27))
+2026-06-14T17:06:59.8804218Z   Downloading botocore-1.35.99-py3-none-any.whl.metadata (5.7 kB)
+2026-06-14T17:06:59.8960045Z Collecting jmespath<2.0.0,>=0.7.1 (from boto3==1.35.86->-r requirements.txt (line 27))
+2026-06-14T17:06:59.9040274Z   Downloading jmespath-1.1.0-py3-none-any.whl.metadata (7.6 kB)
+2026-06-14T17:06:59.9222284Z Collecting s3transfer<0.11.0,>=0.10.0 (from boto3==1.35.86->-r requirements.txt (line 27))
+2026-06-14T17:06:59.9296307Z   Downloading s3transfer-0.10.4-py3-none-any.whl.metadata (1.7 kB)
+2026-06-14T17:06:59.9496942Z Collecting billiard<5.0,>=4.2.0 (from celery==5.4.0->celery[redis]==5.4.0->-r requirements.txt (line 28))
+2026-06-14T17:06:59.9570159Z   Downloading billiard-4.2.4-py3-none-any.whl.metadata (4.8 kB)
+2026-06-14T17:06:59.9820842Z Collecting kombu<6.0,>=5.3.4 (from celery==5.4.0->celery[redis]==5.4.0->-r requirements.txt (line 28))
+2026-06-14T17:06:59.9895450Z   Downloading kombu-5.6.2-py3-none-any.whl.metadata (3.5 kB)
+2026-06-14T17:07:00.0070880Z Collecting vine<6.0,>=5.1.0 (from celery==5.4.0->celery[redis]==5.4.0->-r requirements.txt (line 28))
+2026-06-14T17:07:00.0142691Z   Downloading vine-5.1.0-py3-none-any.whl.metadata (2.7 kB)
+2026-06-14T17:07:00.0288841Z Collecting click-didyoumean>=0.3.0 (from celery==5.4.0->celery[redis]==5.4.0->-r requirements.txt (line 28))
+2026-06-14T17:07:00.0375078Z   Downloading click_didyoumean-0.3.1-py3-none-any.whl.metadata (3.9 kB)
+2026-06-14T17:07:00.0522897Z Collecting click-repl>=0.2.0 (from celery==5.4.0->celery[redis]==5.4.0->-r requirements.txt (line 28))
+2026-06-14T17:07:00.0628103Z   Downloading click_repl-0.3.0-py3-none-any.whl.metadata (3.6 kB)
+2026-06-14T17:07:00.0768133Z Collecting click-plugins>=1.1.1 (from celery==5.4.0->celery[redis]==5.4.0->-r requirements.txt (line 28))
+2026-06-14T17:07:00.0877524Z   Downloading click_plugins-1.1.1.2-py2.py3-none-any.whl.metadata (6.5 kB)
+2026-06-14T17:07:00.1724448Z Collecting tzdata>=2022.7 (from celery==5.4.0->celery[redis]==5.4.0->-r requirements.txt (line 28))
+2026-06-14T17:07:00.1808436Z   Downloading tzdata-2026.2-py2.py3-none-any.whl.metadata (1.4 kB)
+2026-06-14T17:07:00.2055501Z Collecting urllib3>=1.26.11 (from sentry-sdk==2.19.2->sentry-sdk[fastapi]==2.19.2->-r requirements.txt (line 31))
+2026-06-14T17:07:00.2132041Z   Downloading urllib3-2.7.0-py3-none-any.whl.metadata (6.9 kB)
+2026-06-14T17:07:00.2395210Z Collecting email-validator>=2.0.0 (from pydantic[email]==2.10.3->-r requirements.txt (line 8))
+2026-06-14T17:07:00.2470173Z   Downloading email_validator-2.3.0-py3-none-any.whl.metadata (26 kB)
+2026-06-14T17:07:00.4056456Z Collecting cryptography>=3.4.0 (from python-jose[cryptography]==3.3.0->-r requirements.txt (line 22))
+2026-06-14T17:07:00.4137688Z   Downloading cryptography-49.0.0-cp311-abi3-manylinux_2_34_x86_64.whl.metadata (4.3 kB)
+2026-06-14T17:07:00.4531090Z Collecting httptools>=0.6.3 (from uvicorn[standard]==0.34.0->-r requirements.txt (line 2))
+2026-06-14T17:07:00.4606430Z   Downloading httptools-0.8.0-cp312-cp312-manylinux1_x86_64.manylinux_2_28_x86_64.manylinux_2_5_x86_64.whl.metadata (3.5 kB)
+2026-06-14T17:07:00.4967406Z Collecting pyyaml>=5.1 (from uvicorn[standard]==0.34.0->-r requirements.txt (line 2))
+2026-06-14T17:07:00.5044536Z   Downloading pyyaml-6.0.3-cp312-cp312-manylinux2014_x86_64.manylinux_2_17_x86_64.manylinux_2_28_x86_64.whl.metadata (2.4 kB)
+2026-06-14T17:07:00.5418238Z Collecting uvloop!=0.15.0,!=0.15.1,>=0.14.0 (from uvicorn[standard]==0.34.0->-r requirements.txt (line 2))
+2026-06-14T17:07:00.5498028Z   Downloading uvloop-0.22.1-cp312-cp312-manylinux2014_x86_64.manylinux_2_17_x86_64.manylinux_2_28_x86_64.whl.metadata (4.9 kB)
+2026-06-14T17:07:00.6208418Z Collecting watchfiles>=0.13 (from uvicorn[standard]==0.34.0->-r requirements.txt (line 2))
+2026-06-14T17:07:00.6293742Z   Downloading watchfiles-1.2.0-cp312-cp312-manylinux_2_17_x86_64.manylinux2014_x86_64.whl.metadata (4.9 kB)
+2026-06-14T17:07:00.7061398Z Collecting websockets>=10.4 (from uvicorn[standard]==0.34.0->-r requirements.txt (line 2))
+2026-06-14T17:07:00.7147131Z   Downloading websockets-16.0-cp312-cp312-manylinux1_x86_64.manylinux_2_28_x86_64.manylinux_2_5_x86_64.whl.metadata (6.8 kB)
+2026-06-14T17:07:00.7417337Z Collecting amqp<6.0.0,>=5.1.1 (from kombu<6.0,>=5.3.4->celery==5.4.0->celery[redis]==5.4.0->-r requirements.txt (line 28))
+2026-06-14T17:07:00.7507972Z   Downloading amqp-5.3.1-py3-none-any.whl.metadata (8.9 kB)
+2026-06-14T17:07:00.7720665Z Collecting six>=1.5 (from python-dateutil>=2.7->matplotlib==3.10.0->-r requirements.txt (line 20))
+2026-06-14T17:07:00.7795151Z   Downloading six-1.17.0-py2.py3-none-any.whl.metadata (1.7 kB)
+2026-06-14T17:07:00.8341806Z Collecting prompt-toolkit>=3.0.36 (from click-repl>=0.2.0->celery==5.4.0->celery[redis]==5.4.0->-r requirements.txt (line 28))
+2026-06-14T17:07:00.8421615Z   Downloading prompt_toolkit-3.0.52-py3-none-any.whl.metadata (6.4 kB)
+2026-06-14T17:07:00.9315657Z Collecting cffi>=2.0.0 (from cryptography>=3.4.0->python-jose[cryptography]==3.3.0->-r requirements.txt (line 22))
+2026-06-14T17:07:00.9400290Z   Downloading cffi-2.0.0-cp312-cp312-manylinux2014_x86_64.manylinux_2_17_x86_64.whl.metadata (2.6 kB)
+2026-06-14T17:07:00.9555024Z Collecting pycparser (from cffi>=2.0.0->cryptography>=3.4.0->python-jose[cryptography]==3.3.0->-r requirements.txt (line 22))
+2026-06-14T17:07:00.9639826Z   Downloading pycparser-3.0-py3-none-any.whl.metadata (8.2 kB)
+2026-06-14T17:07:00.9830827Z Collecting dnspython>=2.0.0 (from email-validator>=2.0.0->pydantic[email]==2.10.3->-r requirements.txt (line 8))
+2026-06-14T17:07:00.9901456Z   Downloading dnspython-2.8.0-py3-none-any.whl.metadata (5.7 kB)
+2026-06-14T17:07:01.0179244Z Collecting deprecated>=1.2 (from limits>=2.3->slowapi==0.1.9->-r requirements.txt (line 16))
+2026-06-14T17:07:01.0257067Z   Downloading deprecated-1.3.1-py2.py3-none-any.whl.metadata (5.9 kB)
+2026-06-14T17:07:01.3167820Z Collecting wrapt<3,>=1.10 (from deprecated>=1.2->limits>=2.3->slowapi==0.1.9->-r requirements.txt (line 16))
+2026-06-14T17:07:01.3246611Z   Downloading wrapt-2.2.1-cp312-cp312-manylinux1_x86_64.manylinux_2_28_x86_64.manylinux_2_5_x86_64.whl.metadata (7.4 kB)
+2026-06-14T17:07:01.3461812Z Collecting wcwidth (from prompt-toolkit>=3.0.36->click-repl>=0.2.0->celery==5.4.0->celery[redis]==5.4.0->-r requirements.txt (line 28))
+2026-06-14T17:07:01.3536038Z   Downloading wcwidth-0.8.1-py3-none-any.whl.metadata (43 kB)
+2026-06-14T17:07:01.4224894Z Collecting MarkupSafe>=0.9.2 (from Mako->alembic==1.14.0->-r requirements.txt (line 5))
+2026-06-14T17:07:01.4308519Z   Downloading markupsafe-3.0.3-cp312-cp312-manylinux2014_x86_64.manylinux_2_17_x86_64.manylinux_2_28_x86_64.whl.metadata (2.7 kB)
+2026-06-14T17:07:01.4490498Z Downloading fastapi-0.115.6-py3-none-any.whl (94 kB)
+2026-06-14T17:07:01.4645316Z Downloading pydantic-2.10.3-py3-none-any.whl (456 kB)
+2026-06-14T17:07:01.5036985Z Downloading uvicorn-0.34.0-py3-none-any.whl (62 kB)
+2026-06-14T17:07:01.5140614Z Downloading SQLAlchemy-2.0.36-cp312-cp312-manylinux_2_17_x86_64.manylinux2014_x86_64.whl (3.2 MB)
+2026-06-14T17:07:01.6319604Z    ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 3.2/3.2 MB 29.1 MB/s  0:00:00
+2026-06-14T17:07:01.6410949Z Downloading asyncpg-0.30.0-cp312-cp312-manylinux_2_17_x86_64.manylinux2014_x86_64.whl (3.6 MB)
+2026-06-14T17:07:01.7058451Z    ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 3.6/3.6 MB 57.9 MB/s  0:00:00
+2026-06-14T17:07:01.7147691Z Downloading alembic-1.14.0-py3-none-any.whl (233 kB)
+2026-06-14T17:07:01.7283796Z Downloading pydantic_settings-2.7.0-py3-none-any.whl (29 kB)
+2026-06-14T17:07:01.7429773Z Downloading python_multipart-0.0.20-py3-none-any.whl (24 kB)
+2026-06-14T17:07:01.7530329Z Downloading python_magic-0.4.27-py2.py3-none-any.whl (13 kB)
+2026-06-14T17:07:01.7681421Z Downloading opencv_python_headless-4.10.0.84-cp37-abi3-manylinux_2_17_x86_64.manylinux2014_x86_64.whl (49.9 MB)
+2026-06-14T17:07:02.1084419Z    ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 49.9/49.9 MB 147.2 MB/s  0:00:00
+2026-06-14T17:07:02.1177871Z Downloading numpy-2.2.1-cp312-cp312-manylinux_2_17_x86_64.manylinux2014_x86_64.whl (16.1 MB)
+2026-06-14T17:07:02.2136773Z    ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 16.1/16.1 MB 169.8 MB/s  0:00:00
+2026-06-14T17:07:02.2226342Z Downloading scikit_image-0.25.0-cp312-cp312-manylinux_2_17_x86_64.manylinux2014_x86_64.whl (15.0 MB)
+2026-06-14T17:07:02.3157272Z    ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 15.0/15.0 MB 162.9 MB/s  0:00:00
+2026-06-14T17:07:02.3233526Z Downloading pillow-11.1.0-cp312-cp312-manylinux_2_28_x86_64.whl (4.5 MB)
+2026-06-14T17:07:02.3393044Z    ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 4.5/4.5 MB 309.2 MB/s  0:00:00
+2026-06-14T17:07:02.3466501Z Downloading slowapi-0.1.9-py3-none-any.whl (14 kB)
+2026-06-14T17:07:02.3563078Z Downloading aiofiles-24.1.0-py3-none-any.whl (15 kB)
+2026-06-14T17:07:02.3651061Z Downloading httpx-0.28.1-py3-none-any.whl (73 kB)
+2026-06-14T17:07:02.3777423Z Downloading reportlab-4.2.5-py3-none-any.whl (1.9 MB)
+2026-06-14T17:07:02.3870337Z    ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 1.9/1.9 MB 242.3 MB/s  0:00:00
+2026-06-14T17:07:02.3978236Z Downloading matplotlib-3.10.0-cp312-cp312-manylinux_2_17_x86_64.manylinux2014_x86_64.whl (8.6 MB)
+2026-06-14T17:07:02.4448657Z    ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 8.6/8.6 MB 188.1 MB/s  0:00:00
+2026-06-14T17:07:02.4530839Z Downloading passlib-1.7.4-py2.py3-none-any.whl (525 kB)
+2026-06-14T17:07:02.4579310Z    ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 525.6/525.6 kB 100.2 MB/s  0:00:00
+2026-06-14T17:07:02.4657060Z Downloading python_jose-3.3.0-py2.py3-none-any.whl (33 kB)
+2026-06-14T17:07:02.4746529Z Downloading bcrypt-4.2.1-cp39-abi3-manylinux_2_28_x86_64.whl (278 kB)
+2026-06-14T17:07:02.4843139Z Downloading pytest-8.3.4-py3-none-any.whl (343 kB)
+2026-06-14T17:07:02.4949863Z Downloading pytest_asyncio-0.25.0-py3-none-any.whl (19 kB)
+2026-06-14T17:07:02.5038809Z Downloading pytest_timeout-2.3.1-py3-none-any.whl (14 kB)
+2026-06-14T17:07:02.5132854Z Downloading boto3-1.35.86-py3-none-any.whl (139 kB)
+2026-06-14T17:07:02.5227647Z Downloading celery-5.4.0-py3-none-any.whl (425 kB)
+2026-06-14T17:07:02.5342629Z Downloading redis-5.2.1-py3-none-any.whl (261 kB)
+2026-06-14T17:07:02.5469577Z Downloading psycopg2_binary-2.9.10-cp312-cp312-manylinux_2_17_x86_64.manylinux2014_x86_64.whl (3.0 MB)
+2026-06-14T17:07:02.5600071Z    ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 3.0/3.0 MB 264.8 MB/s  0:00:00
+2026-06-14T17:07:02.5676871Z Downloading sentry_sdk-2.19.2-py2.py3-none-any.whl (322 kB)
+2026-06-14T17:07:02.5790749Z Downloading pydantic_core-2.27.1-cp312-cp312-manylinux_2_17_x86_64.manylinux2014_x86_64.whl (2.2 MB)
+2026-06-14T17:07:02.5875664Z    ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 2.2/2.2 MB 306.9 MB/s  0:00:00
+2026-06-14T17:07:02.5950221Z Downloading billiard-4.2.4-py3-none-any.whl (87 kB)
+2026-06-14T17:07:02.6042755Z Downloading botocore-1.35.99-py3-none-any.whl (13.3 MB)
+2026-06-14T17:07:02.6903026Z    ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 13.3/13.3 MB 158.1 MB/s  0:00:00
+2026-06-14T17:07:02.6977720Z Downloading click-8.4.1-py3-none-any.whl (116 kB)
+2026-06-14T17:07:02.7071500Z Downloading httpcore-1.0.9-py3-none-any.whl (78 kB)
+2026-06-14T17:07:02.7165086Z Downloading jmespath-1.1.0-py3-none-any.whl (20 kB)
+2026-06-14T17:07:02.7254798Z Downloading kombu-5.6.2-py3-none-any.whl (214 kB)
+2026-06-14T17:07:02.7430115Z Downloading vine-5.1.0-py3-none-any.whl (9.6 kB)
+2026-06-14T17:07:02.7520886Z Downloading amqp-5.3.1-py3-none-any.whl (50 kB)
+2026-06-14T17:07:02.7610874Z Downloading pluggy-1.6.0-py3-none-any.whl (20 kB)
+2026-06-14T17:07:02.7712792Z Downloading python_dateutil-2.9.0.post0-py2.py3-none-any.whl (229 kB)
+2026-06-14T17:07:02.7808958Z Downloading s3transfer-0.10.4-py3-none-any.whl (83 kB)
+2026-06-14T17:07:02.7900344Z Downloading starlette-0.41.3-py3-none-any.whl (73 kB)
+2026-06-14T17:07:02.7994974Z Downloading anyio-4.13.0-py3-none-any.whl (114 kB)
+2026-06-14T17:07:02.8086078Z Downloading urllib3-2.7.0-py3-none-any.whl (131 kB)
+2026-06-14T17:07:02.8185365Z Downloading annotated_types-0.7.0-py3-none-any.whl (13 kB)
+2026-06-14T17:07:02.8276304Z Downloading click_didyoumean-0.3.1-py3-none-any.whl (3.6 kB)
+2026-06-14T17:07:02.8365669Z Downloading click_plugins-1.1.1.2-py2.py3-none-any.whl (11 kB)
+2026-06-14T17:07:02.8452799Z Downloading click_repl-0.3.0-py3-none-any.whl (10 kB)
+2026-06-14T17:07:02.8548305Z Downloading contourpy-1.3.3-cp312-cp312-manylinux_2_27_x86_64.manylinux_2_28_x86_64.whl (362 kB)
+2026-06-14T17:07:02.8649441Z Downloading cryptography-49.0.0-cp311-abi3-manylinux_2_34_x86_64.whl (4.7 MB)
+2026-06-14T17:07:02.8911109Z    ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 4.7/4.7 MB 193.3 MB/s  0:00:00
+2026-06-14T17:07:02.8984346Z Downloading cffi-2.0.0-cp312-cp312-manylinux2014_x86_64.manylinux_2_17_x86_64.whl (219 kB)
+2026-06-14T17:07:02.9080689Z Downloading cycler-0.12.1-py3-none-any.whl (8.3 kB)
+2026-06-14T17:07:02.9181693Z Downloading ecdsa-0.19.2-py2.py3-none-any.whl (150 kB)
+2026-06-14T17:07:02.9272075Z Downloading email_validator-2.3.0-py3-none-any.whl (35 kB)
+2026-06-14T17:07:02.9364143Z Downloading dnspython-2.8.0-py3-none-any.whl (331 kB)
+2026-06-14T17:07:02.9467228Z Downloading fonttools-4.63.0-cp312-cp312-manylinux2014_x86_64.manylinux_2_17_x86_64.whl (5.0 MB)
+2026-06-14T17:07:02.9652442Z    ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 5.0/5.0 MB 304.2 MB/s  0:00:00
+2026-06-14T17:07:02.9728255Z Downloading greenlet-3.5.1-cp312-cp312-manylinux_2_24_x86_64.manylinux_2_28_x86_64.whl (611 kB)
+2026-06-14T17:07:02.9780208Z    ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 611.4/611.4 kB 118.9 MB/s  0:00:00
+2026-06-14T17:07:02.9854084Z Downloading h11-0.16.0-py3-none-any.whl (37 kB)
+2026-06-14T17:07:02.9946526Z Downloading httptools-0.8.0-cp312-cp312-manylinux1_x86_64.manylinux_2_28_x86_64.manylinux_2_5_x86_64.whl (523 kB)
+2026-06-14T17:07:03.0058648Z Downloading idna-3.18-py3-none-any.whl (65 kB)
+2026-06-14T17:07:03.0155951Z Downloading imageio-2.37.3-py3-none-any.whl (317 kB)
+2026-06-14T17:07:03.0295711Z Downloading kiwisolver-1.5.0-cp312-cp312-manylinux2014_x86_64.manylinux_2_17_x86_64.whl (1.5 MB)
+2026-06-14T17:07:03.0372850Z    ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 1.5/1.5 MB 259.9 MB/s  0:00:00
+2026-06-14T17:07:03.0454129Z Downloading lazy_loader-0.5-py3-none-any.whl (8.0 kB)
+2026-06-14T17:07:03.0543280Z Downloading limits-5.8.0-py3-none-any.whl (60 kB)
+2026-06-14T17:07:03.0632874Z Downloading deprecated-1.3.1-py2.py3-none-any.whl (11 kB)
+2026-06-14T17:07:03.0721021Z Downloading wrapt-2.2.1-cp312-cp312-manylinux1_x86_64.manylinux_2_28_x86_64.manylinux_2_5_x86_64.whl (169 kB)
+2026-06-14T17:07:03.0812837Z Downloading networkx-3.6.1-py3-none-any.whl (2.1 MB)
+2026-06-14T17:07:03.0894783Z    ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 2.1/2.1 MB 306.8 MB/s  0:00:00
+2026-06-14T17:07:03.0968096Z Downloading packaging-26.2-py3-none-any.whl (100 kB)
+2026-06-14T17:07:03.1057372Z Downloading prompt_toolkit-3.0.52-py3-none-any.whl (391 kB)
+2026-06-14T17:07:03.1155337Z Downloading pyparsing-3.3.2-py3-none-any.whl (122 kB)
+2026-06-14T17:07:03.1255073Z Downloading python_dotenv-1.2.2-py3-none-any.whl (22 kB)
+2026-06-14T17:07:03.1347568Z Downloading pyyaml-6.0.3-cp312-cp312-manylinux2014_x86_64.manylinux_2_17_x86_64.manylinux_2_28_x86_64.whl (807 kB)
+2026-06-14T17:07:03.1398737Z    ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 807.9/807.9 kB 184.6 MB/s  0:00:00
+2026-06-14T17:07:03.1473340Z Downloading scipy-1.17.1-cp312-cp312-manylinux_2_27_x86_64.manylinux_2_28_x86_64.whl (35.2 MB)
+2026-06-14T17:07:03.2706063Z    ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 35.2/35.2 MB 290.5 MB/s  0:00:00
+2026-06-14T17:07:03.2784274Z Downloading six-1.17.0-py2.py3-none-any.whl (11 kB)
+2026-06-14T17:07:03.2880359Z Downloading tifffile-2026.6.1-py3-none-any.whl (267 kB)
+2026-06-14T17:07:03.3014195Z Downloading typing_extensions-4.15.0-py3-none-any.whl (44 kB)
+2026-06-14T17:07:03.3109122Z Downloading tzdata-2026.2-py2.py3-none-any.whl (349 kB)
+2026-06-14T17:07:03.3222276Z Downloading uvloop-0.22.1-cp312-cp312-manylinux2014_x86_64.manylinux_2_17_x86_64.manylinux_2_28_x86_64.whl (4.4 MB)
+2026-06-14T17:07:03.3382628Z    ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 4.4/4.4 MB 345.3 MB/s  0:00:00
+2026-06-14T17:07:03.3461679Z Downloading watchfiles-1.2.0-cp312-cp312-manylinux_2_17_x86_64.manylinux2014_x86_64.whl (456 kB)
+2026-06-14T17:07:03.3569979Z Downloading websockets-16.0-cp312-cp312-manylinux1_x86_64.manylinux_2_28_x86_64.manylinux_2_5_x86_64.whl (184 kB)
+2026-06-14T17:07:03.3667914Z Downloading certifi-2026.5.20-py3-none-any.whl (134 kB)
+2026-06-14T17:07:03.3763628Z Downloading chardet-7.4.3-cp312-cp312-manylinux2014_x86_64.manylinux_2_17_x86_64.manylinux_2_28_x86_64.whl (888 kB)
+2026-06-14T17:07:03.3832360Z    ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 888.3/888.3 kB 176.3 MB/s  0:00:00
+2026-06-14T17:07:03.3910039Z Downloading iniconfig-2.3.0-py3-none-any.whl (7.5 kB)
+2026-06-14T17:07:03.3999393Z Downloading mako-1.3.12-py3-none-any.whl (78 kB)
+2026-06-14T17:07:03.4093224Z Downloading markupsafe-3.0.3-cp312-cp312-manylinux2014_x86_64.manylinux_2_17_x86_64.manylinux_2_28_x86_64.whl (22 kB)
+2026-06-14T17:07:03.4187289Z Downloading pyasn1-0.6.3-py3-none-any.whl (83 kB)
+2026-06-14T17:07:03.4283419Z Downloading pycparser-3.0-py3-none-any.whl (48 kB)
+2026-06-14T17:07:03.4381749Z Downloading rsa-4.9.1-py3-none-any.whl (34 kB)
+2026-06-14T17:07:03.4475358Z Downloading wcwidth-0.8.1-py3-none-any.whl (323 kB)
+2026-06-14T17:07:03.8899286Z Installing collected packages: passlib, wrapt, websockets, wcwidth, vine, uvloop, urllib3, tzdata, typing-extensions, six, redis, pyyaml, python-multipart, python-magic, python-dotenv, pyparsing, pycparser, pyasn1, psycopg2-binary, pluggy, Pillow, packaging, numpy, networkx, MarkupSafe, kiwisolver, jmespath, iniconfig, idna, httptools, h11, greenlet, fonttools, dnspython, cycler, click, chardet, certifi, billiard, bcrypt, asyncpg, annotated-types, aiofiles, uvicorn, tifffile, sqlalchemy, sentry-sdk, scipy, rsa, reportlab, python-dateutil, pytest, pydantic-core, prompt-toolkit, opencv-python-headless, Mako, lazy-loader, imageio, httpcore, email-validator, ecdsa, deprecated, contourpy, click-plugins, click-didyoumean, cffi, anyio, amqp, watchfiles, starlette, scikit-image, python-jose, pytest-timeout, pytest-asyncio, pydantic, matplotlib, limits, kombu, httpx, cryptography, click-repl, botocore, alembic, slowapi, s3transfer, pydantic-settings, fastapi, celery, boto3
+2026-06-14T17:07:24.2753118Z 
+2026-06-14T17:07:24.2822231Z Successfully installed Mako-1.3.12 MarkupSafe-3.0.3 Pillow-11.1.0 aiofiles-24.1.0 alembic-1.14.0 amqp-5.3.1 annotated-types-0.7.0 anyio-4.13.0 asyncpg-0.30.0 bcrypt-4.2.1 billiard-4.2.4 boto3-1.35.86 botocore-1.35.99 celery-5.4.0 certifi-2026.5.20 cffi-2.0.0 chardet-7.4.3 click-8.4.1 click-didyoumean-0.3.1 click-plugins-1.1.1.2 click-repl-0.3.0 contourpy-1.3.3 cryptography-49.0.0 cycler-0.12.1 deprecated-1.3.1 dnspython-2.8.0 ecdsa-0.19.2 email-validator-2.3.0 fastapi-0.115.6 fonttools-4.63.0 greenlet-3.5.1 h11-0.16.0 httpcore-1.0.9 httptools-0.8.0 httpx-0.28.1 idna-3.18 imageio-2.37.3 iniconfig-2.3.0 jmespath-1.1.0 kiwisolver-1.5.0 kombu-5.6.2 lazy-loader-0.5 limits-5.8.0 matplotlib-3.10.0 networkx-3.6.1 numpy-2.2.1 opencv-python-headless-4.10.0.84 packaging-26.2 passlib-1.7.4 pluggy-1.6.0 prompt-toolkit-3.0.52 psycopg2-binary-2.9.10 pyasn1-0.6.3 pycparser-3.0 pydantic-2.10.3 pydantic-core-2.27.1 pydantic-settings-2.7.0 pyparsing-3.3.2 pytest-8.3.4 pytest-asyncio-0.25.0 pytest-timeout-2.3.1 python-dateutil-2.9.0.post0 python-dotenv-1.2.2 python-jose-3.3.0 python-magic-0.4.27 python-multipart-0.0.20 pyyaml-6.0.3 redis-5.2.1 reportlab-4.2.5 rsa-4.9.1 s3transfer-0.10.4 scikit-image-0.25.0 scipy-1.17.1 sentry-sdk-2.19.2 six-1.17.0 slowapi-0.1.9 sqlalchemy-2.0.36 starlette-0.41.3 tifffile-2026.6.1 typing-extensions-4.15.0 tzdata-2026.2 urllib3-2.7.0 uvicorn-0.34.0 uvloop-0.22.1 vine-5.1.0 watchfiles-1.2.0 wcwidth-0.8.1 websockets-16.0 wrapt-2.2.1
+2026-06-14T17:07:24.7185943Z ##[group]Run set -o pipefail
+2026-06-14T17:07:24.7186307Z [36;1mset -o pipefail[0m
+2026-06-14T17:07:24.7186805Z [36;1mpython -c "from importlib.metadata import version; print('pytest-timeout', version('pytest-timeout'))"[0m
+2026-06-14T17:07:24.7187474Z [36;1mpytest -vv --tb=short --junitxml=junit.xml --durations=15 2>&1 | tee pytest.log[0m
+2026-06-14T17:07:24.7188113Z [36;1mpytest_exit=${PIPESTATUS[0]}[0m
+2026-06-14T17:07:24.7188454Z [36;1mecho "## Pytest output (tail)" >> "$GITHUB_STEP_SUMMARY"[0m
+2026-06-14T17:07:24.7188832Z [36;1mtail -80 pytest.log >> "$GITHUB_STEP_SUMMARY"[0m
+2026-06-14T17:07:24.7189175Z [36;1mecho "" >> "$GITHUB_STEP_SUMMARY"[0m
+2026-06-14T17:07:24.7189523Z [36;1mecho "## Failed / errored tests" >> "$GITHUB_STEP_SUMMARY"[0m
+2026-06-14T17:07:24.7190024Z [36;1mgrep -E "^(FAILED|ERROR|=+ FAILURES|=+ ERRORS)" pytest.log >> "$GITHUB_STEP_SUMMARY" || true[0m
+2026-06-14T17:07:24.7190688Z [36;1mgrep -E "^tests/.*::" pytest.log | grep -E "FAILED|ERROR|Timeout" >> "$GITHUB_STEP_SUMMARY" || true[0m
+2026-06-14T17:07:24.7191160Z [36;1mpython <<'PY' || true[0m
+2026-06-14T17:07:24.7191405Z [36;1mimport os[0m
+2026-06-14T17:07:24.7191622Z [36;1mimport pathlib[0m
+2026-06-14T17:07:24.7191878Z [36;1mimport xml.etree.ElementTree as ET[0m
+2026-06-14T17:07:24.7192158Z [36;1m[0m
+2026-06-14T17:07:24.7192346Z [36;1mtry:[0m
+2026-06-14T17:07:24.7192579Z [36;1m    junit = pathlib.Path("junit.xml")[0m
+2026-06-14T17:07:24.7192887Z [36;1m    log = pathlib.Path("pytest.log")[0m
+2026-06-14T17:07:24.7193232Z [36;1m    summary = os.environ.get("GITHUB_STEP_SUMMARY")[0m
+2026-06-14T17:07:24.7193566Z [36;1m    if summary and junit.exists():[0m
+2026-06-14T17:07:24.7193861Z [36;1m        root = ET.parse(junit).getroot()[0m
+2026-06-14T17:07:24.7194152Z [36;1m        failures: list[str] = [][0m
+2026-06-14T17:07:24.7194449Z [36;1m        for case in root.iter("testcase"):[0m
+2026-06-14T17:07:24.7195102Z [36;1m            name = f"{case.get('classname')}::{case.get('name')}"[0m
+2026-06-14T17:07:24.7195454Z [36;1m            for child in case:[0m
+2026-06-14T17:07:24.7195756Z [36;1m                if child.tag in ("failure", "error"):[0m
+2026-06-14T17:07:24.7196208Z [36;1m                    msg = (child.get("message") or child.text or "failed").replace("\n", " ")[:300][0m
+2026-06-14T17:07:24.7196674Z [36;1m                    failures.append(f"{name} — {msg}")[0m
+2026-06-14T17:07:24.7196985Z [36;1m        if failures:[0m
+2026-06-14T17:07:24.7197297Z [36;1m            with open(summary, "a", encoding="utf-8") as fh:[0m
+2026-06-14T17:07:24.7197658Z [36;1m                fh.write("\n## JUnit failures\n")[0m
+2026-06-14T17:07:24.7197965Z [36;1m                for item in failures:[0m
+2026-06-14T17:07:24.7198263Z [36;1m                    fh.write(f"- {item}\n")[0m
+2026-06-14T17:07:24.7198561Z [36;1m    elif summary and log.exists():[0m
+2026-06-14T17:07:24.7199147Z [36;1m        failed = [line for line in log.read_text(encoding="utf-8", errors="replace").splitlines() if line.startswith(("FAILED ", "ERROR "))][0m
+2026-06-14T17:07:24.7199703Z [36;1m        if failed:[0m
+2026-06-14T17:07:24.7199990Z [36;1m            with open(summary, "a", encoding="utf-8") as fh:[0m
+2026-06-14T17:07:24.7200333Z [36;1m                fh.write("\n## Pytest failures\n")[0m
+2026-06-14T17:07:24.7200652Z [36;1m                for line in failed:[0m
+2026-06-14T17:07:24.7200947Z [36;1m                    fh.write(f"- {line}\n")[0m
+2026-06-14T17:07:24.7201227Z [36;1mexcept Exception as exc:[0m
+2026-06-14T17:07:24.7201571Z [36;1m    print(f"::warning::Failed to summarize junit output: {exc}")[0m
+2026-06-14T17:07:24.7201911Z [36;1mPY[0m
+2026-06-14T17:07:24.7202128Z [36;1mif [ "$pytest_exit" -ne 0 ]; then[0m
+2026-06-14T17:07:24.7202520Z [36;1m  grep -E "^FAILED |^ERROR " pytest.log | head -25 | while IFS= read -r line; do[0m
+2026-06-14T17:07:24.7202912Z [36;1m    echo "::error::$line"[0m
+2026-06-14T17:07:24.7203156Z [36;1m  done || true[0m
+2026-06-14T17:07:24.7203561Z [36;1mfi[0m
+2026-06-14T17:07:24.7203760Z [36;1mexit $pytest_exit[0m
+2026-06-14T17:07:24.7238381Z shell: /usr/bin/bash -e {0}
+2026-06-14T17:07:24.7238637Z env:
+2026-06-14T17:07:24.7238913Z   pythonLocation: /opt/hostedtoolcache/Python/3.12.13/x64
+2026-06-14T17:07:24.7239367Z   PKG_CONFIG_PATH: /opt/hostedtoolcache/Python/3.12.13/x64/lib/pkgconfig
+2026-06-14T17:07:24.7239960Z   Python_ROOT_DIR: /opt/hostedtoolcache/Python/3.12.13/x64
+2026-06-14T17:07:24.7240334Z   Python2_ROOT_DIR: /opt/hostedtoolcache/Python/3.12.13/x64
+2026-06-14T17:07:24.7240701Z   Python3_ROOT_DIR: /opt/hostedtoolcache/Python/3.12.13/x64
+2026-06-14T17:07:24.7241068Z   LD_LIBRARY_PATH: /opt/hostedtoolcache/Python/3.12.13/x64/lib
+2026-06-14T17:07:24.7241833Z   DATABASE_URL: ***localhost:5432/genetic_contour_test
+2026-06-14T17:07:24.7242198Z   SECRET_KEY: test-secret-key-for-ci-only-32chars
+2026-06-14T17:07:24.7242537Z   JWT_SECRET: test-jwt-secret-for-ci-only-32chars
+2026-06-14T17:07:24.7242824Z   API_DEBUG: true
+2026-06-14T17:07:24.7243032Z   TESTING: true
+2026-06-14T17:07:24.7243243Z   STORAGE_BACKEND: local
+2026-06-14T17:07:24.7243503Z   TRUSTED_HOSTS: testserver,localhost,127.0.0.1
+2026-06-14T17:07:24.7243906Z   REDIS_URL: redis://localhost:6379/0
+2026-06-14T17:07:24.7244195Z   EXPERIMENT_QUEUE_BACKEND: asyncio
+2026-06-14T17:07:24.7244458Z   MPLBACKEND: Agg
+2026-06-14T17:07:24.7244959Z ##[endgroup]
+2026-06-14T17:07:24.7913275Z pytest-timeout 2.3.1
+2026-06-14T17:07:28.1909704Z ============================= test session starts ==============================
+2026-06-14T17:07:28.1910930Z platform linux -- Python 3.12.13, pytest-8.3.4, pluggy-1.6.0 -- /opt/hostedtoolcache/Python/3.12.13/x64/bin/python
+2026-06-14T17:07:28.1911724Z cachedir: .pytest_cache
+2026-06-14T17:07:28.1912374Z rootdir: /home/runner/work/genetic-contour-platform/genetic-contour-platform/apps/api
+2026-06-14T17:07:28.1913072Z configfile: pytest.ini
+2026-06-14T17:07:28.1913427Z testpaths: tests
+2026-06-14T17:07:28.1913900Z plugins: timeout-2.3.1, anyio-4.13.0, asyncio-0.25.0
+2026-06-14T17:07:28.1914402Z timeout: 120.0s
+2026-06-14T17:07:28.1915051Z timeout method: thread
+2026-06-14T17:07:28.1915413Z timeout func_only: False
+2026-06-14T17:07:28.1915927Z asyncio: mode=Mode.AUTO, asyncio_default_fixture_loop_scope=session
+2026-06-14T17:07:28.3757296Z collecting ... collected 71 items
+2026-06-14T17:07:28.3757721Z 
+2026-06-14T17:07:29.0467369Z tests/test_auth.py::test_register PASSED                                 [  1%]
+2026-06-14T17:07:29.8417423Z tests/test_auth.py::test_login PASSED                                    [  2%]
+2026-06-14T17:07:30.3432045Z tests/test_auth.py::test_me PASSED                                       [  4%]
+2026-06-14T17:07:30.4182150Z tests/test_config_redis.py::test_redis_url_required_when_celery_backend PASSED [  5%]
+2026-06-14T17:07:30.4932139Z tests/test_config_redis.py::test_redis_url_required_in_production_with_celery PASSED [  7%]
+2026-06-14T17:07:30.5671149Z tests/test_config_redis.py::test_invalid_redis_url_scheme_rejected PASSED [  8%]
+2026-06-14T17:07:30.6409640Z tests/test_config_redis.py::test_asyncio_backend_allows_empty_redis_url PASSED [  9%]
+2026-06-14T17:07:30.7142925Z tests/test_config_redis.py::test_eager_mode_allows_empty_redis_url PASSED [ 11%]
+2026-06-14T17:07:30.7894332Z tests/test_config_validation.py::test_redis_url_required_when_celery_backend PASSED [ 12%]
+2026-06-14T17:07:30.8647112Z tests/test_config_validation.py::test_redis_url_must_use_redis_scheme PASSED [ 14%]
+2026-06-14T17:07:30.9380311Z tests/test_config_validation.py::test_asyncio_backend_allows_empty_redis_in_production PASSED [ 15%]
+2026-06-14T17:07:31.0116269Z tests/test_config_validation.py::test_eager_mode_allows_empty_redis_url PASSED [ 16%]
+2026-06-14T17:07:31.0867425Z tests/test_fair_comparison.py::test_fair_v1_uses_gradient_for_classical PASSED [ 18%]
+2026-06-14T17:07:31.1617506Z tests/test_fair_comparison.py::test_legacy_uses_blurred_for_classical PASSED [ 19%]
+2026-06-14T17:07:31.2370460Z tests/test_gt_validation.py::test_valid_gt_mask PASSED                   [ 21%]
+2026-06-14T17:07:31.3102736Z tests/test_gt_validation.py::test_invalid_gt_empty PASSED                [ 22%]
+2026-06-14T17:07:31.3846596Z tests/test_gt_validation.py::test_gt_size_warning PASSED                 [ 23%]
+2026-06-14T17:07:31.4623436Z tests/test_health_ready.py::test_health_live_returns_ok PASSED           [ 25%]
+2026-06-14T17:07:31.5390753Z tests/test_health_ready.py::test_health_ready_all_checks_ok PASSED       [ 26%]
+2026-06-14T17:07:31.6146007Z tests/test_health_ready.py::test_health_ready_returns_503_when_degraded PASSED [ 28%]
+2026-06-14T17:07:31.8105164Z tests/test_job_recovery.py::test_reset_stale_running_jobs_marks_queued PASSED [ 29%]
+2026-06-14T17:07:31.9990155Z tests/test_job_recovery.py::test_requeue_queued_experiments_assigns_task_id PASSED [ 30%]
+2026-06-14T17:07:32.1884141Z tests/test_job_recovery.py::test_requeue_skips_cancel_requested PASSED   [ 32%]
+2026-06-14T17:07:32.3765110Z tests/test_job_recovery.py::test_run_startup_recovery_combines_reset_and_requeue PASSED [ 33%]
+2026-06-14T17:07:32.9728071Z tests/test_jobs.py::test_run_returns_queued_job_immediately PASSED       [ 35%]
+2026-06-14T17:07:33.5988520Z tests/test_jobs.py::test_status_endpoint PASSED                          [ 36%]
+2026-06-14T17:07:34.2337936Z tests/test_jobs.py::test_cancel_queued_experiment PASSED                 [ 38%]
+2026-06-14T17:07:34.3063803Z tests/test_local_static_dev_only.py::test_local_static_enabled_in_dev PASSED [ 39%]
+2026-06-14T17:07:34.3814166Z tests/test_local_static_dev_only.py::test_local_static_disabled_in_production PASSED [ 40%]
+2026-06-14T17:07:34.4577915Z tests/test_local_static_dev_only.py::test_s3_never_uses_local_static PASSED [ 42%]
+2026-06-14T17:07:34.5405312Z tests/test_local_storage.py::test_save_and_read_bytes PASSED             [ 43%]
+2026-06-14T17:07:34.6142995Z tests/test_local_storage.py::test_delete_file PASSED                     [ 45%]
+2026-06-14T17:07:34.6894915Z tests/test_local_storage.py::test_delete_prefix PASSED                   [ 46%]
+2026-06-14T17:07:34.7633133Z tests/test_local_storage.py::test_public_url_for_results PASSED          [ 47%]
+2026-06-14T17:07:34.8369622Z tests/test_media_urls.py::test_stale_localhost_url_detected PASSED       [ 49%]
+2026-06-14T17:07:34.9140597Z tests/test_media_urls.py::test_fresh_s3_url_not_stale PASSED             [ 50%]
+2026-06-14T17:07:35.3077628Z tests/test_media_urls.py::test_resolve_public_url_regenerates_from_storage_key PASSED [ 52%]
+2026-06-14T17:07:36.3128984Z tests/test_ownership.py::test_experiment_ownership_isolation PASSED      [ 53%]
+2026-06-14T17:07:36.3897670Z tests/test_ownership.py::test_unauthenticated_access_forbidden PASSED    [ 54%]
+2026-06-14T17:07:36.4609751Z tests/test_progress_tracker.py::test_compute_total_steps_compare_all PASSED [ 56%]
+2026-06-14T17:07:36.5320782Z tests/test_progress_tracker.py::test_ga_generation_progress_is_real_not_fake PASSED [ 57%]
+2026-06-14T17:07:36.6058560Z tests/test_progress_tracker.py::test_classical_only_progress PASSED      [ 59%]
+2026-06-14T17:07:37.2829594Z tests/test_queue_enqueue.py::test_enqueue_stores_celery_task_id FAILED   [ 60%]
+2026-06-14T17:07:37.3588314Z tests/test_recovery_lock.py::test_recovery_second_call_skipped_with_redis_lock PASSED [ 61%]
+2026-06-14T17:07:37.4366941Z tests/test_report_pdf_images.py::test_rl_image_from_bytes_builds_pdf_without_type_error PASSED [ 63%]
+2026-06-14T17:07:37.5099255Z tests/test_report_pdf_images.py::test_image_reader_is_rejected_by_platypus_image PASSED [ 64%]
+2026-06-14T17:07:37.5877304Z tests/test_reproducibility_v2.py::test_reproducibility_v2_fields PASSED  [ 66%]
+2026-06-14T17:07:37.6658453Z tests/test_request_id.py::test_response_includes_request_id_header PASSED [ 67%]
+2026-06-14T17:07:37.7405188Z tests/test_request_id.py::test_client_may_supply_request_id PASSED       [ 69%]
+2026-06-14T17:07:38.5941243Z tests/test_result_image_storage.py::test_sobel_results_use_storage_keys PASSED [ 70%]
+2026-06-14T17:07:38.6652726Z tests/test_scientific_evaluation.py::test_no_winner_without_ground_truth PASSED [ 71%]
+2026-06-14T17:07:38.7372647Z tests/test_scientific_evaluation.py::test_winner_by_iou PASSED           [ 73%]
+2026-06-14T17:07:38.8085594Z tests/test_scientific_evaluation.py::test_winner_tie_break_f1 PASSED     [ 74%]
+2026-06-14T17:07:38.8825399Z tests/test_scientific_evaluation.py::test_high_fitness_low_iou_warning PASSED [ 76%]
+2026-06-14T17:07:38.9564008Z tests/test_scientific_evaluation.py::test_supervised_mode PASSED         [ 77%]
+2026-06-14T17:07:39.0309436Z tests/test_scientific_evaluation.py::test_gt_added_after_run_stays_heuristic PASSED [ 78%]
+2026-06-14T17:07:39.1068761Z tests/test_scientific_evaluation.py::test_insights_noise_wording_lowest_penalty PASSED [ 80%]
+2026-06-14T17:07:39.1844075Z tests/test_scientific_evaluation.py::test_summary_handles_null_winner_metrics PASSED [ 81%]
+2026-06-14T17:07:39.2596191Z tests/test_smtp_degraded.py::test_auth_config_degraded PASSED            [ 83%]
+2026-06-14T17:07:40.0321535Z tests/test_smtp_degraded.py::test_register_login_without_smtp PASSED     [ 84%]
+2026-06-14T17:07:40.1132913Z tests/test_smtp_degraded.py::test_password_reset_unavailable_without_smtp PASSED [ 85%]
+2026-06-14T17:07:40.5861969Z tests/test_status_transitions.py::test_cancel_requested_before_start_marks_cancelled PASSED [ 87%]
+2026-06-14T17:07:40.5871136Z tests/test_status_transitions.py::test_cancel_requested_before_start_marks_cancelled ERROR [ 87%]
+2026-06-14T17:07:41.0359711Z tests/test_status_transitions.py::test_worker_completes_after_execute_job PASSED [ 88%]
+2026-06-14T17:07:41.0503670Z tests/test_status_transitions.py::test_worker_completes_after_execute_job ERROR [ 88%]
+2026-06-14T17:07:41.1245788Z tests/test_storage_service.py::test_local_backend_selected_by_default PASSED [ 90%]
+2026-06-14T17:07:41.2016952Z tests/test_storage_service.py::test_s3_backend_selected_when_configured PASSED [ 91%]
+2026-06-14T17:07:41.2752132Z tests/test_storage_service.py::test_upload_key_is_server_generated_uuid PASSED [ 92%]
+2026-06-14T17:07:41.3505769Z tests/test_storage_service.py::test_result_key_rejects_path_traversal PASSED [ 94%]
+2026-06-14T17:07:41.4254139Z tests/test_storage_service.py::test_s3_save_bytes_uses_boto3_put_object PASSED [ 95%]
+2026-06-14T17:07:41.8998417Z tests/test_upload_storage.py::test_upload_returns_storage_key_and_readable_file FAILED [ 97%]
+2026-06-14T17:07:42.4393365Z tests/test_worker_idempotency.py::test_duplicate_tasks_only_one_claims_running PASSED [ 98%]
+2026-06-14T17:07:42.4403254Z tests/test_worker_idempotency.py::test_duplicate_tasks_only_one_claims_running ERROR [ 98%]
+2026-06-14T17:07:42.5429091Z tests/test_worker_task.py::test_run_experiment_task_calls_async_worker PASSED [100%]
+2026-06-14T17:07:42.5429640Z 
+2026-06-14T17:07:42.5429860Z ==================================== ERRORS ====================================
+2026-06-14T17:07:42.5430568Z ___ ERROR at teardown of test_cancel_requested_before_start_marks_cancelled ____
+2026-06-14T17:07:42.5431509Z /opt/hostedtoolcache/Python/3.12.13/x64/lib/python3.12/site-packages/pytest_asyncio/plugin.py:347: in finalizer
+2026-06-14T17:07:42.5432406Z     event_loop.run_until_complete(task)
+2026-06-14T17:07:42.5433157Z /opt/hostedtoolcache/Python/3.12.13/x64/lib/python3.12/asyncio/base_events.py:691: in run_until_complete
+2026-06-14T17:07:42.5433905Z     return future.result()
+2026-06-14T17:07:42.5434867Z /opt/hostedtoolcache/Python/3.12.13/x64/lib/python3.12/site-packages/pytest_asyncio/plugin.py:338: in async_finalizer
+2026-06-14T17:07:42.5435762Z     await gen_obj.__anext__()  # type: ignore[union-attr]
+2026-06-14T17:07:42.5436262Z tests/conftest.py:109: in db_session
+2026-06-14T17:07:42.5436678Z     await session.rollback()
+2026-06-14T17:07:42.5437483Z /opt/hostedtoolcache/Python/3.12.13/x64/lib/python3.12/site-packages/sqlalchemy/ext/asyncio/session.py:999: in rollback
+2026-06-14T17:07:42.5438076Z     await greenlet_spawn(self.sync_session.rollback)
+2026-06-14T17:07:42.5438665Z /opt/hostedtoolcache/Python/3.12.13/x64/lib/python3.12/site-packages/sqlalchemy/util/_concurrency_py3k.py:201: in greenlet_spawn
+2026-06-14T17:07:42.5439489Z     result = context.throw(*sys.exc_info())
+2026-06-14T17:07:42.5440002Z /opt/hostedtoolcache/Python/3.12.13/x64/lib/python3.12/site-packages/sqlalchemy/orm/session.py:1990: in rollback
+2026-06-14T17:07:42.5440532Z     self._transaction.rollback(_to_root=True)
+2026-06-14T17:07:42.5441036Z /opt/hostedtoolcache/Python/3.12.13/x64/lib/python3.12/site-packages/sqlalchemy/orm/state_changes.py:139: in _go
+2026-06-14T17:07:42.5441716Z     ret_value = fn(self, *arg, **kw)
+2026-06-14T17:07:42.5442208Z /opt/hostedtoolcache/Python/3.12.13/x64/lib/python3.12/site-packages/sqlalchemy/orm/session.py:1395: in rollback
+2026-06-14T17:07:42.5442774Z     raise rollback_err[1].with_traceback(rollback_err[2])
+2026-06-14T17:07:42.5443315Z /opt/hostedtoolcache/Python/3.12.13/x64/lib/python3.12/site-packages/sqlalchemy/orm/session.py:1360: in rollback
+2026-06-14T17:07:42.5443799Z     t[1].rollback()
+2026-06-14T17:07:42.5444245Z /opt/hostedtoolcache/Python/3.12.13/x64/lib/python3.12/site-packages/sqlalchemy/engine/base.py:2610: in rollback
+2026-06-14T17:07:42.5444939Z     self._do_rollback()
+2026-06-14T17:07:42.5445402Z /opt/hostedtoolcache/Python/3.12.13/x64/lib/python3.12/site-packages/sqlalchemy/engine/base.py:2729: in _do_rollback
+2026-06-14T17:07:42.5445916Z     self._close_impl(try_deactivate=True)
+2026-06-14T17:07:42.5446419Z /opt/hostedtoolcache/Python/3.12.13/x64/lib/python3.12/site-packages/sqlalchemy/engine/base.py:2712: in _close_impl
+2026-06-14T17:07:42.5446935Z     self._connection_rollback_impl()
+2026-06-14T17:07:42.5447482Z /opt/hostedtoolcache/Python/3.12.13/x64/lib/python3.12/site-packages/sqlalchemy/engine/base.py:2704: in _connection_rollback_impl
+2026-06-14T17:07:42.5448045Z     self.connection._rollback_impl()
+2026-06-14T17:07:42.5448551Z /opt/hostedtoolcache/Python/3.12.13/x64/lib/python3.12/site-packages/sqlalchemy/engine/base.py:1129: in _rollback_impl
+2026-06-14T17:07:42.5449112Z     self._handle_dbapi_exception(e, None, None, None, None)
+2026-06-14T17:07:42.5449767Z /opt/hostedtoolcache/Python/3.12.13/x64/lib/python3.12/site-packages/sqlalchemy/engine/base.py:2358: in _handle_dbapi_exception
+2026-06-14T17:07:42.5450341Z     raise exc_info[1].with_traceback(exc_info[2])
+2026-06-14T17:07:42.5450889Z /opt/hostedtoolcache/Python/3.12.13/x64/lib/python3.12/site-packages/sqlalchemy/engine/base.py:1127: in _rollback_impl
+2026-06-14T17:07:42.5451452Z     self.engine.dialect.do_rollback(self.connection)
+2026-06-14T17:07:42.5452017Z /opt/hostedtoolcache/Python/3.12.13/x64/lib/python3.12/site-packages/sqlalchemy/engine/default.py:699: in do_rollback
+2026-06-14T17:07:42.5452538Z     dbapi_connection.rollback()
+2026-06-14T17:07:42.5453080Z /opt/hostedtoolcache/Python/3.12.13/x64/lib/python3.12/site-packages/sqlalchemy/dialects/postgresql/asyncpg.py:870: in rollback
+2026-06-14T17:07:42.5453636Z     self._handle_exception(error)
+2026-06-14T17:07:42.5454204Z /opt/hostedtoolcache/Python/3.12.13/x64/lib/python3.12/site-packages/sqlalchemy/dialects/postgresql/asyncpg.py:782: in _handle_exception
+2026-06-14T17:07:42.5454974Z     raise error
+2026-06-14T17:07:42.5455469Z /opt/hostedtoolcache/Python/3.12.13/x64/lib/python3.12/site-packages/sqlalchemy/dialects/postgresql/asyncpg.py:864: in rollback
+2026-06-14T17:07:42.5456044Z     self.await_(self._rollback_and_discard())
+2026-06-14T17:07:42.5456602Z /opt/hostedtoolcache/Python/3.12.13/x64/lib/python3.12/site-packages/sqlalchemy/util/_concurrency_py3k.py:132: in await_only
+2026-06-14T17:07:42.5457336Z     return current.parent.switch(awaitable)  # type: ignore[no-any-return,attr-defined] # noqa: E501
+2026-06-14T17:07:42.5458064Z /opt/hostedtoolcache/Python/3.12.13/x64/lib/python3.12/site-packages/sqlalchemy/util/_concurrency_py3k.py:196: in greenlet_spawn
+2026-06-14T17:07:42.5458614Z     value = await result
+2026-06-14T17:07:42.5459175Z /opt/hostedtoolcache/Python/3.12.13/x64/lib/python3.12/site-packages/sqlalchemy/dialects/postgresql/asyncpg.py:845: in _rollback_and_discard
+2026-06-14T17:07:42.5459780Z     await self._transaction.rollback()
+2026-06-14T17:07:42.5460413Z /opt/hostedtoolcache/Python/3.12.13/x64/lib/python3.12/site-packages/asyncpg/transaction.py:227: in rollback
+2026-06-14T17:07:42.5460904Z     await self.__rollback()
+2026-06-14T17:07:42.5461526Z /opt/hostedtoolcache/Python/3.12.13/x64/lib/python3.12/site-packages/asyncpg/transaction.py:206: in __rollback
+2026-06-14T17:07:42.5462331Z     await self._connection.execute(query)
+2026-06-14T17:07:42.5463311Z /opt/hostedtoolcache/Python/3.12.13/x64/lib/python3.12/site-packages/asyncpg/connection.py:349: in execute
+2026-06-14T17:07:42.5464132Z     result = await self._protocol.query(query, timeout)
+2026-06-14T17:07:42.5464808Z asyncpg/protocol/protocol.pyx:375: in query
+2026-06-14T17:07:42.5465224Z     ???
+2026-06-14T17:07:42.5467754Z E   RuntimeError: Task <Task pending name='Task-1221' coro=<_wrap_asyncgen_fixture.<locals>._asyncgen_fixture_wrapper.<locals>.finalizer.<locals>.async_finalizer() running at /opt/hostedtoolcache/Python/3.12.13/x64/lib/python3.12/site-packages/pytest_asyncio/plugin.py:338> cb=[_run_until_complete_cb() at /opt/hostedtoolcache/Python/3.12.13/x64/lib/python3.12/asyncio/base_events.py:181]> got Future <Future pending cb=[BaseProtocol._on_waiter_completed()]> attached to a different loop
+2026-06-14T17:07:42.5469520Z ---------------------------- Captured log teardown -----------------------------
+2026-06-14T17:07:42.5470291Z ERROR    sqlalchemy.pool.impl.NullPool:base.py:378 Exception closing connection <AdaptedConnection <asyncpg.connection.Connection object at 0x7f85f3c775c0>>
+2026-06-14T17:07:42.5470967Z Traceback (most recent call last):
+2026-06-14T17:07:42.5476332Z   File "/opt/hostedtoolcache/Python/3.12.13/x64/lib/python3.12/site-packages/sqlalchemy/pool/base.py", line 376, in _close_connection
+2026-06-14T17:07:42.5477017Z     self._dialect.do_close(connection)
+2026-06-14T17:07:42.5477946Z   File "/opt/hostedtoolcache/Python/3.12.13/x64/lib/python3.12/site-packages/sqlalchemy/engine/default.py", line 708, in do_close
+2026-06-14T17:07:42.5478875Z     dbapi_connection.close()
+2026-06-14T17:07:42.5479557Z   File "/opt/hostedtoolcache/Python/3.12.13/x64/lib/python3.12/site-packages/sqlalchemy/dialects/postgresql/asyncpg.py", line 886, in close
+2026-06-14T17:07:42.5480164Z     self.await_(self._connection.close())
+2026-06-14T17:07:42.5480800Z   File "/opt/hostedtoolcache/Python/3.12.13/x64/lib/python3.12/site-packages/sqlalchemy/util/_concurrency_py3k.py", line 132, in await_only
+2026-06-14T17:07:42.5481587Z     return current.parent.switch(awaitable)  # type: ignore[no-any-return,attr-defined] # noqa: E501
+2026-06-14T17:07:42.5482051Z            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+2026-06-14T17:07:42.5482680Z   File "/opt/hostedtoolcache/Python/3.12.13/x64/lib/python3.12/site-packages/sqlalchemy/util/_concurrency_py3k.py", line 196, in greenlet_spawn
+2026-06-14T17:07:42.5483274Z     value = await result
+2026-06-14T17:07:42.5483502Z             ^^^^^^^^^^^^
+2026-06-14T17:07:42.5483986Z   File "/opt/hostedtoolcache/Python/3.12.13/x64/lib/python3.12/site-packages/asyncpg/connection.py", line 1504, in close
+2026-06-14T17:07:42.5484517Z     await self._protocol.close(timeout)
+2026-06-14T17:07:42.5485127Z   File "asyncpg/protocol/protocol.pyx", line 627, in close
+2026-06-14T17:07:42.5485736Z   File "asyncpg/protocol/protocol.pyx", line 660, in asyncpg.protocol.protocol.BaseProtocol._request_cancel
+2026-06-14T17:07:42.5486580Z   File "/opt/hostedtoolcache/Python/3.12.13/x64/lib/python3.12/site-packages/asyncpg/connection.py", line 1673, in _cancel_current_command
+2026-06-14T17:07:42.5487260Z     self._cancellations.add(self._loop.create_task(self._cancel(waiter)))
+2026-06-14T17:07:42.5487657Z                             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+2026-06-14T17:07:42.5488191Z   File "/opt/hostedtoolcache/Python/3.12.13/x64/lib/python3.12/asyncio/base_events.py", line 455, in create_task
+2026-06-14T17:07:42.5488669Z     self._check_closed()
+2026-06-14T17:07:42.5489136Z   File "/opt/hostedtoolcache/Python/3.12.13/x64/lib/python3.12/asyncio/base_events.py", line 545, in _check_closed
+2026-06-14T17:07:42.5510739Z ##[error]    raise RuntimeError('Event loop is closed')
+2026-06-14T17:07:42.5518960Z RuntimeError: Event loop is closed
+2026-06-14T17:07:42.5519403Z _________ ERROR at teardown of test_worker_completes_after_execute_job _________
+2026-06-14T17:07:42.5520078Z /opt/hostedtoolcache/Python/3.12.13/x64/lib/python3.12/site-packages/pytest_asyncio/plugin.py:347: in finalizer
+2026-06-14T17:07:42.5520856Z     event_loop.run_until_complete(task)
+2026-06-14T17:07:42.5521352Z /opt/hostedtoolcache/Python/3.12.13/x64/lib/python3.12/asyncio/base_events.py:691: in run_until_complete
+2026-06-14T17:07:42.5521830Z     return future.result()
+2026-06-14T17:07:42.5522327Z /opt/hostedtoolcache/Python/3.12.13/x64/lib/python3.12/site-packages/pytest_asyncio/plugin.py:338: in async_finalizer
+2026-06-14T17:07:42.5522899Z     await gen_obj.__anext__()  # type: ignore[union-attr]
+2026-06-14T17:07:42.5523236Z tests/conftest.py:109: in db_session
+2026-06-14T17:07:42.5523510Z     await session.rollback()
+2026-06-14T17:07:42.5524020Z /opt/hostedtoolcache/Python/3.12.13/x64/lib/python3.12/site-packages/sqlalchemy/ext/asyncio/session.py:999: in rollback
+2026-06-14T17:07:42.5524784Z     await greenlet_spawn(self.sync_session.rollback)
+2026-06-14T17:07:42.5525692Z /opt/hostedtoolcache/Python/3.12.13/x64/lib/python3.12/site-packages/sqlalchemy/util/_concurrency_py3k.py:201: in greenlet_spawn
+2026-06-14T17:07:42.5526406Z     result = context.throw(*sys.exc_info())
+2026-06-14T17:07:42.5527023Z /opt/hostedtoolcache/Python/3.12.13/x64/lib/python3.12/site-packages/sqlalchemy/orm/session.py:1990: in rollback
+2026-06-14T17:07:42.5527798Z     self._transaction.rollback(_to_root=True)
+2026-06-14T17:07:42.5528438Z /opt/hostedtoolcache/Python/3.12.13/x64/lib/python3.12/site-packages/sqlalchemy/orm/state_changes.py:139: in _go
+2026-06-14T17:07:42.5529158Z     ret_value = fn(self, *arg, **kw)
+2026-06-14T17:07:42.5529760Z /opt/hostedtoolcache/Python/3.12.13/x64/lib/python3.12/site-packages/sqlalchemy/orm/session.py:1395: in rollback
+2026-06-14T17:07:42.5530406Z     raise rollback_err[1].with_traceback(rollback_err[2])
+2026-06-14T17:07:42.5531159Z /opt/hostedtoolcache/Python/3.12.13/x64/lib/python3.12/site-packages/sqlalchemy/orm/session.py:1360: in rollback
+2026-06-14T17:07:42.5531761Z     t[1].rollback()
+2026-06-14T17:07:42.5532326Z /opt/hostedtoolcache/Python/3.12.13/x64/lib/python3.12/site-packages/sqlalchemy/engine/base.py:2610: in rollback
+2026-06-14T17:07:42.5532944Z     self._do_rollback()
+2026-06-14T17:07:42.5533521Z /opt/hostedtoolcache/Python/3.12.13/x64/lib/python3.12/site-packages/sqlalchemy/engine/base.py:2729: in _do_rollback
+2026-06-14T17:07:42.5534235Z     self._close_impl(try_deactivate=True)
+2026-06-14T17:07:42.5535044Z /opt/hostedtoolcache/Python/3.12.13/x64/lib/python3.12/site-packages/sqlalchemy/engine/base.py:2712: in _close_impl
+2026-06-14T17:07:42.5535765Z     self._connection_rollback_impl()
+2026-06-14T17:07:42.5536420Z /opt/hostedtoolcache/Python/3.12.13/x64/lib/python3.12/site-packages/sqlalchemy/engine/base.py:2704: in _connection_rollback_impl
+2026-06-14T17:07:42.5550655Z     self.connection._rollback_impl()
+2026-06-14T17:07:42.5551271Z /opt/hostedtoolcache/Python/3.12.13/x64/lib/python3.12/site-packages/sqlalchemy/engine/base.py:1129: in _rollback_impl
+2026-06-14T17:07:42.5551894Z     self._handle_dbapi_exception(e, None, None, None, None)
+2026-06-14T17:07:42.5552535Z /opt/hostedtoolcache/Python/3.12.13/x64/lib/python3.12/site-packages/sqlalchemy/engine/base.py:2358: in _handle_dbapi_exception
+2026-06-14T17:07:42.5553137Z     raise exc_info[1].with_traceback(exc_info[2])
+2026-06-14T17:07:42.5553691Z /opt/hostedtoolcache/Python/3.12.13/x64/lib/python3.12/site-packages/sqlalchemy/engine/base.py:1127: in _rollback_impl
+2026-06-14T17:07:42.5554262Z     self.engine.dialect.do_rollback(self.connection)
+2026-06-14T17:07:42.5555070Z /opt/hostedtoolcache/Python/3.12.13/x64/lib/python3.12/site-packages/sqlalchemy/engine/default.py:699: in do_rollback
+2026-06-14T17:07:42.5555596Z     dbapi_connection.rollback()
+2026-06-14T17:07:42.5556424Z /opt/hostedtoolcache/Python/3.12.13/x64/lib/python3.12/site-packages/sqlalchemy/dialects/postgresql/asyncpg.py:870: in rollback
+2026-06-14T17:07:42.5556994Z     self._handle_exception(error)
+2026-06-14T17:07:42.5557566Z /opt/hostedtoolcache/Python/3.12.13/x64/lib/python3.12/site-packages/sqlalchemy/dialects/postgresql/asyncpg.py:782: in _handle_exception
+2026-06-14T17:07:42.5558283Z     raise error
+2026-06-14T17:07:42.5558797Z /opt/hostedtoolcache/Python/3.12.13/x64/lib/python3.12/site-packages/sqlalchemy/dialects/postgresql/asyncpg.py:864: in rollback
+2026-06-14T17:07:42.5559353Z     self.await_(self._rollback_and_discard())
+2026-06-14T17:07:42.5559906Z /opt/hostedtoolcache/Python/3.12.13/x64/lib/python3.12/site-packages/sqlalchemy/util/_concurrency_py3k.py:132: in await_only
+2026-06-14T17:07:42.5560641Z     return current.parent.switch(awaitable)  # type: ignore[no-any-return,attr-defined] # noqa: E501
+2026-06-14T17:07:42.5561371Z /opt/hostedtoolcache/Python/3.12.13/x64/lib/python3.12/site-packages/sqlalchemy/util/_concurrency_py3k.py:196: in greenlet_spawn
+2026-06-14T17:07:42.5561913Z     value = await result
+2026-06-14T17:07:42.5562481Z /opt/hostedtoolcache/Python/3.12.13/x64/lib/python3.12/site-packages/sqlalchemy/dialects/postgresql/asyncpg.py:845: in _rollback_and_discard
+2026-06-14T17:07:42.5563086Z     await self._transaction.rollback()
+2026-06-14T17:07:42.5563575Z /opt/hostedtoolcache/Python/3.12.13/x64/lib/python3.12/site-packages/asyncpg/transaction.py:227: in rollback
+2026-06-14T17:07:42.5564050Z     await self.__rollback()
+2026-06-14T17:07:42.5564500Z /opt/hostedtoolcache/Python/3.12.13/x64/lib/python3.12/site-packages/asyncpg/transaction.py:206: in __rollback
+2026-06-14T17:07:42.5565223Z     await self._connection.execute(query)
+2026-06-14T17:07:42.5565722Z /opt/hostedtoolcache/Python/3.12.13/x64/lib/python3.12/site-packages/asyncpg/connection.py:349: in execute
+2026-06-14T17:07:42.5566245Z     result = await self._protocol.query(query, timeout)
+2026-06-14T17:07:42.5566585Z asyncpg/protocol/protocol.pyx:375: in query
+2026-06-14T17:07:42.5566865Z     ???
+2026-06-14T17:07:42.5568456Z E   RuntimeError: Task <Task pending name='Task-1231' coro=<_wrap_asyncgen_fixture.<locals>._asyncgen_fixture_wrapper.<locals>.finalizer.<locals>.async_finalizer() running at /opt/hostedtoolcache/Python/3.12.13/x64/lib/python3.12/site-packages/pytest_asyncio/plugin.py:338> cb=[_run_until_complete_cb() at /opt/hostedtoolcache/Python/3.12.13/x64/lib/python3.12/asyncio/base_events.py:181]> got Future <Future pending cb=[BaseProtocol._on_waiter_completed()]> attached to a different loop
+2026-06-14T17:07:42.5570211Z ---------------------------- Captured log teardown -----------------------------
+2026-06-14T17:07:42.5570965Z ERROR    sqlalchemy.pool.impl.NullPool:base.py:378 Exception closing connection <AdaptedConnection <asyncpg.connection.Connection object at 0x7f85f3c763f0>>
+2026-06-14T17:07:42.5571628Z Traceback (most recent call last):
+2026-06-14T17:07:42.5572323Z   File "/opt/hostedtoolcache/Python/3.12.13/x64/lib/python3.12/site-packages/sqlalchemy/pool/base.py", line 376, in _close_connection
+2026-06-14T17:07:42.5572911Z     self._dialect.do_close(connection)
+2026-06-14T17:07:42.5573495Z   File "/opt/hostedtoolcache/Python/3.12.13/x64/lib/python3.12/site-packages/sqlalchemy/engine/default.py", line 708, in do_close
+2026-06-14T17:07:42.5574051Z     dbapi_connection.close()
+2026-06-14T17:07:42.5574899Z   File "/opt/hostedtoolcache/Python/3.12.13/x64/lib/python3.12/site-packages/sqlalchemy/dialects/postgresql/asyncpg.py", line 886, in close
+2026-06-14T17:07:42.5575538Z     self.await_(self._connection.close())
+2026-06-14T17:07:42.5576153Z   File "/opt/hostedtoolcache/Python/3.12.13/x64/lib/python3.12/site-packages/sqlalchemy/util/_concurrency_py3k.py", line 132, in await_only
+2026-06-14T17:07:42.5576934Z     return current.parent.switch(awaitable)  # type: ignore[no-any-return,attr-defined] # noqa: E501
+2026-06-14T17:07:42.5577396Z            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+2026-06-14T17:07:42.5578164Z   File "/opt/hostedtoolcache/Python/3.12.13/x64/lib/python3.12/site-packages/sqlalchemy/util/_concurrency_py3k.py", line 196, in greenlet_spawn
+2026-06-14T17:07:42.5578764Z     value = await result
+2026-06-14T17:07:42.5578991Z             ^^^^^^^^^^^^
+2026-06-14T17:07:42.5579475Z   File "/opt/hostedtoolcache/Python/3.12.13/x64/lib/python3.12/site-packages/asyncpg/connection.py", line 1504, in close
+2026-06-14T17:07:42.5580141Z     await self._protocol.close(timeout)
+2026-06-14T17:07:42.5580498Z   File "asyncpg/protocol/protocol.pyx", line 627, in close
+2026-06-14T17:07:42.5581100Z   File "asyncpg/protocol/protocol.pyx", line 660, in asyncpg.protocol.protocol.BaseProtocol._request_cancel
+2026-06-14T17:07:42.5581931Z   File "/opt/hostedtoolcache/Python/3.12.13/x64/lib/python3.12/site-packages/asyncpg/connection.py", line 1673, in _cancel_current_command
+2026-06-14T17:07:42.5582603Z     self._cancellations.add(self._loop.create_task(self._cancel(waiter)))
+2026-06-14T17:07:42.5583009Z                             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+2026-06-14T17:07:42.5583556Z   File "/opt/hostedtoolcache/Python/3.12.13/x64/lib/python3.12/asyncio/base_events.py", line 455, in create_task
+2026-06-14T17:07:42.5584045Z     self._check_closed()
+2026-06-14T17:07:42.5584511Z   File "/opt/hostedtoolcache/Python/3.12.13/x64/lib/python3.12/asyncio/base_events.py", line 545, in _check_closed
+2026-06-14T17:07:42.5585860Z ##[error]    raise RuntimeError('Event loop is closed')
+2026-06-14T17:07:42.5586801Z RuntimeError: Event loop is closed
+2026-06-14T17:07:42.5587191Z ______ ERROR at teardown of test_duplicate_tasks_only_one_claims_running _______
+2026-06-14T17:07:42.5587810Z /opt/hostedtoolcache/Python/3.12.13/x64/lib/python3.12/site-packages/pytest_asyncio/plugin.py:347: in finalizer
+2026-06-14T17:07:42.5588324Z     event_loop.run_until_complete(task)
+2026-06-14T17:07:42.5588797Z /opt/hostedtoolcache/Python/3.12.13/x64/lib/python3.12/asyncio/base_events.py:691: in run_until_complete
+2026-06-14T17:07:42.5589270Z     return future.result()
+2026-06-14T17:07:42.5589769Z /opt/hostedtoolcache/Python/3.12.13/x64/lib/python3.12/site-packages/pytest_asyncio/plugin.py:338: in async_finalizer
+2026-06-14T17:07:42.5590372Z     await gen_obj.__anext__()  # type: ignore[union-attr]
+2026-06-14T17:07:42.5590707Z tests/conftest.py:109: in db_session
+2026-06-14T17:07:42.5590990Z     await session.rollback()
+2026-06-14T17:07:42.5591499Z /opt/hostedtoolcache/Python/3.12.13/x64/lib/python3.12/site-packages/sqlalchemy/ext/asyncio/session.py:999: in rollback
+2026-06-14T17:07:42.5592064Z     await greenlet_spawn(self.sync_session.rollback)
+2026-06-14T17:07:42.5592644Z /opt/hostedtoolcache/Python/3.12.13/x64/lib/python3.12/site-packages/sqlalchemy/util/_concurrency_py3k.py:201: in greenlet_spawn
+2026-06-14T17:07:42.5593208Z     result = context.throw(*sys.exc_info())
+2026-06-14T17:07:42.5593708Z /opt/hostedtoolcache/Python/3.12.13/x64/lib/python3.12/site-packages/sqlalchemy/orm/session.py:1990: in rollback
+2026-06-14T17:07:42.5594227Z     self._transaction.rollback(_to_root=True)
+2026-06-14T17:07:42.5594942Z /opt/hostedtoolcache/Python/3.12.13/x64/lib/python3.12/site-packages/sqlalchemy/orm/state_changes.py:139: in _go
+2026-06-14T17:07:42.5595442Z     ret_value = fn(self, *arg, **kw)
+2026-06-14T17:07:42.5595911Z /opt/hostedtoolcache/Python/3.12.13/x64/lib/python3.12/site-packages/sqlalchemy/orm/session.py:1395: in rollback
+2026-06-14T17:07:42.5596448Z     raise rollback_err[1].with_traceback(rollback_err[2])
+2026-06-14T17:07:42.5596957Z /opt/hostedtoolcache/Python/3.12.13/x64/lib/python3.12/site-packages/sqlalchemy/orm/session.py:1360: in rollback
+2026-06-14T17:07:42.5597434Z     t[1].rollback()
+2026-06-14T17:07:42.5597853Z /opt/hostedtoolcache/Python/3.12.13/x64/lib/python3.12/site-packages/sqlalchemy/engine/base.py:2610: in rollback
+2026-06-14T17:07:42.5598324Z     self._do_rollback()
+2026-06-14T17:07:42.5598780Z /opt/hostedtoolcache/Python/3.12.13/x64/lib/python3.12/site-packages/sqlalchemy/engine/base.py:2729: in _do_rollback
+2026-06-14T17:07:42.5599472Z     self._close_impl(try_deactivate=True)
+2026-06-14T17:07:42.5599982Z /opt/hostedtoolcache/Python/3.12.13/x64/lib/python3.12/site-packages/sqlalchemy/engine/base.py:2712: in _close_impl
+2026-06-14T17:07:42.5600495Z     self._connection_rollback_impl()
+2026-06-14T17:07:42.5601102Z /opt/hostedtoolcache/Python/3.12.13/x64/lib/python3.12/site-packages/sqlalchemy/engine/base.py:2704: in _connection_rollback_impl
+2026-06-14T17:07:42.5601790Z     self.connection._rollback_impl()
+2026-06-14T17:07:42.5602534Z /opt/hostedtoolcache/Python/3.12.13/x64/lib/python3.12/site-packages/sqlalchemy/engine/base.py:1129: in _rollback_impl
+2026-06-14T17:07:42.5603106Z     self._handle_dbapi_exception(e, None, None, None, None)
+2026-06-14T17:07:42.5603703Z /opt/hostedtoolcache/Python/3.12.13/x64/lib/python3.12/site-packages/sqlalchemy/engine/base.py:2358: in _handle_dbapi_exception
+2026-06-14T17:07:42.5604284Z     raise exc_info[1].with_traceback(exc_info[2])
+2026-06-14T17:07:42.5605015Z /opt/hostedtoolcache/Python/3.12.13/x64/lib/python3.12/site-packages/sqlalchemy/engine/base.py:1127: in _rollback_impl
+2026-06-14T17:07:42.5605572Z     self.engine.dialect.do_rollback(self.connection)
+2026-06-14T17:07:42.5606114Z /opt/hostedtoolcache/Python/3.12.13/x64/lib/python3.12/site-packages/sqlalchemy/engine/default.py:699: in do_rollback
+2026-06-14T17:07:42.5606632Z     dbapi_connection.rollback()
+2026-06-14T17:07:42.5607164Z /opt/hostedtoolcache/Python/3.12.13/x64/lib/python3.12/site-packages/sqlalchemy/dialects/postgresql/asyncpg.py:870: in rollback
+2026-06-14T17:07:42.5607718Z     self._handle_exception(error)
+2026-06-14T17:07:42.5608285Z /opt/hostedtoolcache/Python/3.12.13/x64/lib/python3.12/site-packages/sqlalchemy/dialects/postgresql/asyncpg.py:782: in _handle_exception
+2026-06-14T17:07:42.5608848Z     raise error
+2026-06-14T17:07:42.5609322Z /opt/hostedtoolcache/Python/3.12.13/x64/lib/python3.12/site-packages/sqlalchemy/dialects/postgresql/asyncpg.py:864: in rollback
+2026-06-14T17:07:42.5609886Z     self.await_(self._rollback_and_discard())
+2026-06-14T17:07:42.5610438Z /opt/hostedtoolcache/Python/3.12.13/x64/lib/python3.12/site-packages/sqlalchemy/util/_concurrency_py3k.py:132: in await_only
+2026-06-14T17:07:42.5611156Z     return current.parent.switch(awaitable)  # type: ignore[no-any-return,attr-defined] # noqa: E501
+2026-06-14T17:07:42.5611877Z /opt/hostedtoolcache/Python/3.12.13/x64/lib/python3.12/site-packages/sqlalchemy/util/_concurrency_py3k.py:196: in greenlet_spawn
+2026-06-14T17:07:42.5612420Z     value = await result
+2026-06-14T17:07:42.5612986Z /opt/hostedtoolcache/Python/3.12.13/x64/lib/python3.12/site-packages/sqlalchemy/dialects/postgresql/asyncpg.py:845: in _rollback_and_discard
+2026-06-14T17:07:42.5613589Z     await self._transaction.rollback()
+2026-06-14T17:07:42.5614068Z /opt/hostedtoolcache/Python/3.12.13/x64/lib/python3.12/site-packages/asyncpg/transaction.py:227: in rollback
+2026-06-14T17:07:42.5614541Z     await self.__rollback()
+2026-06-14T17:07:42.5615163Z /opt/hostedtoolcache/Python/3.12.13/x64/lib/python3.12/site-packages/asyncpg/transaction.py:206: in __rollback
+2026-06-14T17:07:42.5615666Z     await self._connection.execute(query)
+2026-06-14T17:07:42.5616152Z /opt/hostedtoolcache/Python/3.12.13/x64/lib/python3.12/site-packages/asyncpg/connection.py:349: in execute
+2026-06-14T17:07:42.5616674Z     result = await self._protocol.query(query, timeout)
+2026-06-14T17:07:42.5617010Z asyncpg/protocol/protocol.pyx:375: in query
+2026-06-14T17:07:42.5617285Z     ???
+2026-06-14T17:07:42.5618871Z E   RuntimeError: Task <Task pending name='Task-1339' coro=<_wrap_asyncgen_fixture.<locals>._asyncgen_fixture_wrapper.<locals>.finalizer.<locals>.async_finalizer() running at /opt/hostedtoolcache/Python/3.12.13/x64/lib/python3.12/site-packages/pytest_asyncio/plugin.py:338> cb=[_run_until_complete_cb() at /opt/hostedtoolcache/Python/3.12.13/x64/lib/python3.12/asyncio/base_events.py:181]> got Future <Future pending cb=[BaseProtocol._on_waiter_completed()]> attached to a different loop
+2026-06-14T17:07:42.5620780Z ---------------------------- Captured log teardown -----------------------------
+2026-06-14T17:07:42.5621566Z ERROR    sqlalchemy.pool.impl.NullPool:base.py:378 Exception closing connection <AdaptedConnection <asyncpg.connection.Connection object at 0x7f85f25e19a0>>
+2026-06-14T17:07:42.5622231Z Traceback (most recent call last):
+2026-06-14T17:07:42.5622875Z   File "/opt/hostedtoolcache/Python/3.12.13/x64/lib/python3.12/site-packages/sqlalchemy/pool/base.py", line 376, in _close_connection
+2026-06-14T17:07:42.5623587Z     self._dialect.do_close(connection)
+2026-06-14T17:07:42.5624154Z   File "/opt/hostedtoolcache/Python/3.12.13/x64/lib/python3.12/site-packages/sqlalchemy/engine/default.py", line 708, in do_close
+2026-06-14T17:07:42.5624916Z     dbapi_connection.close()
+2026-06-14T17:07:42.5625504Z   File "/opt/hostedtoolcache/Python/3.12.13/x64/lib/python3.12/site-packages/sqlalchemy/dialects/postgresql/asyncpg.py", line 886, in close
+2026-06-14T17:07:42.5626098Z     self.await_(self._connection.close())
+2026-06-14T17:07:42.5626693Z   File "/opt/hostedtoolcache/Python/3.12.13/x64/lib/python3.12/site-packages/sqlalchemy/util/_concurrency_py3k.py", line 132, in await_only
+2026-06-14T17:07:42.5627451Z     return current.parent.switch(awaitable)  # type: ignore[no-any-return,attr-defined] # noqa: E501
+2026-06-14T17:07:42.5627903Z            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+2026-06-14T17:07:42.5628514Z   File "/opt/hostedtoolcache/Python/3.12.13/x64/lib/python3.12/site-packages/sqlalchemy/util/_concurrency_py3k.py", line 196, in greenlet_spawn
+2026-06-14T17:07:42.5629097Z     value = await result
+2026-06-14T17:07:42.5629333Z             ^^^^^^^^^^^^
+2026-06-14T17:07:42.5629808Z   File "/opt/hostedtoolcache/Python/3.12.13/x64/lib/python3.12/site-packages/asyncpg/connection.py", line 1504, in close
+2026-06-14T17:07:42.5630325Z     await self._protocol.close(timeout)
+2026-06-14T17:07:42.5630670Z   File "asyncpg/protocol/protocol.pyx", line 627, in close
+2026-06-14T17:07:42.5631266Z   File "asyncpg/protocol/protocol.pyx", line 660, in asyncpg.protocol.protocol.BaseProtocol._request_cancel
+2026-06-14T17:07:42.5632210Z   File "/opt/hostedtoolcache/Python/3.12.13/x64/lib/python3.12/site-packages/asyncpg/connection.py", line 1673, in _cancel_current_command
+2026-06-14T17:07:42.5632900Z     self._cancellations.add(self._loop.create_task(self._cancel(waiter)))
+2026-06-14T17:07:42.5633300Z                             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+2026-06-14T17:07:42.5633839Z   File "/opt/hostedtoolcache/Python/3.12.13/x64/lib/python3.12/asyncio/base_events.py", line 455, in create_task
+2026-06-14T17:07:42.5634323Z     self._check_closed()
+2026-06-14T17:07:42.5635063Z   File "/opt/hostedtoolcache/Python/3.12.13/x64/lib/python3.12/asyncio/base_events.py", line 545, in _check_closed
+2026-06-14T17:07:42.5635891Z ##[error]    raise RuntimeError('Event loop is closed')
+2026-06-14T17:07:42.5636683Z RuntimeError: Event loop is closed
+2026-06-14T17:07:42.5636994Z =================================== FAILURES ===================================
+2026-06-14T17:07:42.5637415Z ______________________ test_enqueue_stores_celery_task_id ______________________
+2026-06-14T17:07:42.5637862Z tests/test_queue_enqueue.py:52: in test_enqueue_stores_celery_task_id
+2026-06-14T17:07:42.5638227Z     await db_session.expire_all()
+2026-06-14T17:07:42.5638563Z E   TypeError: object NoneType can't be used in 'await' expression
+2026-06-14T17:07:42.5639022Z ______________ test_upload_returns_storage_key_and_readable_file _______________
+2026-06-14T17:07:42.5639519Z tests/test_upload_storage.py:39: in test_upload_returns_storage_key_and_readable_file
+2026-06-14T17:07:42.5640028Z     assert image["url"].startswith("http://testserver/static/uploads/")
+2026-06-14T17:07:42.5640396Z E   AssertionError: assert False
+2026-06-14T17:07:42.5640877Z E    +  where False = <built-in method startswith of str object at 0x7f85f2741730>('http://testserver/static/uploads/')
+2026-06-14T17:07:42.5641969Z E    +    where <built-in method startswith of str object at 0x7f85f2741730> = 'http://localhost:8000/static/uploads/20cc413349c04b4d859768a2ae6ba58b.png'.startswith
+2026-06-14T17:07:42.5642687Z =============================== warnings summary ===============================
+2026-06-14T17:07:42.5643241Z ../../../../../../../opt/hostedtoolcache/Python/3.12.13/x64/lib/python3.12/site-packages/passlib/utils/__init__.py:854
+2026-06-14T17:07:42.5644233Z   /opt/hostedtoolcache/Python/3.12.13/x64/lib/python3.12/site-packages/passlib/utils/__init__.py:854: DeprecationWarning: 'crypt' is deprecated and slated for removal in Python 3.13
+2026-06-14T17:07:42.5645319Z     from crypt import crypt as _crypt
+2026-06-14T17:07:42.5645516Z 
+2026-06-14T17:07:42.5645862Z ../../../../../../../opt/hostedtoolcache/Python/3.12.13/x64/lib/python3.12/site-packages/matplotlib/_fontconfig_pattern.py:64
+2026-06-14T17:07:42.5646813Z   /opt/hostedtoolcache/Python/3.12.13/x64/lib/python3.12/site-packages/matplotlib/_fontconfig_pattern.py:64: PyparsingDeprecationWarning: 'oneOf' deprecated - use 'one_of'
+2026-06-14T17:07:42.5647634Z     prop = Group((name + Suppress("=") + comma_separated(value)) | oneOf(_CONSTANTS))
+2026-06-14T17:07:42.5647929Z 
+2026-06-14T17:07:42.5648255Z ../../../../../../../opt/hostedtoolcache/Python/3.12.13/x64/lib/python3.12/site-packages/matplotlib/_fontconfig_pattern.py:85
+2026-06-14T17:07:42.5648967Z ../../../../../../../opt/hostedtoolcache/Python/3.12.13/x64/lib/python3.12/site-packages/matplotlib/_fontconfig_pattern.py:85
+2026-06-14T17:07:42.5649680Z ../../../../../../../opt/hostedtoolcache/Python/3.12.13/x64/lib/python3.12/site-packages/matplotlib/_fontconfig_pattern.py:85
+2026-06-14T17:07:42.5650384Z ../../../../../../../opt/hostedtoolcache/Python/3.12.13/x64/lib/python3.12/site-packages/matplotlib/_fontconfig_pattern.py:85
+2026-06-14T17:07:42.5651091Z ../../../../../../../opt/hostedtoolcache/Python/3.12.13/x64/lib/python3.12/site-packages/matplotlib/_fontconfig_pattern.py:85
+2026-06-14T17:07:42.5651789Z ../../../../../../../opt/hostedtoolcache/Python/3.12.13/x64/lib/python3.12/site-packages/matplotlib/_fontconfig_pattern.py:85
+2026-06-14T17:07:42.5652752Z   /opt/hostedtoolcache/Python/3.12.13/x64/lib/python3.12/site-packages/matplotlib/_fontconfig_pattern.py:85: PyparsingDeprecationWarning: 'parseString' deprecated - use 'parse_string'
+2026-06-14T17:07:42.5653503Z     parse = parser.parseString(pattern)
+2026-06-14T17:07:42.5653697Z 
+2026-06-14T17:07:42.5654021Z ../../../../../../../opt/hostedtoolcache/Python/3.12.13/x64/lib/python3.12/site-packages/matplotlib/_fontconfig_pattern.py:89
+2026-06-14T17:07:42.5654962Z ../../../../../../../opt/hostedtoolcache/Python/3.12.13/x64/lib/python3.12/site-packages/matplotlib/_fontconfig_pattern.py:89
+2026-06-14T17:07:42.5655696Z ../../../../../../../opt/hostedtoolcache/Python/3.12.13/x64/lib/python3.12/site-packages/matplotlib/_fontconfig_pattern.py:89
+2026-06-14T17:07:42.5656421Z ../../../../../../../opt/hostedtoolcache/Python/3.12.13/x64/lib/python3.12/site-packages/matplotlib/_fontconfig_pattern.py:89
+2026-06-14T17:07:42.5657142Z ../../../../../../../opt/hostedtoolcache/Python/3.12.13/x64/lib/python3.12/site-packages/matplotlib/_fontconfig_pattern.py:89
+2026-06-14T17:07:42.5657846Z ../../../../../../../opt/hostedtoolcache/Python/3.12.13/x64/lib/python3.12/site-packages/matplotlib/_fontconfig_pattern.py:89
+2026-06-14T17:07:42.5658797Z   /opt/hostedtoolcache/Python/3.12.13/x64/lib/python3.12/site-packages/matplotlib/_fontconfig_pattern.py:89: PyparsingDeprecationWarning: 'resetCache' deprecated - use 'reset_cache'
+2026-06-14T17:07:42.5659526Z     parser.resetCache()
+2026-06-14T17:07:42.5659681Z 
+2026-06-14T17:07:42.5659978Z ../../../../../../../opt/hostedtoolcache/Python/3.12.13/x64/lib/python3.12/site-packages/matplotlib/_mathtext.py:45
+2026-06-14T17:07:42.5660895Z   /opt/hostedtoolcache/Python/3.12.13/x64/lib/python3.12/site-packages/matplotlib/_mathtext.py:45: PyparsingDeprecationWarning: 'enablePackrat' deprecated - use 'enable_packrat'
+2026-06-14T17:07:42.5661627Z     ParserElement.enablePackrat()
+2026-06-14T17:07:42.5661810Z 
+2026-06-14T17:07:42.5662264Z ../../../../../../../opt/hostedtoolcache/Python/3.12.13/x64/lib/python3.12/site-packages/reportlab/lib/rl_safe_eval.py:12
+2026-06-14T17:07:42.5663316Z   /opt/hostedtoolcache/Python/3.12.13/x64/lib/python3.12/site-packages/reportlab/lib/rl_safe_eval.py:12: DeprecationWarning: ast.NameConstant is deprecated and will be removed in Python 3.14; use ast.Constant instead
+2026-06-14T17:07:42.5664299Z     haveNameConstant = hasattr(ast,'NameConstant')
+2026-06-14T17:07:42.5664514Z 
+2026-06-14T17:07:42.5664715Z tests/test_auth.py: 1 warning
+2026-06-14T17:07:42.5664969Z tests/test_jobs.py: 11 warnings
+2026-06-14T17:07:42.5665233Z tests/test_ownership.py: 5 warnings
+2026-06-14T17:07:42.5665511Z tests/test_queue_enqueue.py: 3 warnings
+2026-06-14T17:07:42.5665807Z tests/test_result_image_storage.py: 5 warnings
+2026-06-14T17:07:42.5666112Z tests/test_upload_storage.py: 1 warning
+2026-06-14T17:07:42.5667185Z   /opt/hostedtoolcache/Python/3.12.13/x64/lib/python3.12/site-packages/jose/jwt.py:311: DeprecationWarning: datetime.datetime.utcnow() is deprecated and scheduled for removal in a future version. Use timezone-aware objects to represent datetimes in UTC: datetime.datetime.now(datetime.UTC).
+2026-06-14T17:07:42.5668275Z     now = timegm(datetime.utcnow().utctimetuple())
+2026-06-14T17:07:42.5668478Z 
+2026-06-14T17:07:42.5668708Z tests/test_status_transitions.py::test_worker_completes_after_execute_job
+2026-06-14T17:07:42.5669185Z tests/test_storage_service.py::test_local_backend_selected_by_default
+2026-06-14T17:07:42.5669632Z tests/test_worker_task.py::test_run_experiment_task_calls_async_worker
+2026-06-14T17:07:42.5670358Z   /opt/hostedtoolcache/Python/3.12.13/x64/lib/python3.12/site-packages/_pytest/logging.py:389: RuntimeWarning: coroutine 'Connection._cancel' was never awaited
+2026-06-14T17:07:42.5670988Z     self.records = []
+2026-06-14T17:07:42.5671300Z   Enable tracemalloc to get traceback where the object was allocated.
+2026-06-14T17:07:42.5671852Z   See https://docs.pytest.org/en/stable/how-to/capture-warnings.html#resource-warnings for more info.
+2026-06-14T17:07:42.5672238Z 
+2026-06-14T17:07:42.5672427Z -- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
+2026-06-14T17:07:42.5673047Z - generated xml file: /home/runner/work/genetic-contour-platform/genetic-contour-platform/apps/api/junit.xml -
+2026-06-14T17:07:42.5673609Z ============================= slowest 15 durations =============================
+2026-06-14T17:07:42.5674054Z 0.93s call     tests/test_ownership.py::test_experiment_ownership_isolation
+2026-06-14T17:07:42.5674554Z 0.78s call     tests/test_result_image_storage.py::test_sobel_results_use_storage_keys
+2026-06-14T17:07:42.5675081Z 0.72s call     tests/test_auth.py::test_login
+2026-06-14T17:07:42.5675463Z 0.70s call     tests/test_smtp_degraded.py::test_register_login_without_smtp
+2026-06-14T17:07:42.5675895Z 0.55s call     tests/test_jobs.py::test_cancel_queued_experiment
+2026-06-14T17:07:42.5676268Z 0.55s call     tests/test_jobs.py::test_status_endpoint
+2026-06-14T17:07:42.5676665Z 0.52s call     tests/test_jobs.py::test_run_returns_queued_job_immediately
+2026-06-14T17:07:42.5677133Z 0.50s call     tests/test_queue_enqueue.py::test_enqueue_stores_celery_task_id
+2026-06-14T17:07:42.5677525Z 0.41s call     tests/test_auth.py::test_register
+2026-06-14T17:07:42.5677968Z 0.40s call     tests/test_upload_storage.py::test_upload_returns_storage_key_and_readable_file
+2026-06-14T17:07:42.5678416Z 0.39s call     tests/test_auth.py::test_me
+2026-06-14T17:07:42.5678828Z 0.32s call     tests/test_media_urls.py::test_resolve_public_url_regenerates_from_storage_key
+2026-06-14T17:07:42.5679276Z 0.25s setup    tests/test_auth.py::test_register
+2026-06-14T17:07:42.5679710Z 0.18s call     tests/test_worker_idempotency.py::test_duplicate_tasks_only_one_claims_running
+2026-06-14T17:07:42.5680251Z 0.12s call     tests/test_job_recovery.py::test_reset_stale_running_jobs_marks_queued
+2026-06-14T17:07:42.5680685Z =========================== short test summary info ============================
+2026-06-14T17:07:42.5681464Z FAILED tests/test_queue_enqueue.py::test_enqueue_stores_celery_task_id - TypeError: object NoneType can't be used in 'await' expression
+2026-06-14T17:07:42.5682287Z FAILED tests/test_upload_storage.py::test_upload_returns_storage_key_and_readable_file - AssertionError: assert False
+2026-06-14T17:07:42.5683029Z  +  where False = <built-in method startswith of str object at 0x7f85f2741730>('http://testserver/static/uploads/')
+2026-06-14T17:07:42.5684022Z  +    where <built-in method startswith of str object at 0x7f85f2741730> = 'http://localhost:8000/static/uploads/20cc413349c04b4d859768a2ae6ba58b.png'.startswith
+2026-06-14T17:07:42.5686566Z ERROR tests/test_status_transitions.py::test_cancel_requested_before_start_marks_cancelled - RuntimeError: Task <Task pending name='Task-1221' coro=<_wrap_asyncgen_fixture.<locals>._asyncgen_fixture_wrapper.<locals>.finalizer.<locals>.async_finalizer() running at /opt/hostedtoolcache/Python/3.12.13/x64/lib/python3.12/site-packages/pytest_asyncio/plugin.py:338> cb=[_run_until_complete_cb() at /opt/hostedtoolcache/Python/3.12.13/x64/lib/python3.12/asyncio/base_events.py:181]> got Future <Future pending cb=[BaseProtocol._on_waiter_completed()]> attached to a different loop
+2026-06-14T17:07:42.5690057Z ERROR tests/test_status_transitions.py::test_worker_completes_after_execute_job - RuntimeError: Task <Task pending name='Task-1231' coro=<_wrap_asyncgen_fixture.<locals>._asyncgen_fixture_wrapper.<locals>.finalizer.<locals>.async_finalizer() running at /opt/hostedtoolcache/Python/3.12.13/x64/lib/python3.12/site-packages/pytest_asyncio/plugin.py:338> cb=[_run_until_complete_cb() at /opt/hostedtoolcache/Python/3.12.13/x64/lib/python3.12/asyncio/base_events.py:181]> got Future <Future pending cb=[BaseProtocol._on_waiter_completed()]> attached to a different loop
+2026-06-14T17:07:42.5693513Z ERROR tests/test_worker_idempotency.py::test_duplicate_tasks_only_one_claims_running - RuntimeError: Task <Task pending name='Task-1339' coro=<_wrap_asyncgen_fixture.<locals>._asyncgen_fixture_wrapper.<locals>.finalizer.<locals>.async_finalizer() running at /opt/hostedtoolcache/Python/3.12.13/x64/lib/python3.12/site-packages/pytest_asyncio/plugin.py:338> cb=[_run_until_complete_cb() at /opt/hostedtoolcache/Python/3.12.13/x64/lib/python3.12/asyncio/base_events.py:181]> got Future <Future pending cb=[BaseProtocol._on_waiter_completed()]> attached to a different loop
+2026-06-14T17:07:42.5695633Z ============= 2 failed, 69 passed, 45 warnings, 3 errors in 14.36s =============
+2026-06-14T17:07:43.2069653Z ##[error]Process completed with exit code 1.
+2026-06-14T17:07:43.2116049Z ##[group]Run python <<'PY'
+2026-06-14T17:07:43.2116388Z [36;1mpython <<'PY'[0m
+2026-06-14T17:07:43.2116625Z [36;1mimport pathlib[0m
+2026-06-14T17:07:43.2116890Z [36;1mimport xml.etree.ElementTree as ET[0m
+2026-06-14T17:07:43.2117172Z [36;1m[0m
+2026-06-14T17:07:43.2117384Z [36;1mjunit = pathlib.Path("junit.xml")[0m
+2026-06-14T17:07:43.2117673Z [36;1mlog = pathlib.Path("pytest.log")[0m
+2026-06-14T17:07:43.2117955Z [36;1mif junit.exists():[0m
+2026-06-14T17:07:43.2118229Z [36;1m    root = ET.parse(junit).getroot()[0m
+2026-06-14T17:07:43.2118534Z [36;1m    for case in root.iter("testcase"):[0m
+2026-06-14T17:07:43.2118893Z [36;1m        name = f"{case.get('classname')}::{case.get('name')}"[0m
+2026-06-14T17:07:43.2119244Z [36;1m        for child in case:[0m
+2026-06-14T17:07:43.2119561Z [36;1m            if child.tag in ("failure", "error"):[0m
+2026-06-14T17:07:43.2120053Z [36;1m                msg = (child.get("message") or child.text or "failed").replace("\n", " ")[:300][0m
+2026-06-14T17:07:43.2120498Z [36;1m                print(f"::error::{name} — {msg}")[0m
+2026-06-14T17:07:43.2120804Z [36;1melif log.exists():[0m
+2026-06-14T17:07:43.2121188Z [36;1m    for line in log.read_text(encoding="utf-8", errors="replace").splitlines():[0m
+2026-06-14T17:07:43.2121707Z [36;1m        if line.startswith("FAILED ") or line.startswith("ERROR "):[0m
+2026-06-14T17:07:43.2122086Z [36;1m            print(f"::error::{line}")[0m
+2026-06-14T17:07:43.2122367Z [36;1mPY[0m
+2026-06-14T17:07:43.2158777Z shell: /usr/bin/bash -e {0}
+2026-06-14T17:07:43.2159035Z env:
+2026-06-14T17:07:43.2159313Z   pythonLocation: /opt/hostedtoolcache/Python/3.12.13/x64
+2026-06-14T17:07:43.2159760Z   PKG_CONFIG_PATH: /opt/hostedtoolcache/Python/3.12.13/x64/lib/pkgconfig
+2026-06-14T17:07:43.2160181Z   Python_ROOT_DIR: /opt/hostedtoolcache/Python/3.12.13/x64
+2026-06-14T17:07:43.2160780Z   Python2_ROOT_DIR: /opt/hostedtoolcache/Python/3.12.13/x64
+2026-06-14T17:07:43.2161172Z   Python3_ROOT_DIR: /opt/hostedtoolcache/Python/3.12.13/x64
+2026-06-14T17:07:43.2161544Z   LD_LIBRARY_PATH: /opt/hostedtoolcache/Python/3.12.13/x64/lib
+2026-06-14T17:07:43.2161862Z ##[endgroup]
+2026-06-14T17:07:43.2513497Z ##[error]tests.test_queue_enqueue::test_enqueue_stores_celery_task_id — TypeError: object NoneType can't be used in 'await' expression
+2026-06-14T17:07:43.2520421Z ##[error]tests.test_status_transitions::test_cancel_requested_before_start_marks_cancelled — failed on teardown with "RuntimeError: Task <Task pending name='Task-1221' coro=<_wrap_asyncgen_fixture.<locals>._asyncgen_fixture_wrapper.<locals>.finalizer.<locals>.async_finalizer() running at /opt/hostedtoolcache/Python/3.12.13/x64/lib/python3.12/site-packages/pytest_asyncio/plugin.py:338> cb=[_
+2026-06-14T17:07:43.2528339Z ##[error]tests.test_status_transitions::test_worker_completes_after_execute_job — failed on teardown with "RuntimeError: Task <Task pending name='Task-1231' coro=<_wrap_asyncgen_fixture.<locals>._asyncgen_fixture_wrapper.<locals>.finalizer.<locals>.async_finalizer() running at /opt/hostedtoolcache/Python/3.12.13/x64/lib/python3.12/site-packages/pytest_asyncio/plugin.py:338> cb=[_
+2026-06-14T17:07:43.2535999Z ##[error]tests.test_upload_storage::test_upload_returns_storage_key_and_readable_file — AssertionError: assert False  +  where False = <built-in method startswith of str object at 0x7f85f2741730>('http://testserver/static/uploads/')  +    where <built-in method startswith of str object at 0x7f85f2741730> = 'http://localhost:8000/static/uploads/20cc413349c04b4d859768a2ae6ba58b.png'.star
+2026-06-14T17:07:43.2543115Z ##[error]tests.test_worker_idempotency::test_duplicate_tasks_only_one_claims_running — failed on teardown with "RuntimeError: Task <Task pending name='Task-1339' coro=<_wrap_asyncgen_fixture.<locals>._asyncgen_fixture_wrapper.<locals>.finalizer.<locals>.async_finalizer() running at /opt/hostedtoolcache/Python/3.12.13/x64/lib/python3.12/site-packages/pytest_asyncio/plugin.py:338> cb=[_
+2026-06-14T17:07:43.2602347Z ##[group]Run actions/upload-artifact@v4
+2026-06-14T17:07:43.2602650Z with:
+2026-06-14T17:07:43.2602855Z   name: pytest-results
+2026-06-14T17:07:43.2603129Z   path: apps/api/junit.xml
+apps/api/pytest.log
+
+2026-06-14T17:07:43.2603443Z   if-no-files-found: ignore
+2026-06-14T17:07:43.2603690Z   compression-level: 6
+2026-06-14T17:07:43.2603925Z   overwrite: false
+2026-06-14T17:07:43.2604146Z   include-hidden-files: false
+2026-06-14T17:07:43.2604390Z env:
+2026-06-14T17:07:43.2604917Z   pythonLocation: /opt/hostedtoolcache/Python/3.12.13/x64
+2026-06-14T17:07:43.2605394Z   PKG_CONFIG_PATH: /opt/hostedtoolcache/Python/3.12.13/x64/lib/pkgconfig
+2026-06-14T17:07:43.2605822Z   Python_ROOT_DIR: /opt/hostedtoolcache/Python/3.12.13/x64
+2026-06-14T17:07:43.2606194Z   Python2_ROOT_DIR: /opt/hostedtoolcache/Python/3.12.13/x64
+2026-06-14T17:07:43.2606556Z   Python3_ROOT_DIR: /opt/hostedtoolcache/Python/3.12.13/x64
+2026-06-14T17:07:43.2606976Z   LD_LIBRARY_PATH: /opt/hostedtoolcache/Python/3.12.13/x64/lib
+2026-06-14T17:07:43.2607305Z ##[endgroup]
+2026-06-14T17:07:43.4972050Z Multiple search paths detected. Calculating the least common ancestor of all paths
+2026-06-14T17:07:43.4975818Z The least common ancestor is /home/runner/work/genetic-contour-platform/genetic-contour-platform/apps/api. This will be the root directory of the artifact
+2026-06-14T17:07:43.4976879Z With the provided path, there will be 2 files uploaded
+2026-06-14T17:07:43.4982126Z Artifact name is valid!
+2026-06-14T17:07:43.4983675Z Root directory input is valid!
+2026-06-14T17:07:43.7261489Z Beginning upload of artifact content to blob storage
+2026-06-14T17:07:43.7974013Z Uploaded bytes 8315
+2026-06-14T17:07:43.8149383Z Finished uploading artifact content to blob storage!
+2026-06-14T17:07:43.8152274Z SHA256 digest of uploaded artifact zip is acdcec22ba7627e8f3e173392d0439f5c3292e85fbc7f23d48dcf1b1ae50df0b
+2026-06-14T17:07:43.8154519Z Finalizing artifact upload
+2026-06-14T17:07:43.9709020Z Artifact pytest-results.zip successfully finalized. Artifact ID 7623209226
+2026-06-14T17:07:43.9710076Z Artifact pytest-results has been successfully uploaded! Final size is 8315 bytes. Artifact ID is 7623209226
+2026-06-14T17:07:43.9717474Z Artifact download URL: https://github.com/nodirbekurinov0892/genetic-contour-platform/actions/runs/27506016336/artifacts/7623209226
+2026-06-14T17:07:43.9902454Z Post job cleanup.
+2026-06-14T17:07:44.0935759Z [command]/usr/bin/git version
+2026-06-14T17:07:44.0974386Z git version 2.54.0
+2026-06-14T17:07:44.1016596Z Temporarily overriding HOME='/home/runner/work/_temp/e1fb1858-e918-4b25-bbc5-8596cadc4481' before making global git config changes
+2026-06-14T17:07:44.1017770Z Adding repository directory to the temporary git global config as a safe directory
+2026-06-14T17:07:44.1031423Z [command]/usr/bin/git config --global --add safe.directory /home/runner/work/genetic-contour-platform/genetic-contour-platform
+2026-06-14T17:07:44.1070365Z [command]/usr/bin/git config --local --name-only --get-regexp core\.sshCommand
+2026-06-14T17:07:44.1105390Z [command]/usr/bin/git submodule foreach --recursive sh -c "git config --local --name-only --get-regexp 'core\.sshCommand' && git config --local --unset-all 'core.sshCommand' || :"
+2026-06-14T17:07:44.1358578Z [command]/usr/bin/git config --local --name-only --get-regexp http\.https\:\/\/github\.com\/\.extraheader
+2026-06-14T17:07:44.1387606Z http.https://github.com/.extraheader
+2026-06-14T17:07:44.1401017Z [command]/usr/bin/git config --local --unset-all http.https://github.com/.extraheader
+2026-06-14T17:07:44.1436161Z [command]/usr/bin/git submodule foreach --recursive sh -c "git config --local --name-only --get-regexp 'http\.https\:\/\/github\.com\/\.extraheader' && git config --local --unset-all 'http.https://github.com/.extraheader' || :"
+2026-06-14T17:07:44.1683101Z [command]/usr/bin/git config --local --name-only --get-regexp ^includeIf\.gitdir:
+2026-06-14T17:07:44.1720163Z [command]/usr/bin/git submodule foreach --recursive git config --local --show-origin --name-only --get-regexp remote.origin.url
+2026-06-14T17:07:44.2096820Z Print service container logs: 08fe77746dfc45d195460c181f23192c_postgres16alpine_f5daa1
+2026-06-14T17:07:44.2101660Z ##[command]/usr/bin/docker logs --details b6dd7c728ae0449203f2486008ed02668fd04ef2ff1d767299b33820516a6551
+2026-06-14T17:07:44.2239380Z  sh: locale: not found
+2026-06-14T17:07:44.2239855Z  The files belonging to this database system will be owned by user "postgres".
+2026-06-14T17:07:44.2240904Z  2026-06-14 17:06:39.703 UTC [35] WARNING:  no usable system locales were found
+2026-06-14T17:07:44.2241441Z  initdb: warning: enabling "trust" authentication for local connections
+2026-06-14T17:07:44.2242164Z  initdb: hint: You can change this by editing pg_hba.conf or using the option -A, or --auth-local and --auth-host, the next time you run initdb.
+2026-06-14T17:07:44.2243031Z  2026-06-14 17:06:40.484 UTC [1] LOG:  starting PostgreSQL 16.14 on x86_64-pc-linux-musl, compiled by gcc (Alpine 15.2.0) 15.2.0, 64-bit
+2026-06-14T17:07:44.2243785Z  2026-06-14 17:06:40.484 UTC [1] LOG:  listening on IPv4 address "0.0.0.0", port 5432
+2026-06-14T17:07:44.2244256Z  2026-06-14 17:06:40.484 UTC [1] LOG:  listening on IPv6 address "::", port 5432
+2026-06-14T17:07:44.2245079Z  2026-06-14 17:06:40.485 UTC [1] LOG:  listening on Unix socket "/var/run/postgresql/.s.PGSQL.5432"
+2026-06-14T17:07:44.2245962Z  2026-06-14 17:06:40.488 UTC [57] LOG:  database system was shut down at 2026-06-14 17:06:40 UTC
+2026-06-14T17:07:44.2246650Z  2026-06-14 17:06:40.492 UTC [1] LOG:  database system is ready to accept connections
+2026-06-14T17:07:44.2247132Z  2026-06-14 17:06:44.088 UTC [67] FATAL:  database "genetic_contour" does not exist
+2026-06-14T17:07:44.2247588Z  2026-06-14 17:06:49.132 UTC [74] FATAL:  database "genetic_contour" does not exist
+2026-06-14T17:07:44.2248021Z  2026-06-14 17:06:54.180 UTC [81] FATAL:  database "genetic_contour" does not exist
+2026-06-14T17:07:44.2248820Z  2026-06-14 17:06:59.224 UTC [88] FATAL:  database "genetic_contour" does not exist
+2026-06-14T17:07:44.2249262Z  2026-06-14 17:07:04.272 UTC [95] FATAL:  database "genetic_contour" does not exist
+2026-06-14T17:07:44.2249720Z  2026-06-14 17:07:09.315 UTC [102] FATAL:  database "genetic_contour" does not exist
+2026-06-14T17:07:44.2250184Z  2026-06-14 17:07:14.360 UTC [110] FATAL:  database "genetic_contour" does not exist
+2026-06-14T17:07:44.2250622Z  2026-06-14 17:07:19.405 UTC [117] FATAL:  database "genetic_contour" does not exist
+2026-06-14T17:07:44.2251068Z  2026-06-14 17:07:24.449 UTC [124] FATAL:  database "genetic_contour" does not exist
+2026-06-14T17:07:44.2251498Z  2026-06-14 17:07:29.493 UTC [137] FATAL:  database "genetic_contour" does not exist
+2026-06-14T17:07:44.2251928Z  2026-06-14 17:07:34.537 UTC [201] FATAL:  database "genetic_contour" does not exist
+2026-06-14T17:07:44.2252367Z  2026-06-14 17:07:39.583 UTC [258] FATAL:  database "genetic_contour" does not exist
+2026-06-14T17:07:44.2252782Z  This user must also own the server process.
+2026-06-14T17:07:44.2253065Z  
+2026-06-14T17:07:44.2253365Z  The database cluster will be initialized with locale "en_US.utf8".
+2026-06-14T17:07:44.2253819Z  The default database encoding has accordingly been set to "UTF8".
+2026-06-14T17:07:44.2254254Z  The default text search configuration will be set to "english".
+2026-06-14T17:07:44.2254748Z  
+2026-06-14T17:07:44.2254981Z  Data page checksums are disabled.
+2026-06-14T17:07:44.2255240Z  
+2026-06-14T17:07:44.2255548Z  fixing permissions on existing directory /var/lib/postgresql/data ... ok
+2026-06-14T17:07:44.2255962Z  creating subdirectories ... ok
+2026-06-14T17:07:44.2256298Z  selecting dynamic shared memory implementation ... posix
+2026-06-14T17:07:44.2256656Z  selecting default max_connections ... 100
+2026-06-14T17:07:44.2256963Z  selecting default shared_buffers ... 128MB
+2026-06-14T17:07:44.2257287Z  selecting default time zone ... UTC
+2026-06-14T17:07:44.2257567Z  creating configuration files ... ok
+2026-06-14T17:07:44.2257852Z  running bootstrap script ... ok
+2026-06-14T17:07:44.2258423Z  performing post-bootstrap initialization ... ok
+2026-06-14T17:07:44.2258760Z  syncing data to disk ... ok
+2026-06-14T17:07:44.2259003Z  
+2026-06-14T17:07:44.2259189Z  
+2026-06-14T17:07:44.2259436Z  Success. You can now start the database server using:
+2026-06-14T17:07:44.2259785Z  
+2026-06-14T17:07:44.2260030Z      pg_ctl -D /var/lib/postgresql/data -l logfile start
+2026-06-14T17:07:44.2260330Z  
+2026-06-14T17:07:44.2260885Z  waiting for server to start....2026-06-14 17:06:40.215 UTC [41] LOG:  starting PostgreSQL 16.14 on x86_64-pc-linux-musl, compiled by gcc (Alpine 15.2.0) 15.2.0, 64-bit
+2026-06-14T17:07:44.2261682Z  2026-06-14 17:06:40.215 UTC [41] LOG:  listening on Unix socket "/var/run/postgresql/.s.PGSQL.5432"
+2026-06-14T17:07:44.2262230Z  2026-06-14 17:06:40.218 UTC [44] LOG:  database system was shut down at 2026-06-14 17:06:40 UTC
+2026-06-14T17:07:44.2262731Z  2026-06-14 17:06:40.223 UTC [41] LOG:  database system is ready to accept connections
+2026-06-14T17:07:44.2263125Z   done
+2026-06-14T17:07:44.2263324Z  server started
+2026-06-14T17:07:44.2263542Z  CREATE DATABASE
+2026-06-14T17:07:44.2263750Z  
+2026-06-14T17:07:44.2263947Z  
+2026-06-14T17:07:44.2264288Z  /usr/local/bin/docker-entrypoint.sh: ignoring /docker-entrypoint-initdb.d/*
+2026-06-14T17:07:44.2265015Z  
+2026-06-14T17:07:44.2265566Z  waiting for server to shut down....2026-06-14 17:06:40.362 UTC [41] LOG:  received fast shutdown request
+2026-06-14T17:07:44.2266402Z  2026-06-14 17:06:40.363 UTC [41] LOG:  aborting any active transactions
+2026-06-14T17:07:44.2267323Z  2026-06-14 17:06:40.367 UTC [41] LOG:  background worker "logical replication launcher" (PID 47) exited with exit code 1
+2026-06-14T17:07:44.2268160Z  2026-06-14 17:06:40.368 UTC [42] LOG:  shutting down
+2026-06-14T17:07:44.2268794Z  2026-06-14 17:06:40.368 UTC [42] LOG:  checkpoint starting: shutdown immediate
+2026-06-14T17:07:44.2270501Z  2026-06-14 17:06:40.384 UTC [42] LOG:  checkpoint complete: wrote 926 buffers (5.7%); 0 WAL file(s) added, 0 removed, 0 recycled; write=0.014 s, sync=0.002 s, total=0.017 s; sync files=301, longest=0.001 s, average=0.001 s; distance=4272 kB, estimate=4272 kB; lsn=0/191E940, redo lsn=0/191E940
+2026-06-14T17:07:44.2272396Z  2026-06-14 17:06:40.392 UTC [41] LOG:  database system is shut down
+2026-06-14T17:07:44.2272893Z   done
+2026-06-14T17:07:44.2273173Z  server stopped
+2026-06-14T17:07:44.2273501Z  
+2026-06-14T17:07:44.2273862Z  PostgreSQL init process complete; ready for start up.
+2026-06-14T17:07:44.2274339Z  
+2026-06-14T17:07:44.2286014Z Stop and remove container: 08fe77746dfc45d195460c181f23192c_postgres16alpine_f5daa1
+2026-06-14T17:07:44.2291066Z ##[command]/usr/bin/docker rm --force b6dd7c728ae0449203f2486008ed02668fd04ef2ff1d767299b33820516a6551
+2026-06-14T17:07:45.4105461Z b6dd7c728ae0449203f2486008ed02668fd04ef2ff1d767299b33820516a6551
+2026-06-14T17:07:45.4136735Z Remove container network: github_network_825641a0b40148f89aa3732b796337d1
+2026-06-14T17:07:45.4141175Z ##[command]/usr/bin/docker network rm github_network_825641a0b40148f89aa3732b796337d1
+2026-06-14T17:07:45.5261781Z github_network_825641a0b40148f89aa3732b796337d1
+2026-06-14T17:07:45.5339460Z Cleaning up orphan processes
+2026-06-14T17:07:45.5642101Z ##[warning]Node.js 20 actions are deprecated. The following actions are running on Node.js 20 and may not work as expected: actions/checkout@v4, actions/setup-python@v5, actions/upload-artifact@v4. Actions will be forced to run with Node.js 24 by default starting June 16th, 2026. Node.js 20 will be removed from the runner on September 16th, 2026. Please check if updated versions of these actions are available that support Node.js 24. To opt into Node.js 24 now, set the FORCE_JAVASCRIPT_ACTIONS_TO_NODE24=true environment variable on the runner or in your workflow file. Once Node.js 24 becomes the default, you can temporarily opt out by setting ACTIONS_ALLOW_USE_UNSECURE_NODE_VERSION=true. For more information see: https://github.blog/changelog/2025-09-19-deprecation-of-node-20-on-github-actions-runners/

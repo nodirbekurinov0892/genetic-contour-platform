@@ -1,0 +1,17 @@
+﻿2026-06-14T16:50:28.5497193Z ##[group]Run actions/setup-python@v5
+2026-06-14T16:50:28.5497497Z with:
+2026-06-14T16:50:28.5497702Z   python-version: 3.12
+2026-06-14T16:50:28.5497934Z   cache: pip
+2026-06-14T16:50:28.5498187Z   cache-dependency-path: apps/api/requirements*.txt
+2026-06-14T16:50:28.5498509Z   check-latest: false
+2026-06-14T16:50:28.5501954Z   token: ***
+2026-06-14T16:50:28.5502179Z   update-environment: true
+2026-06-14T16:50:28.5502449Z   allow-prereleases: false
+2026-06-14T16:50:28.5502680Z   freethreaded: false
+2026-06-14T16:50:28.5502906Z ##[endgroup]
+2026-06-14T16:50:28.7191687Z ##[group]Installed versions
+2026-06-14T16:50:28.7279195Z Successfully set up CPython (3.12.13)
+2026-06-14T16:50:28.7280077Z ##[endgroup]
+2026-06-14T16:50:28.7608379Z [command]/opt/hostedtoolcache/Python/3.12.13/x64/bin/pip cache dir
+2026-06-14T16:50:29.0475880Z /home/runner/.cache/pip
+2026-06-14T16:50:29.2912334Z pip cache is not found

@@ -1,0 +1,31 @@
+﻿2026-06-14T17:07:43.2602339Z ##[group]Run actions/upload-artifact@v4
+2026-06-14T17:07:43.2602647Z with:
+2026-06-14T17:07:43.2602853Z   name: pytest-results
+2026-06-14T17:07:43.2603125Z   path: apps/api/junit.xml
+apps/api/pytest.log
+
+2026-06-14T17:07:43.2603440Z   if-no-files-found: ignore
+2026-06-14T17:07:43.2603688Z   compression-level: 6
+2026-06-14T17:07:43.2603914Z   overwrite: false
+2026-06-14T17:07:43.2604144Z   include-hidden-files: false
+2026-06-14T17:07:43.2604388Z env:
+2026-06-14T17:07:43.2604913Z   pythonLocation: /opt/hostedtoolcache/Python/3.12.13/x64
+2026-06-14T17:07:43.2605390Z   PKG_CONFIG_PATH: /opt/hostedtoolcache/Python/3.12.13/x64/lib/pkgconfig
+2026-06-14T17:07:43.2605820Z   Python_ROOT_DIR: /opt/hostedtoolcache/Python/3.12.13/x64
+2026-06-14T17:07:43.2606192Z   Python2_ROOT_DIR: /opt/hostedtoolcache/Python/3.12.13/x64
+2026-06-14T17:07:43.2606555Z   Python3_ROOT_DIR: /opt/hostedtoolcache/Python/3.12.13/x64
+2026-06-14T17:07:43.2606933Z   LD_LIBRARY_PATH: /opt/hostedtoolcache/Python/3.12.13/x64/lib
+2026-06-14T17:07:43.2607302Z ##[endgroup]
+2026-06-14T17:07:43.4972008Z Multiple search paths detected. Calculating the least common ancestor of all paths
+2026-06-14T17:07:43.4975811Z The least common ancestor is /home/runner/work/genetic-contour-platform/genetic-contour-platform/apps/api. This will be the root directory of the artifact
+2026-06-14T17:07:43.4976873Z With the provided path, there will be 2 files uploaded
+2026-06-14T17:07:43.4982122Z Artifact name is valid!
+2026-06-14T17:07:43.4983660Z Root directory input is valid!
+2026-06-14T17:07:43.7261453Z Beginning upload of artifact content to blob storage
+2026-06-14T17:07:43.7973968Z Uploaded bytes 8315
+2026-06-14T17:07:43.8149327Z Finished uploading artifact content to blob storage!
+2026-06-14T17:07:43.8152260Z SHA256 digest of uploaded artifact zip is acdcec22ba7627e8f3e173392d0439f5c3292e85fbc7f23d48dcf1b1ae50df0b
+2026-06-14T17:07:43.8154509Z Finalizing artifact upload
+2026-06-14T17:07:43.9708954Z Artifact pytest-results.zip successfully finalized. Artifact ID 7623209226
+2026-06-14T17:07:43.9710071Z Artifact pytest-results has been successfully uploaded! Final size is 8315 bytes. Artifact ID is 7623209226
+2026-06-14T17:07:43.9717461Z Artifact download URL: https://github.com/nodirbekurinov0892/genetic-contour-platform/actions/runs/27506016336/artifacts/7623209226

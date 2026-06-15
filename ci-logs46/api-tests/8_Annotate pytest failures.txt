@@ -1,0 +1,34 @@
+﻿2026-06-14T17:07:43.2116041Z ##[group]Run python <<'PY'
+2026-06-14T17:07:43.2116379Z [36;1mpython <<'PY'[0m
+2026-06-14T17:07:43.2116623Z [36;1mimport pathlib[0m
+2026-06-14T17:07:43.2116888Z [36;1mimport xml.etree.ElementTree as ET[0m
+2026-06-14T17:07:43.2117170Z [36;1m[0m
+2026-06-14T17:07:43.2117382Z [36;1mjunit = pathlib.Path("junit.xml")[0m
+2026-06-14T17:07:43.2117671Z [36;1mlog = pathlib.Path("pytest.log")[0m
+2026-06-14T17:07:43.2117953Z [36;1mif junit.exists():[0m
+2026-06-14T17:07:43.2118227Z [36;1m    root = ET.parse(junit).getroot()[0m
+2026-06-14T17:07:43.2118533Z [36;1m    for case in root.iter("testcase"):[0m
+2026-06-14T17:07:43.2118891Z [36;1m        name = f"{case.get('classname')}::{case.get('name')}"[0m
+2026-06-14T17:07:43.2119242Z [36;1m        for child in case:[0m
+2026-06-14T17:07:43.2119558Z [36;1m            if child.tag in ("failure", "error"):[0m
+2026-06-14T17:07:43.2120013Z [36;1m                msg = (child.get("message") or child.text or "failed").replace("\n", " ")[:300][0m
+2026-06-14T17:07:43.2120495Z [36;1m                print(f"::error::{name} — {msg}")[0m
+2026-06-14T17:07:43.2120802Z [36;1melif log.exists():[0m
+2026-06-14T17:07:43.2121185Z [36;1m    for line in log.read_text(encoding="utf-8", errors="replace").splitlines():[0m
+2026-06-14T17:07:43.2121705Z [36;1m        if line.startswith("FAILED ") or line.startswith("ERROR "):[0m
+2026-06-14T17:07:43.2122083Z [36;1m            print(f"::error::{line}")[0m
+2026-06-14T17:07:43.2122364Z [36;1mPY[0m
+2026-06-14T17:07:43.2158772Z shell: /usr/bin/bash -e {0}
+2026-06-14T17:07:43.2159033Z env:
+2026-06-14T17:07:43.2159311Z   pythonLocation: /opt/hostedtoolcache/Python/3.12.13/x64
+2026-06-14T17:07:43.2159758Z   PKG_CONFIG_PATH: /opt/hostedtoolcache/Python/3.12.13/x64/lib/pkgconfig
+2026-06-14T17:07:43.2160179Z   Python_ROOT_DIR: /opt/hostedtoolcache/Python/3.12.13/x64
+2026-06-14T17:07:43.2160777Z   Python2_ROOT_DIR: /opt/hostedtoolcache/Python/3.12.13/x64
+2026-06-14T17:07:43.2161160Z   Python3_ROOT_DIR: /opt/hostedtoolcache/Python/3.12.13/x64
+2026-06-14T17:07:43.2161542Z   LD_LIBRARY_PATH: /opt/hostedtoolcache/Python/3.12.13/x64/lib
+2026-06-14T17:07:43.2161860Z ##[endgroup]
+2026-06-14T17:07:43.2513453Z ##[error]tests.test_queue_enqueue::test_enqueue_stores_celery_task_id — TypeError: object NoneType can't be used in 'await' expression
+2026-06-14T17:07:43.2520409Z ##[error]tests.test_status_transitions::test_cancel_requested_before_start_marks_cancelled — failed on teardown with "RuntimeError: Task <Task pending name='Task-1221' coro=<_wrap_asyncgen_fixture.<locals>._asyncgen_fixture_wrapper.<locals>.finalizer.<locals>.async_finalizer() running at /opt/hostedtoolcache/Python/3.12.13/x64/lib/python3.12/site-packages/pytest_asyncio/plugin.py:338> cb=[_
+2026-06-14T17:07:43.2528283Z ##[error]tests.test_status_transitions::test_worker_completes_after_execute_job — failed on teardown with "RuntimeError: Task <Task pending name='Task-1231' coro=<_wrap_asyncgen_fixture.<locals>._asyncgen_fixture_wrapper.<locals>.finalizer.<locals>.async_finalizer() running at /opt/hostedtoolcache/Python/3.12.13/x64/lib/python3.12/site-packages/pytest_asyncio/plugin.py:338> cb=[_
+2026-06-14T17:07:43.2535990Z ##[error]tests.test_upload_storage::test_upload_returns_storage_key_and_readable_file — AssertionError: assert False  +  where False = <built-in method startswith of str object at 0x7f85f2741730>('http://testserver/static/uploads/')  +    where <built-in method startswith of str object at 0x7f85f2741730> = 'http://localhost:8000/static/uploads/20cc413349c04b4d859768a2ae6ba58b.png'.star
+2026-06-14T17:07:43.2543101Z ##[error]tests.test_worker_idempotency::test_duplicate_tasks_only_one_claims_running — failed on teardown with "RuntimeError: Task <Task pending name='Task-1339' coro=<_wrap_asyncgen_fixture.<locals>._asyncgen_fixture_wrapper.<locals>.finalizer.<locals>.async_finalizer() running at /opt/hostedtoolcache/Python/3.12.13/x64/lib/python3.12/site-packages/pytest_asyncio/plugin.py:338> cb=[_

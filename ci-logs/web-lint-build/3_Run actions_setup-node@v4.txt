@@ -1,0 +1,17 @@
+﻿2026-06-14T16:50:10.2898943Z ##[group]Run actions/setup-node@v4
+2026-06-14T16:50:10.2899629Z with:
+2026-06-14T16:50:10.2900081Z   node-version: 20
+2026-06-14T16:50:10.2900570Z   always-auth: false
+2026-06-14T16:50:10.2901054Z   check-latest: false
+2026-06-14T16:50:10.2906319Z   token: ***
+2026-06-14T16:50:10.2907032Z ##[endgroup]
+2026-06-14T16:50:10.5103767Z Attempting to download 20...
+2026-06-14T16:50:11.0351582Z Acquiring 20.20.2 - x64 from https://github.com/actions/node-versions/releases/download/20.20.2-23521894959/node-20.20.2-linux-x64.tar.gz
+2026-06-14T16:50:11.4788304Z Extracting ...
+2026-06-14T16:50:11.4895994Z [command]/usr/bin/tar xz --strip 1 --warning=no-unknown-keyword --overwrite -C /home/runner/work/_temp/6dbd9585-f4f1-4ab1-b03f-d90367216e9e -f /home/runner/work/_temp/158819fe-e3a3-4981-9b4b-77b1b26f98cd
+2026-06-14T16:50:12.4751773Z Adding to the cache ...
+2026-06-14T16:50:14.3098911Z ##[group]Environment details
+2026-06-14T16:50:14.6536300Z node: v20.20.2
+2026-06-14T16:50:14.6537393Z npm: 10.8.2
+2026-06-14T16:50:14.6538621Z yarn: 1.22.22
+2026-06-14T16:50:14.6564665Z ##[endgroup]

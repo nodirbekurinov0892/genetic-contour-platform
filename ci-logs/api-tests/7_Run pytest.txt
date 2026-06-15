@@ -1,0 +1,216 @@
+﻿2026-06-14T16:51:10.0911020Z ##[group]Run set -o pipefail
+2026-06-14T16:51:10.0911394Z [36;1mset -o pipefail[0m
+2026-06-14T16:51:10.0911911Z [36;1mpython -c "from importlib.metadata import version; print('pytest-timeout', version('pytest-timeout'))"[0m
+2026-06-14T16:51:10.0912771Z [36;1mpytest -vv --tb=short --junitxml=junit.xml --durations=15 2>&1 | tee pytest.log[0m
+2026-06-14T16:51:10.0913216Z [36;1mpytest_exit=${PIPESTATUS[0]}[0m
+2026-06-14T16:51:10.0913563Z [36;1mecho "## Pytest output (tail)" >> "$GITHUB_STEP_SUMMARY"[0m
+2026-06-14T16:51:10.0913952Z [36;1mtail -80 pytest.log >> "$GITHUB_STEP_SUMMARY"[0m
+2026-06-14T16:51:10.0914274Z [36;1mecho "" >> "$GITHUB_STEP_SUMMARY"[0m
+2026-06-14T16:51:10.0914627Z [36;1mecho "## Failed / errored tests" >> "$GITHUB_STEP_SUMMARY"[0m
+2026-06-14T16:51:10.0915134Z [36;1mgrep -E "^(FAILED|ERROR|=+ FAILURES|=+ ERRORS)" pytest.log >> "$GITHUB_STEP_SUMMARY" || true[0m
+2026-06-14T16:51:10.0915759Z [36;1mgrep -E "^tests/.*::" pytest.log | grep -E "FAILED|ERROR|Timeout" >> "$GITHUB_STEP_SUMMARY" || true[0m
+2026-06-14T16:51:10.0916266Z [36;1mpython <<'PY' || true[0m
+2026-06-14T16:51:10.0916517Z [36;1mimport os[0m
+2026-06-14T16:51:10.0916748Z [36;1mimport pathlib[0m
+2026-06-14T16:51:10.0917015Z [36;1mimport xml.etree.ElementTree as ET[0m
+2026-06-14T16:51:10.0917293Z [36;1m[0m
+2026-06-14T16:51:10.0917484Z [36;1mtry:[0m
+2026-06-14T16:51:10.0917720Z [36;1m    junit = pathlib.Path("junit.xml")[0m
+2026-06-14T16:51:10.0918034Z [36;1m    log = pathlib.Path("pytest.log")[0m
+2026-06-14T16:51:10.0918371Z [36;1m    summary = os.environ.get("GITHUB_STEP_SUMMARY")[0m
+2026-06-14T16:51:10.0918714Z [36;1m    if summary and junit.exists():[0m
+2026-06-14T16:51:10.0919017Z [36;1m        root = ET.parse(junit).getroot()[0m
+2026-06-14T16:51:10.0919324Z [36;1m        failures: list[str] = [][0m
+2026-06-14T16:51:10.0919918Z [36;1m        for case in root.iter("testcase"):[0m
+2026-06-14T16:51:10.0920287Z [36;1m            name = f"{case.get('classname')}::{case.get('name')}"[0m
+2026-06-14T16:51:10.0920643Z [36;1m            for child in case:[0m
+2026-06-14T16:51:10.0920949Z [36;1m                if child.tag in ("failure", "error"):[0m
+2026-06-14T16:51:10.0921403Z [36;1m                    msg = (child.get("message") or child.text or "failed").replace("\n", " ")[:300][0m
+2026-06-14T16:51:10.0921857Z [36;1m                    failures.append(f"{name} — {msg}")[0m
+2026-06-14T16:51:10.0922661Z [36;1m        if failures:[0m
+2026-06-14T16:51:10.0922967Z [36;1m            with open(summary, "a", encoding="utf-8") as fh:[0m
+2026-06-14T16:51:10.0923325Z [36;1m                fh.write("\n## JUnit failures\n")[0m
+2026-06-14T16:51:10.0923638Z [36;1m                for item in failures:[0m
+2026-06-14T16:51:10.0923944Z [36;1m                    fh.write(f"- {item}\n")[0m
+2026-06-14T16:51:10.0924239Z [36;1m    elif summary and log.exists():[0m
+2026-06-14T16:51:10.0924855Z [36;1m        failed = [line for line in log.read_text(encoding="utf-8", errors="replace").splitlines() if line.startswith(("FAILED ", "ERROR "))][0m
+2026-06-14T16:51:10.0925471Z [36;1m        if failed:[0m
+2026-06-14T16:51:10.0925778Z [36;1m            with open(summary, "a", encoding="utf-8") as fh:[0m
+2026-06-14T16:51:10.0926145Z [36;1m                fh.write("\n## Pytest failures\n")[0m
+2026-06-14T16:51:10.0926460Z [36;1m                for line in failed:[0m
+2026-06-14T16:51:10.0926753Z [36;1m                    fh.write(f"- {line}\n")[0m
+2026-06-14T16:51:10.0927046Z [36;1mexcept Exception as exc:[0m
+2026-06-14T16:51:10.0927398Z [36;1m    print(f"::warning::Failed to summarize junit output: {exc}")[0m
+2026-06-14T16:51:10.0927750Z [36;1mPY[0m
+2026-06-14T16:51:10.0927969Z [36;1mif [ "$pytest_exit" -ne 0 ]; then[0m
+2026-06-14T16:51:10.0928375Z [36;1m  grep -E "^FAILED |^ERROR " pytest.log | head -25 | while IFS= read -r line; do[0m
+2026-06-14T16:51:10.0928776Z [36;1m    echo "::error::$line"[0m
+2026-06-14T16:51:10.0929025Z [36;1m  done || true[0m
+2026-06-14T16:51:10.0929242Z [36;1mfi[0m
+2026-06-14T16:51:10.0929820Z [36;1mexit $pytest_exit[0m
+2026-06-14T16:51:10.0963675Z shell: /usr/bin/bash -e {0}
+2026-06-14T16:51:10.0963938Z env:
+2026-06-14T16:51:10.0964363Z   pythonLocation: /opt/hostedtoolcache/Python/3.12.13/x64
+2026-06-14T16:51:10.0964802Z   PKG_CONFIG_PATH: /opt/hostedtoolcache/Python/3.12.13/x64/lib/pkgconfig
+2026-06-14T16:51:10.0965226Z   Python_ROOT_DIR: /opt/hostedtoolcache/Python/3.12.13/x64
+2026-06-14T16:51:10.0965595Z   Python2_ROOT_DIR: /opt/hostedtoolcache/Python/3.12.13/x64
+2026-06-14T16:51:10.0965970Z   Python3_ROOT_DIR: /opt/hostedtoolcache/Python/3.12.13/x64
+2026-06-14T16:51:10.0966336Z   LD_LIBRARY_PATH: /opt/hostedtoolcache/Python/3.12.13/x64/lib
+2026-06-14T16:51:10.0967124Z   DATABASE_URL: ***localhost:5432/genetic_contour_test
+2026-06-14T16:51:10.0967490Z   SECRET_KEY: test-secret-key-for-ci-only-32chars
+2026-06-14T16:51:10.0967832Z   JWT_SECRET: test-jwt-secret-for-ci-only-32chars
+2026-06-14T16:51:10.0968123Z   API_DEBUG: true
+2026-06-14T16:51:10.0968324Z   TESTING: true
+2026-06-14T16:51:10.0968542Z   STORAGE_BACKEND: local
+2026-06-14T16:51:10.0968805Z   TRUSTED_HOSTS: testserver,localhost,127.0.0.1
+2026-06-14T16:51:10.0969162Z   REDIS_URL: redis://localhost:6379/0
+2026-06-14T16:51:10.0970204Z   EXPERIMENT_QUEUE_BACKEND: asyncio
+2026-06-14T16:51:10.0970476Z   MPLBACKEND: Agg
+2026-06-14T16:51:10.0970692Z ##[endgroup]
+2026-06-14T16:51:10.1646985Z pytest-timeout 2.3.1
+2026-06-14T16:51:13.3418931Z ============================= test session starts ==============================
+2026-06-14T16:51:13.3420257Z platform linux -- Python 3.12.13, pytest-8.3.4, pluggy-1.6.0 -- /opt/hostedtoolcache/Python/3.12.13/x64/bin/python
+2026-06-14T16:51:13.3421115Z cachedir: .pytest_cache
+2026-06-14T16:51:13.3421758Z rootdir: /home/runner/work/genetic-contour-platform/genetic-contour-platform/apps/api
+2026-06-14T16:51:13.3422490Z configfile: pytest.ini
+2026-06-14T16:51:13.3422847Z testpaths: tests
+2026-06-14T16:51:13.3423261Z plugins: timeout-2.3.1, anyio-4.13.0, asyncio-0.25.0
+2026-06-14T16:51:13.3423792Z timeout: 120.0s
+2026-06-14T16:51:13.3424134Z timeout method: thread
+2026-06-14T16:51:13.3424496Z timeout func_only: False
+2026-06-14T16:51:13.3425034Z asyncio: mode=Mode.AUTO, asyncio_default_fixture_loop_scope=session
+2026-06-14T16:51:13.5170645Z collecting ... collected 71 items
+2026-06-14T16:51:13.5171085Z 
+2026-06-14T16:51:14.4112925Z tests/test_auth.py::test_register FAILED                                 [  1%]
+2026-06-14T16:51:15.0801617Z tests/test_auth.py::test_login FAILED                                    [  2%]
+2026-06-14T16:51:15.6153820Z tests/test_auth.py::test_me FAILED                                       [  4%]
+2026-06-14T16:51:15.6468245Z tests/test_config_redis.py::test_redis_url_required_when_celery_backend PASSED [  5%]
+2026-06-14T16:51:15.6782214Z tests/test_config_redis.py::test_redis_url_required_in_production_with_celery PASSED [  7%]
+2026-06-14T16:51:15.7098155Z tests/test_config_redis.py::test_invalid_redis_url_scheme_rejected PASSED [  8%]
+2026-06-14T16:51:15.7403069Z tests/test_config_redis.py::test_asyncio_backend_allows_empty_redis_url PASSED [  9%]
+2026-06-14T16:51:15.7711396Z tests/test_config_redis.py::test_eager_mode_allows_empty_redis_url PASSED [ 11%]
+2026-06-14T16:51:15.8017448Z tests/test_config_validation.py::test_redis_url_required_when_celery_backend PASSED [ 12%]
+2026-06-14T16:51:15.8350252Z tests/test_config_validation.py::test_redis_url_must_use_redis_scheme PASSED [ 14%]
+2026-06-14T16:51:15.8693752Z tests/test_config_validation.py::test_asyncio_backend_allows_empty_redis_in_production PASSED [ 15%]
+2026-06-14T16:51:15.9023360Z tests/test_config_validation.py::test_eager_mode_allows_empty_redis_url PASSED [ 16%]
+2026-06-14T16:51:15.9366026Z tests/test_fair_comparison.py::test_fair_v1_uses_gradient_for_classical PASSED [ 18%]
+2026-06-14T16:51:15.9721735Z tests/test_fair_comparison.py::test_legacy_uses_blurred_for_classical PASSED [ 19%]
+2026-06-14T16:51:16.0050793Z tests/test_gt_validation.py::test_valid_gt_mask PASSED                   [ 21%]
+2026-06-14T16:51:16.0374547Z tests/test_gt_validation.py::test_invalid_gt_empty PASSED                [ 22%]
+2026-06-14T16:51:16.0699811Z tests/test_gt_validation.py::test_gt_size_warning PASSED                 [ 23%]
+2026-06-14T16:51:16.1084023Z tests/test_health_ready.py::test_health_live_returns_ok PASSED           [ 25%]
+2026-06-14T16:51:16.1462142Z tests/test_health_ready.py::test_health_ready_all_checks_ok PASSED       [ 26%]
+2026-06-14T16:51:16.1815730Z tests/test_health_ready.py::test_health_ready_returns_503_when_degraded PASSED [ 28%]
+2026-06-14T16:53:16.1977933Z tests/test_job_recovery.py::test_reset_stale_running_jobs_marks_queued +++++++++++++++++++++++++++++++++++ Timeout ++++++++++++++++++++++++++++++++++++
+2026-06-14T16:53:16.1979046Z ~~~~~~~~~~~~~~~~~~~~~ Stack of asyncio_0 (139757708629696) ~~~~~~~~~~~~~~~~~~~~~
+2026-06-14T16:53:16.1986623Z   File "/opt/hostedtoolcache/Python/3.12.13/x64/lib/python3.12/threading.py", line 1032, in _bootstrap
+2026-06-14T16:53:16.1987217Z     self._bootstrap_inner()
+2026-06-14T16:53:16.1987803Z   File "/opt/hostedtoolcache/Python/3.12.13/x64/lib/python3.12/threading.py", line 1075, in _bootstrap_inner
+2026-06-14T16:53:16.1988312Z     self.run()
+2026-06-14T16:53:16.1988713Z   File "/opt/hostedtoolcache/Python/3.12.13/x64/lib/python3.12/threading.py", line 1012, in run
+2026-06-14T16:53:16.1989164Z     self._target(*self._args, **self._kwargs)
+2026-06-14T16:53:16.1989983Z   File "/opt/hostedtoolcache/Python/3.12.13/x64/lib/python3.12/concurrent/futures/thread.py", line 90, in _worker
+2026-06-14T16:53:16.1990511Z     work_item = work_queue.get(block=True)
+2026-06-14T16:53:16.1990869Z ~~~~~~~~~~~~~~~~~~~~ Stack of MainThread (139758572407680) ~~~~~~~~~~~~~~~~~~~~~
+2026-06-14T16:53:16.1991378Z   File "/opt/hostedtoolcache/Python/3.12.13/x64/bin/pytest", line 6, in <module>
+2026-06-14T16:53:16.1991773Z     sys.exit(console_main())
+2026-06-14T16:53:16.1992338Z   File "/opt/hostedtoolcache/Python/3.12.13/x64/lib/python3.12/site-packages/_pytest/config/__init__.py", line 201, in console_main
+2026-06-14T16:53:16.1992896Z     code = main()
+2026-06-14T16:53:16.1993393Z   File "/opt/hostedtoolcache/Python/3.12.13/x64/lib/python3.12/site-packages/_pytest/config/__init__.py", line 175, in main
+2026-06-14T16:53:16.1994044Z     ret: ExitCode | int = config.hook.pytest_cmdline_main(config=config)
+2026-06-14T16:53:16.1994671Z   File "/opt/hostedtoolcache/Python/3.12.13/x64/lib/python3.12/site-packages/pluggy/_hooks.py", line 512, in __call__
+2026-06-14T16:53:16.1995325Z     return self._hookexec(self.name, self._hookimpls.copy(), kwargs, firstresult)
+2026-06-14T16:53:16.1995989Z   File "/opt/hostedtoolcache/Python/3.12.13/x64/lib/python3.12/site-packages/pluggy/_manager.py", line 120, in _hookexec
+2026-06-14T16:53:16.1996620Z     return self._inner_hookexec(hook_name, methods, kwargs, firstresult)
+2026-06-14T16:53:16.1997226Z   File "/opt/hostedtoolcache/Python/3.12.13/x64/lib/python3.12/site-packages/pluggy/_callers.py", line 121, in _multicall
+2026-06-14T16:53:16.1997737Z     res = hook_impl.function(*args)
+2026-06-14T16:53:16.1998295Z   File "/opt/hostedtoolcache/Python/3.12.13/x64/lib/python3.12/site-packages/_pytest/main.py", line 330, in pytest_cmdline_main
+2026-06-14T16:53:16.1998842Z     return wrap_session(config, _main)
+2026-06-14T16:53:16.1999363Z   File "/opt/hostedtoolcache/Python/3.12.13/x64/lib/python3.12/site-packages/_pytest/main.py", line 283, in wrap_session
+2026-06-14T16:53:16.2000110Z     session.exitstatus = doit(config, session) or 0
+2026-06-14T16:53:16.2000659Z   File "/opt/hostedtoolcache/Python/3.12.13/x64/lib/python3.12/site-packages/_pytest/main.py", line 337, in _main
+2026-06-14T16:53:16.2001186Z     config.hook.pytest_runtestloop(session=session)
+2026-06-14T16:53:16.2001719Z   File "/opt/hostedtoolcache/Python/3.12.13/x64/lib/python3.12/site-packages/pluggy/_hooks.py", line 512, in __call__
+2026-06-14T16:53:16.2002330Z     return self._hookexec(self.name, self._hookimpls.copy(), kwargs, firstresult)
+2026-06-14T16:53:16.2002956Z   File "/opt/hostedtoolcache/Python/3.12.13/x64/lib/python3.12/site-packages/pluggy/_manager.py", line 120, in _hookexec
+2026-06-14T16:53:16.2003827Z     return self._inner_hookexec(hook_name, methods, kwargs, firstresult)
+2026-06-14T16:53:16.2004582Z   File "/opt/hostedtoolcache/Python/3.12.13/x64/lib/python3.12/site-packages/pluggy/_callers.py", line 121, in _multicall
+2026-06-14T16:53:16.2005091Z     res = hook_impl.function(*args)
+2026-06-14T16:53:16.2005639Z   File "/opt/hostedtoolcache/Python/3.12.13/x64/lib/python3.12/site-packages/_pytest/main.py", line 362, in pytest_runtestloop
+2026-06-14T16:53:16.2006270Z     item.config.hook.pytest_runtest_protocol(item=item, nextitem=nextitem)
+2026-06-14T16:53:16.2006876Z   File "/opt/hostedtoolcache/Python/3.12.13/x64/lib/python3.12/site-packages/pluggy/_hooks.py", line 512, in __call__
+2026-06-14T16:53:16.2007477Z     return self._hookexec(self.name, self._hookimpls.copy(), kwargs, firstresult)
+2026-06-14T16:53:16.2008090Z   File "/opt/hostedtoolcache/Python/3.12.13/x64/lib/python3.12/site-packages/pluggy/_manager.py", line 120, in _hookexec
+2026-06-14T16:53:16.2008681Z     return self._inner_hookexec(hook_name, methods, kwargs, firstresult)
+2026-06-14T16:53:16.2009291Z   File "/opt/hostedtoolcache/Python/3.12.13/x64/lib/python3.12/site-packages/pluggy/_callers.py", line 121, in _multicall
+2026-06-14T16:53:16.2010026Z     res = hook_impl.function(*args)
+2026-06-14T16:53:16.2010601Z   File "/opt/hostedtoolcache/Python/3.12.13/x64/lib/python3.12/site-packages/_pytest/runner.py", line 113, in pytest_runtest_protocol
+2026-06-14T16:53:16.2011179Z     runtestprotocol(item, nextitem=nextitem)
+2026-06-14T16:53:16.2011731Z   File "/opt/hostedtoolcache/Python/3.12.13/x64/lib/python3.12/site-packages/_pytest/runner.py", line 132, in runtestprotocol
+2026-06-14T16:53:16.2012293Z     reports.append(call_and_report(item, "call", log))
+2026-06-14T16:53:16.2012865Z   File "/opt/hostedtoolcache/Python/3.12.13/x64/lib/python3.12/site-packages/_pytest/runner.py", line 241, in call_and_report
+2026-06-14T16:53:16.2013386Z     call = CallInfo.from_call(
+2026-06-14T16:53:16.2013885Z   File "/opt/hostedtoolcache/Python/3.12.13/x64/lib/python3.12/site-packages/_pytest/runner.py", line 341, in from_call
+2026-06-14T16:53:16.2014390Z     result: TResult | None = func()
+2026-06-14T16:53:16.2014880Z   File "/opt/hostedtoolcache/Python/3.12.13/x64/lib/python3.12/site-packages/_pytest/runner.py", line 242, in <lambda>
+2026-06-14T16:53:16.2015461Z     lambda: runtest_hook(item=item, **kwds), when=when, reraise=reraise
+2026-06-14T16:53:16.2016050Z   File "/opt/hostedtoolcache/Python/3.12.13/x64/lib/python3.12/site-packages/pluggy/_hooks.py", line 512, in __call__
+2026-06-14T16:53:16.2016647Z     return self._hookexec(self.name, self._hookimpls.copy(), kwargs, firstresult)
+2026-06-14T16:53:16.2017298Z   File "/opt/hostedtoolcache/Python/3.12.13/x64/lib/python3.12/site-packages/pluggy/_manager.py", line 120, in _hookexec
+2026-06-14T16:53:16.2017879Z     return self._inner_hookexec(hook_name, methods, kwargs, firstresult)
+2026-06-14T16:53:16.2018485Z   File "/opt/hostedtoolcache/Python/3.12.13/x64/lib/python3.12/site-packages/pluggy/_callers.py", line 121, in _multicall
+2026-06-14T16:53:16.2018998Z     res = hook_impl.function(*args)
+2026-06-14T16:53:16.2019808Z   File "/opt/hostedtoolcache/Python/3.12.13/x64/lib/python3.12/site-packages/_pytest/runner.py", line 174, in pytest_runtest_call
+2026-06-14T16:53:16.2020375Z     item.runtest()
+2026-06-14T16:53:16.2020839Z   File "/opt/hostedtoolcache/Python/3.12.13/x64/lib/python3.12/site-packages/_pytest/python.py", line 1627, in runtest
+2026-06-14T16:53:16.2021397Z     self.ihook.pytest_pyfunc_call(pyfuncitem=self)
+2026-06-14T16:53:16.2021948Z   File "/opt/hostedtoolcache/Python/3.12.13/x64/lib/python3.12/site-packages/pluggy/_hooks.py", line 512, in __call__
+2026-06-14T16:53:16.2022538Z     return self._hookexec(self.name, self._hookimpls.copy(), kwargs, firstresult)
+2026-06-14T16:53:16.2023152Z   File "/opt/hostedtoolcache/Python/3.12.13/x64/lib/python3.12/site-packages/pluggy/_manager.py", line 120, in _hookexec
+2026-06-14T16:53:16.2023901Z     return self._inner_hookexec(hook_name, methods, kwargs, firstresult)
+2026-06-14T16:53:16.2024515Z   File "/opt/hostedtoolcache/Python/3.12.13/x64/lib/python3.12/site-packages/pluggy/_callers.py", line 121, in _multicall
+2026-06-14T16:53:16.2025147Z     res = hook_impl.function(*args)
+2026-06-14T16:53:16.2025694Z   File "/opt/hostedtoolcache/Python/3.12.13/x64/lib/python3.12/site-packages/_pytest/python.py", line 159, in pytest_pyfunc_call
+2026-06-14T16:53:16.2026239Z     result = testfunction(**testargs)
+2026-06-14T16:53:16.2026979Z   File "/home/runner/work/genetic-contour-platform/genetic-contour-platform/apps/api/tests/test_job_recovery.py", line 76, in test_reset_stale_running_jobs_marks_queued
+2026-06-14T16:53:16.2027762Z     experiment_id = _seed_experiment(ExperimentStatus.RUNNING.value)
+2026-06-14T16:53:16.2028497Z   File "/home/runner/work/genetic-contour-platform/genetic-contour-platform/apps/api/tests/test_job_recovery.py", line 58, in _seed_experiment
+2026-06-14T16:53:16.2029105Z     session.commit()
+2026-06-14T16:53:16.2029835Z   File "/opt/hostedtoolcache/Python/3.12.13/x64/lib/python3.12/site-packages/sqlalchemy/orm/session.py", line 2028, in commit
+2026-06-14T16:53:16.2030390Z     trans.commit(_to_root=True)
+2026-06-14T16:53:16.2030667Z   File "<string>", line 2, in commit
+2026-06-14T16:53:16.2031199Z   File "/opt/hostedtoolcache/Python/3.12.13/x64/lib/python3.12/site-packages/sqlalchemy/orm/state_changes.py", line 139, in _go
+2026-06-14T16:53:16.2031729Z     ret_value = fn(self, *arg, **kw)
+2026-06-14T16:53:16.2032237Z   File "/opt/hostedtoolcache/Python/3.12.13/x64/lib/python3.12/site-packages/sqlalchemy/orm/session.py", line 1313, in commit
+2026-06-14T16:53:16.2032793Z     self._prepare_impl()
+2026-06-14T16:53:16.2033068Z   File "<string>", line 2, in _prepare_impl
+2026-06-14T16:53:16.2033612Z   File "/opt/hostedtoolcache/Python/3.12.13/x64/lib/python3.12/site-packages/sqlalchemy/orm/state_changes.py", line 139, in _go
+2026-06-14T16:53:16.2034132Z     ret_value = fn(self, *arg, **kw)
+2026-06-14T16:53:16.2034683Z   File "/opt/hostedtoolcache/Python/3.12.13/x64/lib/python3.12/site-packages/sqlalchemy/orm/session.py", line 1288, in _prepare_impl
+2026-06-14T16:53:16.2035233Z     self.session.flush()
+2026-06-14T16:53:16.2035712Z   File "/opt/hostedtoolcache/Python/3.12.13/x64/lib/python3.12/site-packages/sqlalchemy/orm/session.py", line 4352, in flush
+2026-06-14T16:53:16.2036225Z     self._flush(objects)
+2026-06-14T16:53:16.2036698Z   File "/opt/hostedtoolcache/Python/3.12.13/x64/lib/python3.12/site-packages/sqlalchemy/orm/session.py", line 4448, in _flush
+2026-06-14T16:53:16.2037214Z     flush_context.execute()
+2026-06-14T16:53:16.2037724Z   File "/opt/hostedtoolcache/Python/3.12.13/x64/lib/python3.12/site-packages/sqlalchemy/orm/unitofwork.py", line 466, in execute
+2026-06-14T16:53:16.2038253Z     rec.execute(self)
+2026-06-14T16:53:16.2038738Z   File "/opt/hostedtoolcache/Python/3.12.13/x64/lib/python3.12/site-packages/sqlalchemy/orm/unitofwork.py", line 642, in execute
+2026-06-14T16:53:16.2039299Z     util.preloaded.orm_persistence.save_obj(
+2026-06-14T16:53:16.2040054Z   File "/opt/hostedtoolcache/Python/3.12.13/x64/lib/python3.12/site-packages/sqlalchemy/orm/persistence.py", line 93, in save_obj
+2026-06-14T16:53:16.2040610Z     _emit_insert_statements(
+2026-06-14T16:53:16.2041202Z   File "/opt/hostedtoolcache/Python/3.12.13/x64/lib/python3.12/site-packages/sqlalchemy/orm/persistence.py", line 1233, in _emit_insert_statements
+2026-06-14T16:53:16.2041799Z     result = connection.execute(
+2026-06-14T16:53:16.2042314Z   File "/opt/hostedtoolcache/Python/3.12.13/x64/lib/python3.12/site-packages/sqlalchemy/engine/base.py", line 1418, in execute
+2026-06-14T16:53:16.2042834Z     return meth(
+2026-06-14T16:53:16.2043388Z   File "/opt/hostedtoolcache/Python/3.12.13/x64/lib/python3.12/site-packages/sqlalchemy/sql/elements.py", line 515, in _execute_on_connection
+2026-06-14T16:53:16.2043998Z     return connection._execute_clauseelement(
+2026-06-14T16:53:16.2044613Z   File "/opt/hostedtoolcache/Python/3.12.13/x64/lib/python3.12/site-packages/sqlalchemy/engine/base.py", line 1640, in _execute_clauseelement
+2026-06-14T16:53:16.2045494Z     ret = self._execute_context(
+2026-06-14T16:53:16.2046063Z   File "/opt/hostedtoolcache/Python/3.12.13/x64/lib/python3.12/site-packages/sqlalchemy/engine/base.py", line 1846, in _execute_context
+2026-06-14T16:53:16.2046631Z     return self._exec_single_context(
+2026-06-14T16:53:16.2047220Z   File "/opt/hostedtoolcache/Python/3.12.13/x64/lib/python3.12/site-packages/sqlalchemy/engine/base.py", line 1967, in _exec_single_context
+2026-06-14T16:53:16.2047794Z     self.dialect.do_execute(
+2026-06-14T16:53:16.2048332Z   File "/opt/hostedtoolcache/Python/3.12.13/x64/lib/python3.12/site-packages/sqlalchemy/engine/default.py", line 941, in do_execute
+2026-06-14T16:53:16.2048892Z     cursor.execute(statement, parameters)
+2026-06-14T16:53:16.2049226Z +++++++++++++++++++++++++++++++++++ Timeout ++++++++++++++++++++++++++++++++++++
+2026-06-14T16:53:16.2114069Z ##[error]Process completed with exit code 1.

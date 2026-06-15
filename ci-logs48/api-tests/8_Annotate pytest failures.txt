@@ -1,0 +1,33 @@
+﻿2026-06-14T17:15:55.1723514Z ##[group]Run python <<'PY'
+2026-06-14T17:15:55.1723813Z [36;1mpython <<'PY'[0m
+2026-06-14T17:15:55.1724040Z [36;1mimport pathlib[0m
+2026-06-14T17:15:55.1724294Z [36;1mimport xml.etree.ElementTree as ET[0m
+2026-06-14T17:15:55.1724575Z [36;1m[0m
+2026-06-14T17:15:55.1724786Z [36;1mjunit = pathlib.Path("junit.xml")[0m
+2026-06-14T17:15:55.1725078Z [36;1mlog = pathlib.Path("pytest.log")[0m
+2026-06-14T17:15:55.1725350Z [36;1mif junit.exists():[0m
+2026-06-14T17:15:55.1725623Z [36;1m    root = ET.parse(junit).getroot()[0m
+2026-06-14T17:15:55.1725925Z [36;1m    for case in root.iter("testcase"):[0m
+2026-06-14T17:15:55.1726276Z [36;1m        name = f"{case.get('classname')}::{case.get('name')}"[0m
+2026-06-14T17:15:55.1726607Z [36;1m        for child in case:[0m
+2026-06-14T17:15:55.1726894Z [36;1m            if child.tag in ("failure", "error"):[0m
+2026-06-14T17:15:55.1727322Z [36;1m                msg = (child.get("message") or child.text or "failed").replace("\n", " ")[:300][0m
+2026-06-14T17:15:55.1727797Z [36;1m                print(f"::error::{name} — {msg}")[0m
+2026-06-14T17:15:55.1728087Z [36;1melif log.exists():[0m
+2026-06-14T17:15:55.1728447Z [36;1m    for line in log.read_text(encoding="utf-8", errors="replace").splitlines():[0m
+2026-06-14T17:15:55.1729121Z [36;1m        if line.startswith("FAILED ") or line.startswith("ERROR "):[0m
+2026-06-14T17:15:55.1729486Z [36;1m            print(f"::error::{line}")[0m
+2026-06-14T17:15:55.1729867Z [36;1mPY[0m
+2026-06-14T17:15:55.1769982Z shell: /usr/bin/bash -e {0}
+2026-06-14T17:15:55.1770247Z env:
+2026-06-14T17:15:55.1770510Z   pythonLocation: /opt/hostedtoolcache/Python/3.12.13/x64
+2026-06-14T17:15:55.1770933Z   PKG_CONFIG_PATH: /opt/hostedtoolcache/Python/3.12.13/x64/lib/pkgconfig
+2026-06-14T17:15:55.1771333Z   Python_ROOT_DIR: /opt/hostedtoolcache/Python/3.12.13/x64
+2026-06-14T17:15:55.1771697Z   Python2_ROOT_DIR: /opt/hostedtoolcache/Python/3.12.13/x64
+2026-06-14T17:15:55.1772060Z   Python3_ROOT_DIR: /opt/hostedtoolcache/Python/3.12.13/x64
+2026-06-14T17:15:55.1772435Z   LD_LIBRARY_PATH: /opt/hostedtoolcache/Python/3.12.13/x64/lib
+2026-06-14T17:15:55.1772742Z ##[endgroup]
+2026-06-14T17:15:55.2057207Z ##[error]tests.test_queue_enqueue::test_enqueue_stores_celery_task_id — failed on teardown with "RuntimeError: Task <Task pending name='Task-912' coro=<AsyncSession.close() running at /opt/hostedtoolcache/Python/3.12.13/x64/lib/python3.12/site-packages/sqlalchemy/ext/asyncio/session.py:1025> cb=[shield.<locals>._inner_done_callback() at /opt/hostedtoolcache/Python/3.12.
+2026-06-14T17:15:55.2062146Z ##[error]tests.test_status_transitions::test_cancel_requested_before_start_marks_cancelled — failed on teardown with "RuntimeError: Task <Task pending name='Task-1222' coro=<AsyncSession.close() running at /opt/hostedtoolcache/Python/3.12.13/x64/lib/python3.12/site-packages/sqlalchemy/ext/asyncio/session.py:1025> cb=[shield.<locals>._inner_done_callback() at /opt/hostedtoolcache/Python/3.12
+2026-06-14T17:15:55.2066260Z ##[error]tests.test_status_transitions::test_worker_completes_after_execute_job — failed on teardown with "RuntimeError: Task <Task pending name='Task-1232' coro=<AsyncSession.close() running at /opt/hostedtoolcache/Python/3.12.13/x64/lib/python3.12/site-packages/sqlalchemy/ext/asyncio/session.py:1025> cb=[shield.<locals>._inner_done_callback() at /opt/hostedtoolcache/Python/3.12
+2026-06-14T17:15:55.2070542Z ##[error]tests.test_worker_idempotency::test_duplicate_tasks_only_one_claims_running — failed on teardown with "RuntimeError: Task <Task pending name='Task-1340' coro=<AsyncSession.close() running at /opt/hostedtoolcache/Python/3.12.13/x64/lib/python3.12/site-packages/sqlalchemy/ext/asyncio/session.py:1025> cb=[shield.<locals>._inner_done_callback() at /opt/hostedtoolcache/Python/3.12

@@ -1,0 +1,80 @@
+﻿2026-06-14T17:06:47.6180231Z ##[group]Run npm run build
+2026-06-14T17:06:47.6180549Z [36;1mnpm run build[0m
+2026-06-14T17:06:47.6213973Z shell: /usr/bin/bash -e {0}
+2026-06-14T17:06:47.6214285Z env:
+2026-06-14T17:06:47.6214631Z   NEXT_PUBLIC_API_URL: https://genetic-contour-platform.onrender.com
+2026-06-14T17:06:47.6215036Z ##[endgroup]
+2026-06-14T17:06:47.7623594Z 
+2026-06-14T17:06:47.7624353Z > @genetic-contour/web@0.1.0 build
+2026-06-14T17:06:47.7624892Z > next build
+2026-06-14T17:06:47.7625085Z 
+2026-06-14T17:06:48.4914330Z [next.config] NEXT_PUBLIC_STORAGE_PUBLIC_URL is not set. R2/S3 result images will be blocked by next/image unless API serves /static URLs.
+2026-06-14T17:06:48.5896759Z    ▲ Next.js 15.5.19
+2026-06-14T17:06:48.5897304Z 
+2026-06-14T17:06:48.6982467Z    Creating an optimized production build ...
+2026-06-14T17:06:49.3411357Z [next.config] NEXT_PUBLIC_STORAGE_PUBLIC_URL is not set. R2/S3 result images will be blocked by next/image unless API serves /static URLs.
+2026-06-14T17:06:57.4068704Z [next.config] NEXT_PUBLIC_STORAGE_PUBLIC_URL is not set. R2/S3 result images will be blocked by next/image unless API serves /static URLs.
+2026-06-14T17:06:59.3182784Z [next.config] NEXT_PUBLIC_STORAGE_PUBLIC_URL is not set. R2/S3 result images will be blocked by next/image unless API serves /static URLs.
+2026-06-14T17:07:05.4410547Z  ✓ Compiled successfully in 14.3s
+2026-06-14T17:07:05.4449086Z    Linting and checking validity of types ...
+2026-06-14T17:07:07.4508686Z 
+2026-06-14T17:07:07.4509843Z ./app/analytics/page.tsx
+2026-06-14T17:07:07.4511024Z 20:24  Warning: 'ImageIcon' is defined but never used.  @typescript-eslint/no-unused-vars
+2026-06-14T17:07:07.4511750Z 
+2026-06-14T17:07:07.4512194Z ./app/experiments/[id]/page.tsx
+2026-06-14T17:07:07.4513142Z 22:20  Warning: 'ApiError' is defined but never used.  @typescript-eslint/no-unused-vars
+2026-06-14T17:07:07.4514421Z 23:10  Warning: 'safeRedirectPath' is defined but never used.  @typescript-eslint/no-unused-vars
+2026-06-14T17:07:07.4516182Z 172:6  Warning: React Hook useEffect has a missing dependency: 'jobStatus'. Either include it or remove the dependency array.  react-hooks/exhaustive-deps
+2026-06-14T17:07:07.4517358Z 
+2026-06-14T17:07:07.4517997Z ./app/experiments/new/page.tsx
+2026-06-14T17:07:07.4518942Z 4:8  Warning: 'Link' is defined but never used.  @typescript-eslint/no-unused-vars
+2026-06-14T17:07:07.4519612Z 
+2026-06-14T17:07:07.4520043Z ./components/providers/auth-provider.tsx
+2026-06-14T17:07:07.4521086Z 15:3  Warning: 'setTokens' is defined but never used.  @typescript-eslint/no-unused-vars
+2026-06-14T17:07:07.4521850Z 
+2026-06-14T17:07:07.4522884Z info  - Need to disable some ESLint rules? Learn more here: https://nextjs.org/docs/app/api-reference/config/eslint#disabling-rules
+2026-06-14T17:07:10.9783644Z    Collecting page data ...
+2026-06-14T17:07:13.0204352Z    Generating static pages (0/24) ...
+2026-06-14T17:07:13.6659114Z    Generating static pages (6/24) 
+2026-06-14T17:07:13.8414450Z    Generating static pages (12/24) 
+2026-06-14T17:07:14.0617107Z    Generating static pages (18/24) 
+2026-06-14T17:07:14.7427170Z  ✓ Generating static pages (24/24)
+2026-06-14T17:07:15.0358530Z    Finalizing page optimization ...
+2026-06-14T17:07:15.0359312Z    Collecting build traces ...
+2026-06-14T17:07:19.7825837Z 
+2026-06-14T17:07:19.7906636Z Route (app)                                 Size  First Load JS  Revalidate  Expire
+2026-06-14T17:07:19.7908096Z ┌ ○ /                                    4.43 kB         226 kB
+2026-06-14T17:07:19.7909015Z ├ ○ /_not-found                            995 B         104 kB
+2026-06-14T17:07:19.7910269Z ├ ○ /analytics                           1.96 kB         224 kB
+2026-06-14T17:07:19.7910935Z ├ ƒ /api/auth/login                        149 B         103 kB
+2026-06-14T17:07:19.7911621Z ├ ƒ /api/auth/logout                       149 B         103 kB
+2026-06-14T17:07:19.7912257Z ├ ƒ /api/auth/register                     149 B         103 kB
+2026-06-14T17:07:19.7912856Z ├ ƒ /api/backend/[...path]                 149 B         103 kB
+2026-06-14T17:07:19.7913802Z ├ ○ /benchmarks                          3.63 kB         122 kB
+2026-06-14T17:07:19.7914414Z ├ ○ /comparison                          6.38 kB         229 kB
+2026-06-14T17:07:19.7915018Z ├ ○ /experiments                         4.24 kB         126 kB
+2026-06-14T17:07:19.7915671Z ├ ƒ /experiments/[id]                    18.5 kB         246 kB
+2026-06-14T17:07:19.7916284Z ├ ○ /experiments/new                     4.37 kB         123 kB
+2026-06-14T17:07:19.7917026Z ├ ○ /ground-truth                        4.83 kB         119 kB
+2026-06-14T17:07:19.7918072Z ├ ○ /help                                  163 B         106 kB
+2026-06-14T17:07:19.7918793Z ├ ○ /legal/cookies                         149 B         103 kB
+2026-06-14T17:07:19.7919342Z ├ ○ /legal/privacy                         149 B         103 kB
+2026-06-14T17:07:19.7919813Z ├ ○ /legal/terms                           149 B         103 kB
+2026-06-14T17:07:19.7920263Z ├ ○ /library                               172 B         123 kB
+2026-06-14T17:07:19.7920718Z ├ ○ /login                               3.38 kB         121 kB
+2026-06-14T17:07:19.7921160Z ├ ○ /onboarding                          3.25 kB         114 kB
+2026-06-14T17:07:19.7921615Z ├ ○ /register                            3.36 kB         121 kB
+2026-06-14T17:07:19.7922071Z ├ ○ /reports                             5.87 kB         120 kB
+2026-06-14T17:07:19.7922590Z ├ ○ /status                                149 B         103 kB          1m      1y
+2026-06-14T17:07:19.7923104Z └ ○ /upload                                173 B         123 kB
+2026-06-14T17:07:19.7923501Z + First Load JS shared by all             103 kB
+2026-06-14T17:07:19.7923915Z   ├ chunks/18-f2538672e261a112.js        46.7 kB
+2026-06-14T17:07:19.7924300Z   ├ chunks/87c73c54-09e1ba5c70e60a51.js  54.2 kB
+2026-06-14T17:07:19.7924669Z   └ other shared chunks (total)          1.98 kB
+2026-06-14T17:07:19.7924876Z 
+2026-06-14T17:07:19.7924885Z 
+2026-06-14T17:07:19.7925094Z ƒ Middleware                             34.4 kB
+2026-06-14T17:07:19.7925312Z 
+2026-06-14T17:07:19.7925518Z ○  (Static)   prerendered as static content
+2026-06-14T17:07:19.7925898Z ƒ  (Dynamic)  server-rendered on demand
+2026-06-14T17:07:19.7926084Z 

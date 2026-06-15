@@ -1,0 +1,78 @@
+﻿2026-06-14T17:07:44.2096800Z Print service container logs: 08fe77746dfc45d195460c181f23192c_postgres16alpine_f5daa1
+2026-06-14T17:07:44.2101649Z ##[command]/usr/bin/docker logs --details b6dd7c728ae0449203f2486008ed02668fd04ef2ff1d767299b33820516a6551
+2026-06-14T17:07:44.2239353Z  sh: locale: not found
+2026-06-14T17:07:44.2239851Z  The files belonging to this database system will be owned by user "postgres".
+2026-06-14T17:07:44.2240900Z  2026-06-14 17:06:39.703 UTC [35] WARNING:  no usable system locales were found
+2026-06-14T17:07:44.2241436Z  initdb: warning: enabling "trust" authentication for local connections
+2026-06-14T17:07:44.2242159Z  initdb: hint: You can change this by editing pg_hba.conf or using the option -A, or --auth-local and --auth-host, the next time you run initdb.
+2026-06-14T17:07:44.2243026Z  2026-06-14 17:06:40.484 UTC [1] LOG:  starting PostgreSQL 16.14 on x86_64-pc-linux-musl, compiled by gcc (Alpine 15.2.0) 15.2.0, 64-bit
+2026-06-14T17:07:44.2243716Z  2026-06-14 17:06:40.484 UTC [1] LOG:  listening on IPv4 address "0.0.0.0", port 5432
+2026-06-14T17:07:44.2244253Z  2026-06-14 17:06:40.484 UTC [1] LOG:  listening on IPv6 address "::", port 5432
+2026-06-14T17:07:44.2245076Z  2026-06-14 17:06:40.485 UTC [1] LOG:  listening on Unix socket "/var/run/postgresql/.s.PGSQL.5432"
+2026-06-14T17:07:44.2245956Z  2026-06-14 17:06:40.488 UTC [57] LOG:  database system was shut down at 2026-06-14 17:06:40 UTC
+2026-06-14T17:07:44.2246647Z  2026-06-14 17:06:40.492 UTC [1] LOG:  database system is ready to accept connections
+2026-06-14T17:07:44.2247130Z  2026-06-14 17:06:44.088 UTC [67] FATAL:  database "genetic_contour" does not exist
+2026-06-14T17:07:44.2247586Z  2026-06-14 17:06:49.132 UTC [74] FATAL:  database "genetic_contour" does not exist
+2026-06-14T17:07:44.2248019Z  2026-06-14 17:06:54.180 UTC [81] FATAL:  database "genetic_contour" does not exist
+2026-06-14T17:07:44.2248817Z  2026-06-14 17:06:59.224 UTC [88] FATAL:  database "genetic_contour" does not exist
+2026-06-14T17:07:44.2249255Z  2026-06-14 17:07:04.272 UTC [95] FATAL:  database "genetic_contour" does not exist
+2026-06-14T17:07:44.2249718Z  2026-06-14 17:07:09.315 UTC [102] FATAL:  database "genetic_contour" does not exist
+2026-06-14T17:07:44.2250182Z  2026-06-14 17:07:14.360 UTC [110] FATAL:  database "genetic_contour" does not exist
+2026-06-14T17:07:44.2250620Z  2026-06-14 17:07:19.405 UTC [117] FATAL:  database "genetic_contour" does not exist
+2026-06-14T17:07:44.2251067Z  2026-06-14 17:07:24.449 UTC [124] FATAL:  database "genetic_contour" does not exist
+2026-06-14T17:07:44.2251497Z  2026-06-14 17:07:29.493 UTC [137] FATAL:  database "genetic_contour" does not exist
+2026-06-14T17:07:44.2251927Z  2026-06-14 17:07:34.537 UTC [201] FATAL:  database "genetic_contour" does not exist
+2026-06-14T17:07:44.2252365Z  2026-06-14 17:07:39.583 UTC [258] FATAL:  database "genetic_contour" does not exist
+2026-06-14T17:07:44.2252779Z  This user must also own the server process.
+2026-06-14T17:07:44.2253063Z  
+2026-06-14T17:07:44.2253359Z  The database cluster will be initialized with locale "en_US.utf8".
+2026-06-14T17:07:44.2253817Z  The default database encoding has accordingly been set to "UTF8".
+2026-06-14T17:07:44.2254252Z  The default text search configuration will be set to "english".
+2026-06-14T17:07:44.2254744Z  
+2026-06-14T17:07:44.2254978Z  Data page checksums are disabled.
+2026-06-14T17:07:44.2255239Z  
+2026-06-14T17:07:44.2255546Z  fixing permissions on existing directory /var/lib/postgresql/data ... ok
+2026-06-14T17:07:44.2255960Z  creating subdirectories ... ok
+2026-06-14T17:07:44.2256295Z  selecting dynamic shared memory implementation ... posix
+2026-06-14T17:07:44.2256654Z  selecting default max_connections ... 100
+2026-06-14T17:07:44.2256962Z  selecting default shared_buffers ... 128MB
+2026-06-14T17:07:44.2257285Z  selecting default time zone ... UTC
+2026-06-14T17:07:44.2257565Z  creating configuration files ... ok
+2026-06-14T17:07:44.2257850Z  running bootstrap script ... ok
+2026-06-14T17:07:44.2258175Z  performing post-bootstrap initialization ... ok
+2026-06-14T17:07:44.2258758Z  syncing data to disk ... ok
+2026-06-14T17:07:44.2259001Z  
+2026-06-14T17:07:44.2259188Z  
+2026-06-14T17:07:44.2259433Z  Success. You can now start the database server using:
+2026-06-14T17:07:44.2259784Z  
+2026-06-14T17:07:44.2260028Z      pg_ctl -D /var/lib/postgresql/data -l logfile start
+2026-06-14T17:07:44.2260328Z  
+2026-06-14T17:07:44.2260882Z  waiting for server to start....2026-06-14 17:06:40.215 UTC [41] LOG:  starting PostgreSQL 16.14 on x86_64-pc-linux-musl, compiled by gcc (Alpine 15.2.0) 15.2.0, 64-bit
+2026-06-14T17:07:44.2261679Z  2026-06-14 17:06:40.215 UTC [41] LOG:  listening on Unix socket "/var/run/postgresql/.s.PGSQL.5432"
+2026-06-14T17:07:44.2262228Z  2026-06-14 17:06:40.218 UTC [44] LOG:  database system was shut down at 2026-06-14 17:06:40 UTC
+2026-06-14T17:07:44.2262728Z  2026-06-14 17:06:40.223 UTC [41] LOG:  database system is ready to accept connections
+2026-06-14T17:07:44.2263123Z   done
+2026-06-14T17:07:44.2263321Z  server started
+2026-06-14T17:07:44.2263534Z  CREATE DATABASE
+2026-06-14T17:07:44.2263749Z  
+2026-06-14T17:07:44.2263945Z  
+2026-06-14T17:07:44.2264285Z  /usr/local/bin/docker-entrypoint.sh: ignoring /docker-entrypoint-initdb.d/*
+2026-06-14T17:07:44.2265011Z  
+2026-06-14T17:07:44.2265555Z  waiting for server to shut down....2026-06-14 17:06:40.362 UTC [41] LOG:  received fast shutdown request
+2026-06-14T17:07:44.2266398Z  2026-06-14 17:06:40.363 UTC [41] LOG:  aborting any active transactions
+2026-06-14T17:07:44.2267319Z  2026-06-14 17:06:40.367 UTC [41] LOG:  background worker "logical replication launcher" (PID 47) exited with exit code 1
+2026-06-14T17:07:44.2268157Z  2026-06-14 17:06:40.368 UTC [42] LOG:  shutting down
+2026-06-14T17:07:44.2268790Z  2026-06-14 17:06:40.368 UTC [42] LOG:  checkpoint starting: shutdown immediate
+2026-06-14T17:07:44.2270486Z  2026-06-14 17:06:40.384 UTC [42] LOG:  checkpoint complete: wrote 926 buffers (5.7%); 0 WAL file(s) added, 0 removed, 0 recycled; write=0.014 s, sync=0.002 s, total=0.017 s; sync files=301, longest=0.001 s, average=0.001 s; distance=4272 kB, estimate=4272 kB; lsn=0/191E940, redo lsn=0/191E940
+2026-06-14T17:07:44.2272391Z  2026-06-14 17:06:40.392 UTC [41] LOG:  database system is shut down
+2026-06-14T17:07:44.2272890Z   done
+2026-06-14T17:07:44.2273170Z  server stopped
+2026-06-14T17:07:44.2273498Z  
+2026-06-14T17:07:44.2273859Z  PostgreSQL init process complete; ready for start up.
+2026-06-14T17:07:44.2274330Z  
+2026-06-14T17:07:44.2286002Z Stop and remove container: 08fe77746dfc45d195460c181f23192c_postgres16alpine_f5daa1
+2026-06-14T17:07:44.2291056Z ##[command]/usr/bin/docker rm --force b6dd7c728ae0449203f2486008ed02668fd04ef2ff1d767299b33820516a6551
+2026-06-14T17:07:45.4105404Z b6dd7c728ae0449203f2486008ed02668fd04ef2ff1d767299b33820516a6551
+2026-06-14T17:07:45.4136717Z Remove container network: github_network_825641a0b40148f89aa3732b796337d1
+2026-06-14T17:07:45.4141166Z ##[command]/usr/bin/docker network rm github_network_825641a0b40148f89aa3732b796337d1
+2026-06-14T17:07:45.5261690Z github_network_825641a0b40148f89aa3732b796337d1

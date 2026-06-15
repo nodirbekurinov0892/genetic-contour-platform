@@ -1,0 +1,17 @@
+﻿2026-06-14T17:06:31.7378555Z ##[group]Run npm install
+2026-06-14T17:06:31.7379041Z [36;1mnpm install[0m
+2026-06-14T17:06:31.7515972Z shell: /usr/bin/bash -e {0}
+2026-06-14T17:06:31.7516399Z ##[endgroup]
+2026-06-14T17:06:37.6883318Z npm warn deprecated recharts@2.15.4: 1.x and 2.x branches are no longer active. Bump to Recharts v3 to receive latest features and bugfixes. See https://github.com/recharts/recharts/wiki/3.0-migration-guide
+2026-06-14T17:06:43.9257329Z 
+2026-06-14T17:06:43.9258523Z added 449 packages, and audited 451 packages in 12s
+2026-06-14T17:06:43.9258883Z 
+2026-06-14T17:06:43.9259087Z 150 packages are looking for funding
+2026-06-14T17:06:43.9259447Z   run `npm fund` for details
+2026-06-14T17:06:43.9641412Z 
+2026-06-14T17:06:43.9642270Z 2 moderate severity vulnerabilities
+2026-06-14T17:06:43.9642708Z 
+2026-06-14T17:06:43.9643090Z To address all issues (including breaking changes), run:
+2026-06-14T17:06:43.9643965Z   npm audit fix --force
+2026-06-14T17:06:43.9644954Z 
+2026-06-14T17:06:43.9645509Z Run `npm audit` for details.

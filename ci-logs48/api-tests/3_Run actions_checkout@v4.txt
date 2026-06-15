@@ -1,0 +1,72 @@
+﻿2026-06-14T17:15:02.8324293Z ##[group]Run actions/checkout@v4
+2026-06-14T17:15:02.8324830Z with:
+2026-06-14T17:15:02.8325120Z   repository: nodirbekurinov0892/genetic-contour-platform
+2026-06-14T17:15:02.8328161Z   token: ***
+2026-06-14T17:15:02.8328388Z   ssh-strict: true
+2026-06-14T17:15:02.8328760Z   ssh-user: git
+2026-06-14T17:15:02.8328972Z   persist-credentials: true
+2026-06-14T17:15:02.8329200Z   clean: true
+2026-06-14T17:15:02.8329409Z   sparse-checkout-cone-mode: true
+2026-06-14T17:15:02.8329657Z   fetch-depth: 1
+2026-06-14T17:15:02.8329851Z   fetch-tags: false
+2026-06-14T17:15:02.8330055Z   show-progress: true
+2026-06-14T17:15:02.8330255Z   lfs: false
+2026-06-14T17:15:02.8330434Z   submodules: false
+2026-06-14T17:15:02.8330634Z   set-safe-directory: true
+2026-06-14T17:15:02.8331060Z ##[endgroup]
+2026-06-14T17:15:02.9443911Z Syncing repository: nodirbekurinov0892/genetic-contour-platform
+2026-06-14T17:15:02.9445350Z ##[group]Getting Git version info
+2026-06-14T17:15:02.9445977Z Working directory is '/home/runner/work/genetic-contour-platform/genetic-contour-platform'
+2026-06-14T17:15:02.9446730Z [command]/usr/bin/git version
+2026-06-14T17:15:02.9512701Z git version 2.54.0
+2026-06-14T17:15:02.9540657Z ##[endgroup]
+2026-06-14T17:15:02.9556519Z Temporarily overriding HOME='/home/runner/work/_temp/9663aeda-3ec0-4f82-8dd6-305d6764affd' before making global git config changes
+2026-06-14T17:15:02.9557441Z Adding repository directory to the temporary git global config as a safe directory
+2026-06-14T17:15:02.9571206Z [command]/usr/bin/git config --global --add safe.directory /home/runner/work/genetic-contour-platform/genetic-contour-platform
+2026-06-14T17:15:02.9613097Z Deleting the contents of '/home/runner/work/genetic-contour-platform/genetic-contour-platform'
+2026-06-14T17:15:02.9616089Z ##[group]Initializing the repository
+2026-06-14T17:15:02.9620218Z [command]/usr/bin/git init /home/runner/work/genetic-contour-platform/genetic-contour-platform
+2026-06-14T17:15:02.9708404Z hint: Using 'master' as the name for the initial branch. This default branch name
+2026-06-14T17:15:02.9709490Z hint: will change to "main" in Git 3.0. To configure the initial branch name
+2026-06-14T17:15:02.9710054Z hint: to use in all of your new repositories, which will suppress this warning,
+2026-06-14T17:15:02.9710440Z hint: call:
+2026-06-14T17:15:02.9710683Z hint:
+2026-06-14T17:15:02.9711145Z hint: 	git config --global init.defaultBranch <name>
+2026-06-14T17:15:02.9711460Z hint:
+2026-06-14T17:15:02.9711746Z hint: Names commonly chosen instead of 'master' are 'main', 'trunk' and
+2026-06-14T17:15:02.9712221Z hint: 'development'. The just-created branch can be renamed via this command:
+2026-06-14T17:15:02.9712583Z hint:
+2026-06-14T17:15:02.9712785Z hint: 	git branch -m <name>
+2026-06-14T17:15:02.9713009Z hint:
+2026-06-14T17:15:02.9713307Z hint: Disable this message with "git config set advice.defaultBranchName false"
+2026-06-14T17:15:02.9714127Z Initialized empty Git repository in /home/runner/work/genetic-contour-platform/genetic-contour-platform/.git/
+2026-06-14T17:15:02.9721802Z [command]/usr/bin/git remote add origin https://github.com/nodirbekurinov0892/genetic-contour-platform
+2026-06-14T17:15:02.9757753Z ##[endgroup]
+2026-06-14T17:15:02.9758183Z ##[group]Disabling automatic garbage collection
+2026-06-14T17:15:02.9762270Z [command]/usr/bin/git config --local gc.auto 0
+2026-06-14T17:15:02.9786308Z ##[endgroup]
+2026-06-14T17:15:02.9786704Z ##[group]Setting up auth
+2026-06-14T17:15:02.9792851Z [command]/usr/bin/git config --local --name-only --get-regexp core\.sshCommand
+2026-06-14T17:15:02.9821503Z [command]/usr/bin/git submodule foreach --recursive sh -c "git config --local --name-only --get-regexp 'core\.sshCommand' && git config --local --unset-all 'core.sshCommand' || :"
+2026-06-14T17:15:03.0105366Z [command]/usr/bin/git config --local --name-only --get-regexp http\.https\:\/\/github\.com\/\.extraheader
+2026-06-14T17:15:03.0132411Z [command]/usr/bin/git submodule foreach --recursive sh -c "git config --local --name-only --get-regexp 'http\.https\:\/\/github\.com\/\.extraheader' && git config --local --unset-all 'http.https://github.com/.extraheader' || :"
+2026-06-14T17:15:03.0313017Z [command]/usr/bin/git config --local --name-only --get-regexp ^includeIf\.gitdir:
+2026-06-14T17:15:03.0345493Z [command]/usr/bin/git submodule foreach --recursive git config --local --show-origin --name-only --get-regexp remote.origin.url
+2026-06-14T17:15:03.0531836Z [command]/usr/bin/git config --local http.https://github.com/.extraheader AUTHORIZATION: basic ***
+2026-06-14T17:15:03.0564741Z ##[endgroup]
+2026-06-14T17:15:03.0565568Z ##[group]Fetching the repository
+2026-06-14T17:15:03.0573931Z [command]/usr/bin/git -c protocol.version=2 fetch --no-tags --prune --no-recurse-submodules --depth=1 origin +dfb0166dd4d404d5c9da4b32790ca7d1c3790500:refs/remotes/origin/main
+2026-06-14T17:15:03.6752169Z From https://github.com/nodirbekurinov0892/genetic-contour-platform
+2026-06-14T17:15:03.6753464Z  * [new ref]         dfb0166dd4d404d5c9da4b32790ca7d1c3790500 -> origin/main
+2026-06-14T17:15:03.6785443Z ##[endgroup]
+2026-06-14T17:15:03.6786705Z ##[group]Determining the checkout info
+2026-06-14T17:15:03.6787566Z ##[endgroup]
+2026-06-14T17:15:03.6792545Z [command]/usr/bin/git sparse-checkout disable
+2026-06-14T17:15:03.6829365Z [command]/usr/bin/git config --local --unset-all extensions.worktreeConfig
+2026-06-14T17:15:03.6851046Z ##[group]Checking out the ref
+2026-06-14T17:15:03.6855480Z [command]/usr/bin/git checkout --progress --force -B main refs/remotes/origin/main
+2026-06-14T17:15:03.6979845Z Switched to a new branch 'main'
+2026-06-14T17:15:03.6981148Z branch 'main' set up to track 'origin/main'.
+2026-06-14T17:15:03.6986599Z ##[endgroup]
+2026-06-14T17:15:03.7021198Z [command]/usr/bin/git log -1 --format=%H
+2026-06-14T17:15:03.7039562Z dfb0166dd4d404d5c9da4b32790ca7d1c3790500

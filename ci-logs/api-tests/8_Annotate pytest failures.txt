@@ -1,0 +1,29 @@
+﻿2026-06-14T16:53:16.2195598Z ##[group]Run python <<'PY'
+2026-06-14T16:53:16.2196042Z [36;1mpython <<'PY'[0m
+2026-06-14T16:53:16.2196412Z [36;1mimport pathlib[0m
+2026-06-14T16:53:16.2196805Z [36;1mimport xml.etree.ElementTree as ET[0m
+2026-06-14T16:53:16.2197245Z [36;1m[0m
+2026-06-14T16:53:16.2197568Z [36;1mjunit = pathlib.Path("junit.xml")[0m
+2026-06-14T16:53:16.2198018Z [36;1mlog = pathlib.Path("pytest.log")[0m
+2026-06-14T16:53:16.2198445Z [36;1mif junit.exists():[0m
+2026-06-14T16:53:16.2198848Z [36;1m    root = ET.parse(junit).getroot()[0m
+2026-06-14T16:53:16.2199319Z [36;1m    for case in root.iter("testcase"):[0m
+2026-06-14T16:53:16.2200038Z [36;1m        name = f"{case.get('classname')}::{case.get('name')}"[0m
+2026-06-14T16:53:16.2200566Z [36;1m        for child in case:[0m
+2026-06-14T16:53:16.2201015Z [36;1m            if child.tag in ("failure", "error"):[0m
+2026-06-14T16:53:16.2201717Z [36;1m                msg = (child.get("message") or child.text or "failed").replace("\n", " ")[:300][0m
+2026-06-14T16:53:16.2202461Z [36;1m                print(f"::error::{name} — {msg}")[0m
+2026-06-14T16:53:16.2202929Z [36;1melif log.exists():[0m
+2026-06-14T16:53:16.2203542Z [36;1m    for line in log.read_text(encoding="utf-8", errors="replace").splitlines():[0m
+2026-06-14T16:53:16.2204344Z [36;1m        if line.startswith("FAILED ") or line.startswith("ERROR "):[0m
+2026-06-14T16:53:16.2204936Z [36;1m            print(f"::error::{line}")[0m
+2026-06-14T16:53:16.2205347Z [36;1mPY[0m
+2026-06-14T16:53:16.2250728Z shell: /usr/bin/bash -e {0}
+2026-06-14T16:53:16.2251099Z env:
+2026-06-14T16:53:16.2251490Z   pythonLocation: /opt/hostedtoolcache/Python/3.12.13/x64
+2026-06-14T16:53:16.2252157Z   PKG_CONFIG_PATH: /opt/hostedtoolcache/Python/3.12.13/x64/lib/pkgconfig
+2026-06-14T16:53:16.2252812Z   Python_ROOT_DIR: /opt/hostedtoolcache/Python/3.12.13/x64
+2026-06-14T16:53:16.2253391Z   Python2_ROOT_DIR: /opt/hostedtoolcache/Python/3.12.13/x64
+2026-06-14T16:53:16.2253977Z   Python3_ROOT_DIR: /opt/hostedtoolcache/Python/3.12.13/x64
+2026-06-14T16:53:16.2254587Z   LD_LIBRARY_PATH: /opt/hostedtoolcache/Python/3.12.13/x64/lib
+2026-06-14T16:53:16.2255100Z ##[endgroup]
