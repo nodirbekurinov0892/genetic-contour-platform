@@ -32,8 +32,9 @@ def test_local_static_disabled_in_production(monkeypatch: pytest.MonkeyPatch):
     monkeypatch.setenv("API_DEBUG", "false")
     monkeypatch.setenv("API_PUBLIC_URL", "https://api.example.com")
     monkeypatch.setenv("CELERY_TASK_ALWAYS_EAGER", "true")
-    settings = Settings()
-    assert settings.use_local_static_files is False
+
+    with pytest.raises(ValueError, match="STORAGE_BACKEND must be 'supabase' or 's3'"):
+        Settings()
 
 
 def test_s3_never_uses_local_static(monkeypatch: pytest.MonkeyPatch):

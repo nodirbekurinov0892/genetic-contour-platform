@@ -35,17 +35,35 @@ def compute_supervised_metrics(
     fp = int(np.sum(pred & ~gt))
     fn = int(np.sum(~pred & gt))
 
+    pred_fg = int(np.sum(pred))
+    gt_fg = int(np.sum(gt))
+
+    if tp == 0 and pred_fg > 0 and gt_fg > 0:
+        return {
+            "precision": 0.0,
+            "recall": 0.0,
+            "f1_score": 0.0,
+            "iou": 0.0,
+            "dice_coefficient": 0.0,
+        }
+
     precision = tp / (tp + fp) if (tp + fp) > 0 else None
     recall = tp / (tp + fn) if (tp + fn) > 0 else None
 
     f1_score = None
-    if precision is not None and recall is not None and (precision + recall) > 0:
-        f1_score = 2 * precision * recall / (precision + recall)
+    if precision is not None and recall is not None:
+        f1_score = (
+            2 * precision * recall / (precision + recall)
+            if (precision + recall) > 0
+            else 0.0
+        )
+    elif precision == 0.0 and pred_fg > 0:
+        f1_score = 0.0
 
     union = int(np.sum(pred | gt))
-    iou = tp / union if union > 0 else None
+    iou = (tp / union) if union > 0 else None
 
-    denom = int(np.sum(pred)) + int(np.sum(gt))
+    denom = pred_fg + gt_fg
     dice_coefficient = (2 * tp / denom) if denom > 0 else None
 
     return {

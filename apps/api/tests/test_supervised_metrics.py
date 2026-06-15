@@ -35,12 +35,12 @@ def test_perfect_match():
 
 
 def test_no_overlap():
-    pred, gt = _masks([1, 1], [0, 0])
+    pred, gt = _masks([1, 0], [0, 1])
     result = compute_supervised_metrics(pred, gt)
 
     assert result["precision"] == pytest.approx(0.0)
     assert result["recall"] == pytest.approx(0.0)
-    assert result["f1_score"] is None
+    assert result["f1_score"] == pytest.approx(0.0)
     assert result["iou"] == pytest.approx(0.0)
     assert result["dice_coefficient"] == pytest.approx(0.0)
 
