@@ -40,6 +40,10 @@ class ExperimentRunRequest(BaseModel):
         default="fair_v1",
         description="fair_v1 (default) | legacy",
     )
+    evaluation_mode: str = Field(
+        default="auto",
+        description="auto | supervised | heuristic — supervised requires GT file in storage",
+    )
     seed: int | None = Field(default=None, ge=0, le=2**31 - 1)
 
 

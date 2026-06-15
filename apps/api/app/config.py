@@ -54,6 +54,10 @@ class Settings(BaseSettings):
     s3_bucket_name: str = ""
     s3_region: str = "auto"
     s3_public_base_url: str = ""
+    supabase_url: str = ""
+    supabase_service_role_key: str = ""
+    supabase_storage_bucket: str = ""
+    supabase_public_base_url: str = ""
 
     # Upload
     max_upload_size_mb: int = 10
@@ -92,8 +96,8 @@ class Settings(BaseSettings):
             errors.append("JWT_SECRET is required")
 
         backend = self.storage_backend.strip().lower()
-        if backend not in {"local", "s3"}:
-            errors.append("STORAGE_BACKEND must be 'local' or 's3'")
+        if backend not in {"local", "s3", "supabase"}:
+            errors.append("STORAGE_BACKEND must be 'local', 's3', or 'supabase'")
 
         if backend == "s3":
             for field_name, value in [
@@ -104,6 +108,15 @@ class Settings(BaseSettings):
             ]:
                 if not value.strip():
                     errors.append(f"{field_name} is required when STORAGE_BACKEND=s3")
+
+        if backend == "supabase":
+            for field_name, value in [
+                ("SUPABASE_URL", self.supabase_url),
+                ("SUPABASE_SERVICE_ROLE_KEY", self.supabase_service_role_key),
+                ("SUPABASE_STORAGE_BUCKET", self.supabase_storage_bucket),
+            ]:
+                if not value.strip():
+                    errors.append(f"{field_name} is required when STORAGE_BACKEND=supabase")
 
         backend = self.experiment_queue_backend.strip().lower()
         if backend not in {"asyncio", "celery"}:
@@ -120,6 +133,11 @@ class Settings(BaseSettings):
             if "localhost" in public_lower or "127.0.0.1" in public_lower:
                 errors.append(
                     "API_PUBLIC_URL must not point to localhost when API_DEBUG=false"
+                )
+            if self.storage_backend.strip().lower() == "local":
+                errors.append(
+                    "STORAGE_BACKEND must be 'supabase' or 's3' when API_DEBUG=false "
+                    "(production requires persistent object storage)"
                 )
             if self.secret_key.strip() in _INSECURE_SECRET_MARKERS:
                 errors.append("SECRET_KEY must be a strong random value in production")
@@ -191,8 +209,25 @@ class Settings(BaseSettings):
 
     @property
     def use_local_static_files(self) -> bool:
-        """Local /static serving is dev-only. Production uses S3/R2 public URLs."""
+        """Local /static serving is dev-only. Production uses remote object storage URLs."""
         return self.storage_backend.strip().lower() == "local" and self.api_debug
+
+    @property
+    def resolved_supabase_public_base_url(self) -> str:
+        if self.supabase_public_base_url.strip():
+            return self.supabase_public_base_url.rstrip("/")
+        base = self.supabase_url.rstrip("/")
+        bucket = self.supabase_storage_bucket.strip()
+        return f"{base}/storage/v1/object/public/{bucket}"
+
+    @property
+    def storage_public_base_url(self) -> str:
+        backend = self.storage_backend.strip().lower()
+        if backend == "supabase":
+            return self.resolved_supabase_public_base_url
+        if backend == "s3":
+            return self.s3_public_base_url.rstrip("/")
+        return self.api_public_url.rstrip("/")
 
     @property
     def smtp_configured(self) -> bool:

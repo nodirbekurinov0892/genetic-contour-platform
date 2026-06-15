@@ -10,33 +10,10 @@ from app.models.user import User
 from app.schemas.image import ImageResponse
 from app.services.image_service import ImageService
 from app.services.lifecycle_service import LifecycleService
-from app.services.storage import StorageService
-from app.utils.media_urls import resolve_public_url
+from app.utils.image_response import to_image_response
 from app.utils.rate_limit import limiter
 
 router = APIRouter(prefix="/api/lifecycle", tags=["lifecycle"])
-
-
-def _to_image_response(image, settings: Settings) -> ImageResponse:
-    storage = StorageService(settings)
-    data = ImageResponse.model_validate(image)
-    data.url = resolve_public_url(
-        storage=storage,
-        settings=settings,
-        storage_key=image.storage_key,
-        public_url=image.public_url,
-        file_path=image.file_path,
-    )
-    data.has_ground_truth = bool(image.ground_truth_storage_key)
-    if image.ground_truth_storage_key:
-        data.ground_truth_url = resolve_public_url(
-            storage=storage,
-            settings=settings,
-            storage_key=image.ground_truth_storage_key,
-            public_url=image.ground_truth_public_url,
-            file_path=image.ground_truth_file_path,
-        )
-    return data
 
 
 @router.delete("/images/{image_id}")
@@ -64,7 +41,7 @@ async def delete_ground_truth(
 ):
     service = LifecycleService(db, settings)
     image = await service.delete_ground_truth(image_id, current_user)
-    return _to_image_response(image, settings)
+    return to_image_response(image, settings)
 
 
 @router.get("/orphans")

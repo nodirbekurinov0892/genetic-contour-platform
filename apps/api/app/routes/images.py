@@ -9,33 +9,10 @@ from app.dependencies.auth import get_current_active_user
 from app.models.user import User
 from app.schemas.image import ImageResponse, ImageUploadResponse
 from app.services.image_service import ImageService
-from app.services.storage import StorageService
-from app.utils.media_urls import resolve_public_url
+from app.utils.image_response import to_image_response
 from app.utils.rate_limit import limiter
 
 router = APIRouter(prefix="/api/images", tags=["images"])
-
-
-def _to_image_response(image, settings: Settings) -> ImageResponse:
-    storage = StorageService(settings)
-    data = ImageResponse.model_validate(image)
-    data.url = resolve_public_url(
-        storage=storage,
-        settings=settings,
-        storage_key=image.storage_key,
-        public_url=image.public_url,
-        file_path=image.file_path,
-    )
-    data.has_ground_truth = bool(image.ground_truth_storage_key)
-    if image.ground_truth_storage_key:
-        data.ground_truth_url = resolve_public_url(
-            storage=storage,
-            settings=settings,
-            storage_key=image.ground_truth_storage_key,
-            public_url=image.ground_truth_public_url,
-            file_path=image.ground_truth_file_path,
-        )
-    return data
 
 
 @router.post("/upload", response_model=ImageUploadResponse)
@@ -49,7 +26,7 @@ async def upload_image(
 ):
     service = ImageService(db, settings)
     image = await service.upload(file, current_user)
-    return ImageUploadResponse(image=_to_image_response(image, settings))
+    return ImageUploadResponse(image=to_image_response(image, settings))
 
 
 @router.get("", response_model=list[ImageResponse])
@@ -70,7 +47,7 @@ async def list_images(
         search=search,
         has_ground_truth=has_ground_truth,
     )
-    return [_to_image_response(img, settings) for img in images]
+    return [to_image_response(img, settings) for img in images]
 
 
 @router.post("/{image_id}/ground-truth", response_model=ImageResponse)
@@ -85,7 +62,7 @@ async def upload_ground_truth(
 ):
     service = ImageService(db, settings)
     image = await service.upload_ground_truth(image_id, file, current_user)
-    return _to_image_response(image, settings)
+    return to_image_response(image, settings)
 
 
 @router.get("/{image_id}", response_model=ImageResponse)
@@ -97,7 +74,7 @@ async def get_image(
 ):
     service = ImageService(db, settings)
     image = await service.get_by_id(image_id, current_user)
-    return _to_image_response(image, settings)
+    return to_image_response(image, settings)
 
 
 @router.delete("/{image_id}")

@@ -6,6 +6,7 @@ const STATUS_LABELS: Record<ExperimentStatus, string> = {
   queued: "Navbatda",
   running: "Bajarilmoqda",
   completed: "Yakunlandi",
+  degraded: "Cheklangan (GT yo'q)",
   failed: "Muvaffaqiyatsiz",
   cancelled: "Bekor qilindi",
 };
@@ -18,6 +19,7 @@ const STATUS_VARIANTS: Record<
   queued: "outline",
   running: "warning",
   completed: "success",
+  degraded: "warning",
   failed: "destructive",
   cancelled: "secondary",
 };

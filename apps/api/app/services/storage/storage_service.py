@@ -11,6 +11,7 @@ from app.config import Settings, get_settings
 from app.services.storage.base import StorageBackend, StoredObject
 from app.services.storage.local_storage import LocalStorageBackend
 from app.services.storage.s3_storage import S3StorageBackend
+from app.services.storage.supabase_storage import SupabaseStorageBackend
 from app.utils.file_utils import MIME_BY_EXT
 from app.utils.public_url_safety import is_stale_public_url
 
@@ -22,8 +23,11 @@ class StorageService:
 
     @staticmethod
     def _create_backend(settings: Settings) -> StorageBackend:
-        if settings.storage_backend == "s3":
+        backend = settings.storage_backend.strip().lower()
+        if backend == "s3":
             return S3StorageBackend(settings)
+        if backend == "supabase":
+            return SupabaseStorageBackend(settings)
         return LocalStorageBackend(settings)
 
     @property

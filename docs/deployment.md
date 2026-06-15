@@ -6,7 +6,7 @@ See [README.md](../README.md) for step-by-step local setup.
 
 Default storage: `STORAGE_BACKEND=local` — files live under `apps/api/uploads/` and `apps/api/results/`.
 
-**Local `/static` serving** only works when `API_DEBUG=true` **and** `STORAGE_BACKEND=local`. Production (`API_DEBUG=false`) must use `STORAGE_BACKEND=s3` with public R2/S3 URLs.
+**Local `/static` serving** only works when `API_DEBUG=true` **and** `STORAGE_BACKEND=local`. Production (`API_DEBUG=false`) must use `STORAGE_BACKEND=supabase` or `STORAGE_BACKEND=s3` with public object URLs.
 
 Default queue: **Celery + Redis**. Start Redis via `docker compose up -d redis`, then run API and worker in separate terminals (see README).
 
@@ -23,7 +23,7 @@ Default queue: **Celery + Redis**. Start Redis via `docker compose up -d redis`,
 | PostgreSQL | Render PostgreSQL | — |
 | Redis | Render Key Value / Upstash / self-hosted | — |
 | Celery worker | Render Background Worker | `apps/api` |
-| File storage | Cloudflare R2 or AWS S3 | — |
+| File storage | Supabase Storage (recommended) or Cloudflare R2 / AWS S3 | — |
 
 ### Render Backend
 
@@ -55,11 +55,25 @@ alembic upgrade head && uvicorn app.main:app --host 0.0.0.0 --port $PORT
 alembic upgrade head && celery -A app.jobs.celery_app worker --loglevel=info --queues=experiments
 ```
 
-Render health check: `GET /health/ready` (PostgreSQL + Redis + storage).
+Render health check: `GET /health/ready` (PostgreSQL + Redis when Celery + **storage read/write/delete probe**).
 
-Use the same `DATABASE_URL`, `REDIS_URL`, and storage env vars on both web and worker services.
+**Production storage is mandatory remote object storage** — `STORAGE_BACKEND=local` is rejected when `API_DEBUG=false` (startup validation + health FAIL).
 
-**File storage (production — recommended):**
+#### Supabase Storage (recommended)
+
+See [supabase-storage-migration.md](./supabase-storage-migration.md) for full migration steps.
+
+```env
+STORAGE_BACKEND=supabase
+SUPABASE_URL=https://<project-ref>.supabase.co
+SUPABASE_SERVICE_ROLE_KEY=<service_role_secret>
+SUPABASE_STORAGE_BUCKET=genetic-contour-platform
+SUPABASE_PUBLIC_BASE_URL=https://<project-ref>.supabase.co/storage/v1/object/public/genetic-contour-platform
+```
+
+Set `NEXT_PUBLIC_STORAGE_PUBLIC_URL` on Vercel to the same value as `SUPABASE_PUBLIC_BASE_URL` (no trailing slash).
+
+#### S3 / Cloudflare R2 (alternative)
 
 ```env
 STORAGE_BACKEND=s3
@@ -71,7 +85,29 @@ S3_REGION=auto
 S3_PUBLIC_BASE_URL=https://pub-xxxx.r2.dev
 ```
 
-When `STORAGE_BACKEND=s3`, the API does **not** mount local `StaticFiles`. Image URLs in API responses point to `S3_PUBLIC_BASE_URL/{storage_key}`.
+Set `NEXT_PUBLIC_STORAGE_PUBLIC_URL` on Vercel to the same value as `S3_PUBLIC_BASE_URL`.
+
+**Storage health response shape:**
+
+```json
+{
+  "storage": {
+    "ok": true,
+    "backend": "supabase",
+    "read": true,
+    "write": true,
+    "delete": true,
+    "detail": "supabase bucket reachable; read/write/delete probe passed"
+  }
+}
+```
+
+**Ghost record repair API** (authenticated):
+
+- `GET /api/storage/audit` — DB rows without storage objects
+- `POST /api/storage/repair/mark-missing` — mark broken GT/original metadata
+- `POST /api/storage/repair/clear-ground-truth/{image_id}` — clear GT reference when file missing
+- `DELETE /api/storage/repair/images/{image_id}` — remove orphan DB row (explicit action only)
 
 ### Cloudflare R2 Setup
 

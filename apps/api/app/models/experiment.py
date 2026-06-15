@@ -14,12 +14,14 @@ class ExperimentStatus(str, Enum):
     QUEUED = "queued"
     RUNNING = "running"
     COMPLETED = "completed"
+    DEGRADED = "degraded"
     FAILED = "failed"
     CANCELLED = "cancelled"
 
 
 TERMINAL_STATUSES = frozenset({
     ExperimentStatus.COMPLETED.value,
+    ExperimentStatus.DEGRADED.value,
     ExperimentStatus.FAILED.value,
     ExperimentStatus.CANCELLED.value,
 })

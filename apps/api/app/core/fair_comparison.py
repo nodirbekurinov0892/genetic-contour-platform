@@ -20,8 +20,14 @@ FAIR_V1_METHODOLOGY = {
     "version": METHODOLOGY_VERSION,
     "input_space": "normalized_gradient_magnitude_uint8",
     "description": (
-        "All edge detectors (Sobel, Prewitt, Canny, GA) operate on the same "
-        "normalized gradient magnitude representation derived from identical preprocessing."
+        "Fair protocol v1 uses a shared gradient-enhanced input space: all edge detectors "
+        "(Sobel, Prewitt, Canny) receive the same normalized Sobel gradient magnitude (uint8), "
+        "while GA operates on the matching float gradient [0,1]. This is intentional fair "
+        "comparison — not textbook blurred-grayscale classical edge detection."
+    ),
+    "methodological_note": (
+        "Classical detectors run on gradient-enhanced input, not raw blurred grayscale. "
+        "Use comparison_protocol=legacy for blurred-grayscale classical inputs."
     ),
     "preprocessing": {
         "resize": "aspect-preserving width target",

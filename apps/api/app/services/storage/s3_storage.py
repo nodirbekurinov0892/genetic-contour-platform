@@ -8,6 +8,7 @@ from botocore.exceptions import ClientError
 
 from app.config import Settings
 from app.services.storage.base import StorageBackend, StoredObject
+from app.services.storage.exceptions import StorageObjectNotFoundError
 
 logger = logging.getLogger(__name__)
 
@@ -62,7 +63,13 @@ class S3StorageBackend(StorageBackend):
 
     def get_bytes(self, storage_key: str) -> bytes:
         key = self._normalize_key(storage_key)
-        response = self._client.get_object(Bucket=self.bucket, Key=key)
+        try:
+            response = self._client.get_object(Bucket=self.bucket, Key=key)
+        except ClientError as exc:
+            code = exc.response.get("Error", {}).get("Code", "")
+            if code in {"NoSuchKey", "404", "NotFound"}:
+                raise StorageObjectNotFoundError(storage_key) from exc
+            raise
         return response["Body"].read()
 
     def delete_file(self, storage_key: str) -> bool:

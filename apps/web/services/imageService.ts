@@ -45,4 +45,14 @@ export const imageService = {
       body: form,
     });
   },
+
+  async clearGroundTruthReference(imageId: string): Promise<ImageRecord> {
+    return apiFetch<ImageRecord>(`/api/storage/repair/clear-ground-truth/${imageId}`, {
+      method: "POST",
+    });
+  },
+
+  async deleteBrokenRecord(imageId: string): Promise<{ message: string; image_id: string }> {
+    return apiFetch(`/api/storage/repair/images/${imageId}`, { method: "DELETE" });
+  },
 };

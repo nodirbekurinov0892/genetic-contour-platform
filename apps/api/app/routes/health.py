@@ -7,6 +7,16 @@ from app.services.health_checks import run_readiness_checks
 router = APIRouter(tags=["health"])
 
 
+def _format_check(item) -> dict:
+    if item.name == "storage" and item.metadata:
+        return {
+            "ok": item.ok,
+            **item.metadata,
+            "detail": item.detail,
+        }
+    return {"ok": item.ok, "detail": item.detail}
+
+
 @router.get("/health")
 async def health_check():
     """Backward-compatible liveness alias."""
@@ -28,7 +38,7 @@ async def readiness():
 
     settings = get_settings()
     results = await run_readiness_checks(settings)
-    checks = {item.name: {"ok": item.ok, "detail": item.detail} for item in results}
+    checks = {item.name: _format_check(item) for item in results}
     all_ok = all(item.ok for item in results)
     body = {
         "status": "ok" if all_ok else "degraded",

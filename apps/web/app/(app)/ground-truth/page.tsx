@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
-import { CheckCircle2, Loader2, RefreshCw, Trash2, Upload } from "lucide-react";
+import { CheckCircle2, Loader2, RefreshCw, Trash2, Upload, AlertTriangle } from "lucide-react";
 import { apiFetch } from "@/lib/api";
 import { SectionHeader } from "@/components/ui/section-header";
 import { Button } from "@/components/ui/button";
@@ -67,6 +67,20 @@ export default function GroundTruthPage() {
       await load();
     } catch (err) {
       setError(err instanceof Error ? err.message : "O'chirish xatosi");
+    } finally {
+      setActionId(null);
+      setActionType(null);
+    }
+  };
+
+  const clearGtReference = async (id: string) => {
+    setActionId(id);
+    setActionType("delete");
+    try {
+      await imageService.clearGroundTruthReference(id);
+      await load();
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Tozalash xatosi");
     } finally {
       setActionId(null);
       setActionType(null);
@@ -160,6 +174,11 @@ export default function GroundTruthPage() {
                             alt="Ground Truth"
                             fill
                           />
+                        ) : img.ground_truth_storage_status === "reference_missing" ? (
+                          <div className="flex h-full flex-col items-center justify-center gap-1 px-2 text-center text-xs text-amber-700">
+                            <AlertTriangle className="h-4 w-4" />
+                            GT fayl topilmadi
+                          </div>
                         ) : (
                           <div className="flex h-full items-center justify-center text-xs text-muted-foreground">
                             Mask yo&apos;q
@@ -176,10 +195,22 @@ export default function GroundTruthPage() {
                       <Badge variant="outline">
                         {formatGtValidationStatus(img.gt_validation_status)}
                       </Badge>
-                      {img.gt_validation_status === "valid" && (
+                      {img.ground_truth_storage_status === "available" && (
+                        <Badge variant="success">GT fayl mavjud</Badge>
+                      )}
+                      {img.ground_truth_storage_status === "reference_missing" && (
+                        <Badge variant="destructive">GT fayl topilmadi</Badge>
+                      )}
+                      {img.gt_validation_status === "valid" && img.ground_truth_storage_status === "available" && (
                         <Badge variant="success">Juftlik tasdiqlangan</Badge>
                       )}
                     </div>
+                    {img.ground_truth_storage_status === "reference_missing" && (
+                      <p className="flex items-center gap-2 text-xs text-amber-700 dark:text-amber-400">
+                        <AlertTriangle className="h-3.5 w-3.5" />
+                        GT yozuvi bor, lekin storage fayli yo&apos;q. Qayta yuklang yoki bog&apos;lanishni olib tashlang.
+                      </p>
+                    )}
                     <p className="text-xs text-muted-foreground">
                       {img.gt_validated_at
                         ? `Tekshirildi: ${new Date(img.gt_validated_at).toLocaleString("uz-UZ")}`
@@ -224,6 +255,17 @@ export default function GroundTruthPage() {
                         }}
                       />
                     </label>
+                    {img.ground_truth_storage_status === "reference_missing" && (
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        disabled={busy}
+                        onClick={() => clearGtReference(img.id)}
+                        className="gap-2"
+                      >
+                        GT bog&apos;lanishini olib tashlash
+                      </Button>
+                    )}
                     <Button
                       size="sm"
                       variant="destructive"
@@ -240,7 +282,7 @@ export default function GroundTruthPage() {
                     </Button>
                   </div>
                 </div>
-                {img.gt_validation_status === "valid" && (
+                {img.gt_validation_status === "valid" && img.ground_truth_storage_status === "available" && (
                   <div className="mt-3 flex items-center gap-2 text-xs text-emerald-600 dark:text-emerald-400">
                     <CheckCircle2 className="h-4 w-4" />
                     Nazoratli baholash uchun tayyor

@@ -16,6 +16,7 @@ from app.models.experiment import Experiment
 from app.models.image import Image
 from app.models.user import User
 from app.services.storage import StorageService
+from app.services.storage.exceptions import StorageObjectNotFoundError
 from app.utils.ownership import ensure_owner
 
 logger = logging.getLogger(__name__)
@@ -91,6 +92,12 @@ async def serve_media(
         data = storage.get_bytes(key)
     except ValueError as exc:
         raise HTTPException(status_code=404, detail=str(exc)) from exc
+    except StorageObjectNotFoundError as exc:
+        logger.warning("Storage object missing for key %s (user=%s)", normalized, current_user.id)
+        raise HTTPException(status_code=404, detail="Fayl topilmadi") from exc
+    except FileNotFoundError as exc:
+        logger.warning("Storage object missing for key %s (user=%s)", normalized, current_user.id)
+        raise HTTPException(status_code=404, detail="Fayl topilmadi") from exc
     except Exception as exc:
         logger.exception("Failed to read storage object %s", normalized)
         raise HTTPException(

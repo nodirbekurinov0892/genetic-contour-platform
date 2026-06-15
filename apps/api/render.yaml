@@ -54,7 +54,25 @@ services:
 
       - key: STORAGE_BACKEND
 
-        value: "s3"
+        value: "supabase"
+
+      - key: SUPABASE_URL
+
+        sync: false
+
+      - key: SUPABASE_SERVICE_ROLE_KEY
+
+        sync: false
+
+      - key: SUPABASE_STORAGE_BUCKET
+
+        value: "genetic-contour-platform"
+
+      - key: SUPABASE_PUBLIC_BASE_URL
+
+        sync: false
+
+      # Optional S3/R2 fallback — set STORAGE_BACKEND=s3 and S3_* instead of Supabase.
 
       - key: S3_ENDPOINT_URL
 
@@ -71,6 +89,9 @@ services:
       - key: S3_BUCKET_NAME
 
         sync: false
+
+      # Required for production persistence — set all SUPABASE_* (or S3_*) in Render dashboard before deploy.
+      # STORAGE_BACKEND=local will fail startup when API_DEBUG=false.
 
       - key: S3_REGION
 

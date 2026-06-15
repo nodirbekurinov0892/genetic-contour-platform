@@ -7,6 +7,7 @@ import pytest
 from app.config import get_settings
 from app.services.storage.local_storage import LocalStorageBackend
 from app.services.storage.s3_storage import S3StorageBackend
+from app.services.storage.supabase_storage import SupabaseStorageBackend
 from app.services.storage.storage_service import StorageService
 
 
@@ -48,6 +49,18 @@ def test_s3_backend_selected_when_configured(
     assert isinstance(service.backend, S3StorageBackend)
     assert service.is_local is False
     mock_boto_client.assert_called_once()
+
+
+def test_supabase_backend_selected_when_configured(monkeypatch: pytest.MonkeyPatch):
+    monkeypatch.setenv("STORAGE_BACKEND", "supabase")
+    monkeypatch.setenv("SUPABASE_URL", "https://example.supabase.co")
+    monkeypatch.setenv("SUPABASE_SERVICE_ROLE_KEY", "service-role-key")
+    monkeypatch.setenv("SUPABASE_STORAGE_BUCKET", "genetic-contour-platform")
+    get_settings.cache_clear()
+
+    service = StorageService(get_settings())
+    assert isinstance(service.backend, SupabaseStorageBackend)
+    assert service.is_local is False
 
 
 def test_upload_key_is_server_generated_uuid(monkeypatch: pytest.MonkeyPatch):

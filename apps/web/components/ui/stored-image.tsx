@@ -4,7 +4,6 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { ImageOff, Loader2, RefreshCw } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
-  ApiError,
   fetchAuthenticatedBlob,
   resolveMediaProxyUrl,
   resolveStaticUrl,
@@ -69,13 +68,7 @@ export function StoredImage({
       objectUrlRef.current = objectUrl;
       setDisplaySrc(objectUrl);
     } catch (err) {
-      const message =
-        err instanceof ApiError
-          ? err.message
-          : err instanceof Error
-            ? err.message
-            : "Noma'lum xato";
-      setError(`Rasm yuklanmadi: ${message}`);
+      setError("Fayl topilmadi");
       setDisplaySrc(null);
     } finally {
       setLoading(false);

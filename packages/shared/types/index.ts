@@ -3,6 +3,7 @@ export type ExperimentStatus =
   | "queued"
   | "running"
   | "completed"
+  | "degraded"
   | "failed"
   | "cancelled";
 
@@ -34,6 +35,8 @@ export interface ImageRecord {
   size: number;
   mime_type: string;
   has_ground_truth?: boolean;
+  storage_status?: "available" | "missing" | "unknown";
+  ground_truth_storage_status?: "available" | "not_paired" | "reference_missing";
   ground_truth_url?: string | null;
   ground_truth_uploaded_at?: string | null;
   gt_validation_status?: string | null;

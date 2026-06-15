@@ -39,6 +39,10 @@ def build_reproducibility_v2(
     algorithm_params: dict[str, Any] | None = None,
     image_dimensions: dict[str, int] | None = None,
     has_ground_truth: bool = False,
+    gt_file_available: bool | None = None,
+    gt_reference_present: bool | None = None,
+    evaluation_mode: str | None = None,
+    evaluation_warnings: list[str] | None = None,
     comparison_protocol: str | None = None,
     image_checksum: str | None = None,
     gt_checksum: str | None = None,
@@ -70,4 +74,12 @@ def build_reproducibility_v2(
     })
     if protocol == "fair_v1":
         base["fair_comparison_methodology"] = FAIR_V1_METHODOLOGY
+    if gt_file_available is not None:
+        base["gt_file_available"] = gt_file_available
+    if gt_reference_present is not None:
+        base["gt_reference_present"] = gt_reference_present
+    if evaluation_mode:
+        base["evaluation_mode"] = evaluation_mode
+    if evaluation_warnings:
+        base["evaluation_warnings"] = evaluation_warnings
     return base

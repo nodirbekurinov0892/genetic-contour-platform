@@ -5,6 +5,7 @@ from pathlib import Path
 
 from app.config import Settings
 from app.services.storage.base import StorageBackend, StoredObject
+from app.services.storage.exceptions import StorageObjectNotFoundError
 from app.utils.file_utils import ensure_path_within_base
 
 
@@ -58,7 +59,10 @@ class LocalStorageBackend(StorageBackend):
         )
 
     def get_bytes(self, storage_key: str) -> bytes:
-        return self._resolve_local_path(storage_key).read_bytes()
+        path = self._resolve_local_path(storage_key)
+        if not path.exists():
+            raise StorageObjectNotFoundError(storage_key)
+        return path.read_bytes()
 
     def delete_file(self, storage_key: str) -> bool:
         path = self._resolve_local_path(storage_key)

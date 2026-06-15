@@ -14,6 +14,10 @@ def is_stale_public_url(public_url: str, settings: Settings) -> bool:
         base = settings.s3_public_base_url.rstrip("/")
         if base and not public_url.startswith(base):
             return True
+    elif settings.storage_backend == "supabase":
+        base = settings.resolved_supabase_public_base_url.rstrip("/")
+        if base and not public_url.startswith(base):
+            return True
     else:
         base = settings.api_public_url.rstrip("/")
         if base and not public_url.startswith(base):

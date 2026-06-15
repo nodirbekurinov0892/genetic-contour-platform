@@ -31,6 +31,7 @@ from app.schemas.experiment import AlgorithmParamsSchema, ExperimentRunRequest, 
 from app.services.job_registry import clear_cancel, is_cancelled
 from app.services.progress_tracker import ExperimentProgressTracker, resolve_algorithms
 from app.services.storage import StorageService
+from app.services.storage.exceptions import StorageObjectNotFoundError
 
 logger = logging.getLogger(__name__)
 
@@ -65,6 +66,17 @@ async def _mark_completed(session, experiment: Experiment) -> None:
     experiment.completed_at = datetime.now(timezone.utc)
     experiment.finished_at = datetime.now(timezone.utc)
     experiment.error_message = None
+    clear_cancel(experiment.id)
+    await session.commit()
+
+
+async def _mark_degraded(session, experiment: Experiment, message: str) -> None:
+    experiment.status = ExperimentStatus.DEGRADED.value
+    experiment.progress_percent = 100.0
+    experiment.current_generation = None
+    experiment.completed_at = datetime.now(timezone.utc)
+    experiment.finished_at = datetime.now(timezone.utc)
+    experiment.error_message = message[:2000]
     clear_cancel(experiment.id)
     await session.commit()
 
@@ -142,6 +154,51 @@ async def run_experiment_job(experiment_id: uuid.UUID) -> None:
                 await _mark_failed(session, experiment, "Unexpected worker error")
 
 
+GT_MISSING_WARNING = (
+    "Ground Truth fayli topilmadi, tajriba evristik rejimda baholandi"
+)
+
+
+async def _load_ground_truth(
+    storage: StorageService,
+    image: Image,
+) -> tuple[object | None, bool, str | None]:
+    """Return (ground_truth_array, gt_file_available, warning_message)."""
+    if not image.ground_truth_storage_key:
+        return None, False, None
+
+    gt_key = storage.resolve_storage_key(
+        storage_key=image.ground_truth_storage_key,
+        file_path=image.ground_truth_file_path,
+    )
+    if not await asyncio.to_thread(storage.exists, gt_key):
+        logger.warning(
+            "Ground truth storage object missing for image %s key=%s",
+            image.id,
+            gt_key,
+        )
+        return None, False, GT_MISSING_WARNING
+
+    try:
+        import cv2
+        import numpy as np
+
+        gt_bytes = await asyncio.to_thread(storage.get_bytes, gt_key)
+        ground_truth = cv2.imdecode(
+            np.frombuffer(gt_bytes, dtype=np.uint8),
+            cv2.IMREAD_GRAYSCALE,
+        )
+        if ground_truth is None:
+            return None, False, GT_MISSING_WARNING
+        return ground_truth, True, None
+    except (StorageObjectNotFoundError, FileNotFoundError):
+        logger.warning("Ground truth file not found for image %s", image.id, exc_info=True)
+        return None, False, GT_MISSING_WARNING
+    except Exception:
+        logger.warning("Failed to load ground truth for image %s", image.id, exc_info=True)
+        return None, False, GT_MISSING_WARNING
+
+
 async def _execute_job(experiment_id: uuid.UUID, settings) -> None:
     storage = StorageService(settings)
 
@@ -168,28 +225,32 @@ async def _execute_job(experiment_id: uuid.UUID, settings) -> None:
             await _mark_failed(session, experiment, "Source image not found")
             return
 
-        ground_truth = None
-        has_ground_truth = bool(image.ground_truth_storage_key)
-        if image.ground_truth_storage_key:
-            try:
-                gt_key = storage.resolve_storage_key(
-                    storage_key=image.ground_truth_storage_key,
-                    file_path=image.ground_truth_file_path,
-                )
-                gt_bytes = await asyncio.to_thread(storage.get_bytes, gt_key)
-                import cv2
-                import numpy as np
+        image_key = storage.resolve_storage_key(
+            storage_key=image.storage_key,
+            file_path=image.file_path,
+        )
+        if not await asyncio.to_thread(storage.exists, image_key):
+            await _mark_failed(session, experiment, "Manba rasm fayli topilmadi")
+            return
 
-                ground_truth = cv2.imdecode(
-                    np.frombuffer(gt_bytes, dtype=np.uint8),
-                    cv2.IMREAD_GRAYSCALE,
+        ground_truth, gt_file_available, gt_warning = await _load_ground_truth(storage, image)
+        has_ground_truth = gt_file_available
+        evaluation_mode = (request.evaluation_mode or "auto").strip().lower()
+
+        if evaluation_mode == "supervised" and not gt_file_available:
+            if image.ground_truth_storage_key:
+                await _mark_failed(
+                    session,
+                    experiment,
+                    "Ground Truth fayli topilmadi. Nazoratli baholash mumkin emas.",
                 )
-            except Exception:
-                logger.warning(
-                    "Failed to load ground truth for image %s",
-                    image.id,
-                    exc_info=True,
+            else:
+                await _mark_failed(
+                    session,
+                    experiment,
+                    "Ground Truth juftlanmagan. Nazoratli baholash mumkin emas.",
                 )
+            return
 
         from app.utils.reproducibility_v2 import build_reproducibility_v2
 
@@ -206,12 +267,18 @@ async def _execute_job(experiment_id: uuid.UUID, settings) -> None:
         experiment.methodology_version = "2.0.0"
         experiment.experiment_seed = seed
 
+        reproducibility_warnings: list[str] = []
+        if gt_warning:
+            reproducibility_warnings.append(gt_warning)
+
         experiment.reproducibility_json = build_reproducibility_v2(
             seed=seed if seed is not None else random.randint(0, 2**31 - 1),
             preprocessing_params={
                 "resize_width": request.params.resize_width,
                 "blur_kernel": request.params.blur_kernel,
                 "threshold": request.params.threshold,
+                "source": "algorithm_params",
+                "note": "Preprocessing uses AlgorithmParamsSchema for all algorithms (fair comparison).",
             },
             algorithm_params={
                 "threshold": request.params.threshold,
@@ -223,15 +290,23 @@ async def _execute_job(experiment_id: uuid.UUID, settings) -> None:
                 "ga_mutation_rate": ga.mutation_rate,
                 "ga_crossover_rate": ga.crossover_rate,
                 "ga_elitism_count": ga.elitism_count,
+                "ga_preprocessing_note": (
+                    "GAParams threshold/blur/resize mirror algorithm_params at run time; "
+                    "GAConfig receives population/generations/mutation/crossover/elitism only."
+                ),
             },
             image_dimensions={
                 "original_width": image.width,
                 "original_height": image.height,
             },
             has_ground_truth=has_ground_truth,
+            gt_file_available=gt_file_available,
+            gt_reference_present=bool(image.ground_truth_storage_key),
+            evaluation_mode=evaluation_mode,
+            evaluation_warnings=reproducibility_warnings,
             comparison_protocol=protocol,
             image_checksum=image.content_checksum,
-            gt_checksum=image.gt_checksum,
+            gt_checksum=image.gt_checksum if gt_file_available else None,
             dataset_version=image.dataset_version,
             parent_experiment_id=str(experiment.parent_experiment_id) if experiment.parent_experiment_id else None,
             benchmark_run_id=str(experiment.benchmark_run_id) if experiment.benchmark_run_id else None,
@@ -249,10 +324,6 @@ async def _execute_job(experiment_id: uuid.UUID, settings) -> None:
             return
 
         try:
-            image_key = storage.resolve_storage_key(
-                storage_key=image.storage_key,
-                file_path=image.file_path,
-            )
             image_bytes = await asyncio.to_thread(storage.get_bytes, image_key)
             raw = await asyncio.to_thread(load_image_from_bytes, image_bytes)
             config = PreprocessConfig(
@@ -311,9 +382,16 @@ async def _execute_job(experiment_id: uuid.UUID, settings) -> None:
                     await _update_progress(session, experiment, percent, gen)
                     await session.commit()
 
-            await _mark_completed(session, experiment)
+            if gt_warning and image.ground_truth_storage_key:
+                await _mark_degraded(session, experiment, gt_warning)
+            else:
+                await _mark_completed(session, experiment)
         except JobCancelled:
             await _mark_cancelled(session, experiment)
+        except StorageObjectNotFoundError:
+            await _mark_failed(session, experiment, "Manba rasm fayli topilmadi")
+        except FileNotFoundError:
+            await _mark_failed(session, experiment, "Manba rasm fayli topilmadi")
         except Exception:
             logger.exception("Experiment %s failed in worker", experiment_id)
             await _mark_failed(session, experiment, "Experiment processing failed")
@@ -456,9 +534,9 @@ async def _run_genetic_algorithm(
             mutation_rate=ga.mutation_rate,
             crossover_rate=ga.crossover_rate,
             elitism_count=ga.elitism_count,
-            threshold=ga.threshold,
-            blur_kernel=ga.blur_kernel,
-            resize_width=ga.resize_width,
+            threshold=params.threshold,
+            blur_kernel=params.blur_kernel,
+            resize_width=params.resize_width,
         )
     )
     await session.flush()
