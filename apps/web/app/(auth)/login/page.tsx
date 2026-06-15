@@ -8,7 +8,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useAuth } from "@/components/providers/auth-provider";
 import { RedirectIfAuthenticated } from "@/components/auth/redirect-if-authenticated";
-import { SmtpAuthNotice } from "@/components/auth/smtp-auth-notice";
+import { PlatformAuthNotice } from "@/components/auth/platform-auth-notice";
 import { LoadingState } from "@/components/ui/state-panel";
 import { safeRedirectPath } from "@/lib/safe-redirect";
 
@@ -37,7 +37,7 @@ function LoginForm() {
 
   return (
     <RedirectIfAuthenticated next={next}>
-      <div className="scientific-card border-border/80 p-8 shadow-lg">
+      <div className="scientific-card border-sky-200/70 bg-card/95 p-8 shadow-xl shadow-sky-500/5 dark:border-sky-500/20">
         <div className="mb-8">
           <h1 className="text-2xl font-bold tracking-tight">Tizimga kirish</h1>
           <p className="mt-2 text-sm text-muted-foreground">
@@ -45,7 +45,7 @@ function LoginForm() {
           </p>
         </div>
 
-        <SmtpAuthNotice />
+        <PlatformAuthNotice />
 
         <form onSubmit={handleSubmit} className="space-y-4">
           <div className="space-y-2">

@@ -10,6 +10,7 @@ export const PAGE_TITLES: Record<string, string> = {
   "/library": "Rasm kutubxonasi",
   "/help": "Yordam",
   "/profile": "Profil",
+  "/status": "Tizim holati",
   "/onboarding": "Boshlang'ich yo'riqnoma",
 };
 

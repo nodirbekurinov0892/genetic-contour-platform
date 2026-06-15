@@ -1,5 +1,6 @@
 import type { LucideIcon } from "lucide-react";
 import {
+  Activity,
   FlaskConical,
   GitCompare,
   HelpCircle,
@@ -27,12 +28,20 @@ export type NavCategory = {
   items: NavItem[];
 };
 
+/** Enterprise scientific workflow navigation. */
 export const enterpriseNavCategories: NavCategory[] = [
   {
-    id: "main",
-    label: "Asosiy",
+    id: "command",
+    label: "Boshqaruv",
     items: [
       { href: "/", label: "Boshqaruv paneli", icon: Home, mobileLabel: "Panel", showOnMobile: true },
+      { href: "/analytics", label: "Analitika markazi", icon: LineChart, mobileLabel: "Analitika" },
+    ],
+  },
+  {
+    id: "experiment",
+    label: "Tajriba jarayoni",
+    items: [
       {
         href: "/experiments/new",
         label: "Yangi tajriba",
@@ -40,12 +49,6 @@ export const enterpriseNavCategories: NavCategory[] = [
         mobileLabel: "Yangi",
         showOnMobile: true,
       },
-    ],
-  },
-  {
-    id: "workflow",
-    label: "Tajriba jarayoni",
-    items: [
       { href: "/experiments", label: "Tajribalar", icon: FlaskConical, mobileLabel: "Tajribalar" },
       {
         href: "/comparison",
@@ -58,7 +61,7 @@ export const enterpriseNavCategories: NavCategory[] = [
     ],
   },
   {
-    id: "data",
+    id: "datasets",
     label: "Ma'lumotlar",
     items: [
       {
@@ -73,28 +76,16 @@ export const enterpriseNavCategories: NavCategory[] = [
     ],
   },
   {
-    id: "analysis",
-    label: "Tahlil",
-    items: [
-      {
-        href: "/analytics",
-        label: "Analitika markazi",
-        icon: LineChart,
-        mobileLabel: "Analitika",
-      },
-    ],
-  },
-  {
     id: "system",
     label: "Tizim",
     items: [
       { href: "/profile", label: "Profil", icon: User, mobileLabel: "Profil" },
+      { href: "/status", label: "Tizim holati", icon: Activity, mobileLabel: "Holat" },
       { href: "/help", label: "Yordam", icon: HelpCircle, mobileLabel: "Yordam", showOnMobile: true },
     ],
   },
 ];
 
-/** Flat list for mobile nav and legacy consumers. */
 export const enterpriseNav: NavItem[] = enterpriseNavCategories.flatMap((c) => c.items);
 
 export const mobileNav = enterpriseNav.filter((item) => item.showOnMobile);

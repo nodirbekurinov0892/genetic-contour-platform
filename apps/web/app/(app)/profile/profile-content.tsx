@@ -4,6 +4,8 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import { useSearchParams } from "next/navigation";
 import * as Tabs from "@radix-ui/react-tabs";
 import { Loader2, Pencil, Shield, UserCircle } from "lucide-react";
+import { AvatarManager } from "@/components/profile/avatar-manager";
+import { UserAvatar } from "@/components/profile/user-avatar";
 import { useAuth } from "@/components/providers/auth-provider";
 import { useToast } from "@/components/providers/toast-provider";
 import { Badge } from "@/components/ui/badge";
@@ -17,8 +19,8 @@ import {
   formatUserRole,
   getAccountStatusLabel,
   getEmailVerificationLabel,
+  getRoleBadgeVariant,
   getUserDisplayName,
-  getUserInitials,
   type UserProfileData,
 } from "@/lib/user-profile";
 import { cn } from "@/lib/utils";
@@ -36,12 +38,6 @@ function normalizeProfile(data?: UserProfileData | null): UserProfileData {
   return { ...EMPTY_PROFILE, ...(data ?? {}) };
 }
 
-function getRoleBadgeVariant(role: string): "default" | "success" | "secondary" {
-  if (role === "admin") return "default";
-  if (role === "researcher") return "success";
-  return "secondary";
-}
-
 function formatDateTime(value?: string | null): string {
   if (!value) return "—";
   const date = new Date(value);
@@ -57,29 +53,45 @@ function formatDateTime(value?: string | null): string {
 
 function ProfileField({
   label,
+  fieldId,
   value,
   editing,
   onChange,
   readOnly,
   type = "text",
+  multiline = false,
 }: {
   label: string;
+  fieldId: string;
   value: string;
   editing: boolean;
   onChange: (value: string) => void;
   readOnly?: boolean;
   type?: string;
+  multiline?: boolean;
 }) {
   return (
     <div className="space-y-1.5">
-      <Label className="text-xs text-muted-foreground">{label}</Label>
+      <Label htmlFor={fieldId} className="text-xs text-muted-foreground">
+        {label}
+      </Label>
       {editing && !readOnly ? (
-        <Input
-          type={type}
-          value={value}
-          onChange={(e) => onChange(e.target.value)}
-          className="h-9"
-        />
+        multiline ? (
+          <textarea
+            id={fieldId}
+            value={value}
+            onChange={(e) => onChange(e.target.value)}
+            className="min-h-[96px] w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+          />
+        ) : (
+          <Input
+            id={fieldId}
+            type={type}
+            value={value}
+            onChange={(e) => onChange(e.target.value)}
+            className="h-9"
+          />
+        )
       ) : (
         <p className="min-h-9 rounded-md border border-transparent px-3 py-2 text-sm">
           {value.trim() || "—"}
@@ -139,20 +151,32 @@ export default function ProfilePageContent() {
     setEditingScience(false);
   }, [user]);
 
+  const trimOrNull = (value?: string | null) => value?.trim() || null;
+
   const handleSavePersonal = async () => {
     setSaving(true);
     try {
       await updateProfile({
         profile: {
           ...normalizeProfile(user?.profile_data),
-          first_name: personalForm.first_name?.trim() || null,
-          last_name: personalForm.last_name?.trim() || null,
-          middle_name: personalForm.middle_name?.trim() || null,
-          phone: personalForm.phone?.trim() || null,
-          position: personalForm.position?.trim() || null,
-          organization: personalForm.organization?.trim() || null,
-          degree: personalForm.degree?.trim() || null,
-          specialty: personalForm.specialty?.trim() || null,
+          first_name: trimOrNull(personalForm.first_name),
+          last_name: trimOrNull(personalForm.last_name),
+          middle_name: trimOrNull(personalForm.middle_name),
+          phone: trimOrNull(personalForm.phone),
+          position: trimOrNull(personalForm.position),
+          organization: trimOrNull(personalForm.organization),
+          degree: trimOrNull(personalForm.degree),
+          specialty: trimOrNull(personalForm.specialty),
+          birth_date: trimOrNull(personalForm.birth_date),
+          gender: trimOrNull(personalForm.gender),
+          country: trimOrNull(personalForm.country),
+          region: trimOrNull(personalForm.region),
+          city: trimOrNull(personalForm.city),
+          bio: trimOrNull(personalForm.bio),
+          telegram: trimOrNull(personalForm.telegram),
+          linkedin: trimOrNull(personalForm.linkedin),
+          github: trimOrNull(personalForm.github),
+          website: trimOrNull(personalForm.website),
         },
       });
       setEditingPersonal(false);
@@ -170,11 +194,13 @@ export default function ProfilePageContent() {
       await updateProfile({
         profile: {
           ...normalizeProfile(user?.profile_data),
-          orcid: scienceForm.orcid?.trim() || null,
-          google_scholar: scienceForm.google_scholar?.trim() || null,
-          researchgate: scienceForm.researchgate?.trim() || null,
-          affiliation: scienceForm.affiliation?.trim() || null,
-          research_direction: scienceForm.research_direction?.trim() || null,
+          orcid: trimOrNull(scienceForm.orcid),
+          google_scholar: trimOrNull(scienceForm.google_scholar),
+          researchgate: trimOrNull(scienceForm.researchgate),
+          scopus_id: trimOrNull(scienceForm.scopus_id),
+          wos_id: trimOrNull(scienceForm.wos_id),
+          affiliation: trimOrNull(scienceForm.affiliation),
+          research_direction: trimOrNull(scienceForm.research_direction),
         },
       });
       setEditingScience(false);
@@ -215,8 +241,6 @@ export default function ProfilePageContent() {
     return <LoadingState message="Profil topilmadi" />;
   }
 
-  const profile = normalizeProfile(user.profile_data);
-
   return (
     <div className="mx-auto max-w-4xl space-y-6">
       <SectionHeader
@@ -224,10 +248,10 @@ export default function ProfilePageContent() {
         description="Shaxsiy ma'lumotlar, rol va xavfsizlik sozlamalari"
       />
 
+      <AvatarManager />
+
       <div className="scientific-card flex flex-col gap-4 p-5 sm:flex-row sm:items-center">
-        <span className="flex h-16 w-16 items-center justify-center rounded-full bg-primary/12 text-lg font-semibold text-primary">
-          {getUserInitials(user.name, profile, user.email)}
-        </span>
+        <UserAvatar user={user} size="lg" />
         <div className="min-w-0 flex-1">
           <h2 className="truncate text-xl font-semibold">{displayName}</h2>
           <p className="truncate text-sm text-muted-foreground">{user.email}</p>
@@ -278,61 +302,27 @@ export default function ProfilePageContent() {
             )}
           </div>
           <div className="scientific-card grid gap-4 p-5 sm:grid-cols-2">
-            <ProfileField
-              label="Ism"
-              value={personalForm.first_name ?? ""}
-              editing={editingPersonal}
-              onChange={(v) => setPersonalForm((p) => ({ ...p, first_name: v }))}
-            />
-            <ProfileField
-              label="Familiya"
-              value={personalForm.last_name ?? ""}
-              editing={editingPersonal}
-              onChange={(v) => setPersonalForm((p) => ({ ...p, last_name: v }))}
-            />
-            <ProfileField
-              label="Otasining ismi"
-              value={personalForm.middle_name ?? ""}
-              editing={editingPersonal}
-              onChange={(v) => setPersonalForm((p) => ({ ...p, middle_name: v }))}
-            />
-            <ProfileField
-              label="Email"
-              value={user.email}
-              editing={editingPersonal}
-              onChange={() => undefined}
-              readOnly
-            />
-            <ProfileField
-              label="Telefon raqam"
-              value={personalForm.phone ?? ""}
-              editing={editingPersonal}
-              onChange={(v) => setPersonalForm((p) => ({ ...p, phone: v }))}
-            />
-            <ProfileField
-              label="Lavozim"
-              value={personalForm.position ?? ""}
-              editing={editingPersonal}
-              onChange={(v) => setPersonalForm((p) => ({ ...p, position: v }))}
-            />
-            <ProfileField
-              label="Tashkilot / universitet"
-              value={personalForm.organization ?? ""}
-              editing={editingPersonal}
-              onChange={(v) => setPersonalForm((p) => ({ ...p, organization: v }))}
-            />
-            <ProfileField
-              label="Ilmiy daraja"
-              value={personalForm.degree ?? ""}
-              editing={editingPersonal}
-              onChange={(v) => setPersonalForm((p) => ({ ...p, degree: v }))}
-            />
-            <ProfileField
-              label="Mutaxassislik"
-              value={personalForm.specialty ?? ""}
-              editing={editingPersonal}
-              onChange={(v) => setPersonalForm((p) => ({ ...p, specialty: v }))}
-            />
+            <ProfileField fieldId="first_name" label="Ism" value={personalForm.first_name ?? ""} editing={editingPersonal} onChange={(v) => setPersonalForm((p) => ({ ...p, first_name: v }))} />
+            <ProfileField fieldId="last_name" label="Familiya" value={personalForm.last_name ?? ""} editing={editingPersonal} onChange={(v) => setPersonalForm((p) => ({ ...p, last_name: v }))} />
+            <ProfileField fieldId="middle_name" label="Otasining ismi" value={personalForm.middle_name ?? ""} editing={editingPersonal} onChange={(v) => setPersonalForm((p) => ({ ...p, middle_name: v }))} />
+            <ProfileField fieldId="email" label="Email" value={user.email} editing={editingPersonal} onChange={() => undefined} readOnly />
+            <ProfileField fieldId="phone" label="Telefon raqam" value={personalForm.phone ?? ""} editing={editingPersonal} onChange={(v) => setPersonalForm((p) => ({ ...p, phone: v }))} />
+            <ProfileField fieldId="birth_date" label="Tug'ilgan sana" value={personalForm.birth_date ?? ""} editing={editingPersonal} type="date" onChange={(v) => setPersonalForm((p) => ({ ...p, birth_date: v }))} />
+            <ProfileField fieldId="gender" label="Jins" value={personalForm.gender ?? ""} editing={editingPersonal} onChange={(v) => setPersonalForm((p) => ({ ...p, gender: v }))} />
+            <ProfileField fieldId="position" label="Lavozim" value={personalForm.position ?? ""} editing={editingPersonal} onChange={(v) => setPersonalForm((p) => ({ ...p, position: v }))} />
+            <ProfileField fieldId="organization" label="Tashkilot / universitet" value={personalForm.organization ?? ""} editing={editingPersonal} onChange={(v) => setPersonalForm((p) => ({ ...p, organization: v }))} />
+            <ProfileField fieldId="degree" label="Ilmiy daraja" value={personalForm.degree ?? ""} editing={editingPersonal} onChange={(v) => setPersonalForm((p) => ({ ...p, degree: v }))} />
+            <ProfileField fieldId="specialty" label="Mutaxassislik" value={personalForm.specialty ?? ""} editing={editingPersonal} onChange={(v) => setPersonalForm((p) => ({ ...p, specialty: v }))} />
+            <ProfileField fieldId="country" label="Mamlakat" value={personalForm.country ?? ""} editing={editingPersonal} onChange={(v) => setPersonalForm((p) => ({ ...p, country: v }))} />
+            <ProfileField fieldId="region" label="Viloyat" value={personalForm.region ?? ""} editing={editingPersonal} onChange={(v) => setPersonalForm((p) => ({ ...p, region: v }))} />
+            <ProfileField fieldId="city" label="Shahar" value={personalForm.city ?? ""} editing={editingPersonal} onChange={(v) => setPersonalForm((p) => ({ ...p, city: v }))} />
+            <ProfileField fieldId="telegram" label="Telegram" value={personalForm.telegram ?? ""} editing={editingPersonal} onChange={(v) => setPersonalForm((p) => ({ ...p, telegram: v }))} />
+            <ProfileField fieldId="linkedin" label="LinkedIn" value={personalForm.linkedin ?? ""} editing={editingPersonal} onChange={(v) => setPersonalForm((p) => ({ ...p, linkedin: v }))} />
+            <ProfileField fieldId="github" label="GitHub" value={personalForm.github ?? ""} editing={editingPersonal} onChange={(v) => setPersonalForm((p) => ({ ...p, github: v }))} />
+            <ProfileField fieldId="website" label="Veb-sayt" value={personalForm.website ?? ""} editing={editingPersonal} onChange={(v) => setPersonalForm((p) => ({ ...p, website: v }))} />
+            <div className="sm:col-span-2">
+              <ProfileField fieldId="bio" label="Bio" value={personalForm.bio ?? ""} editing={editingPersonal} multiline onChange={(v) => setPersonalForm((p) => ({ ...p, bio: v }))} />
+            </div>
           </div>
         </Tabs.Content>
 
@@ -448,37 +438,14 @@ export default function ProfilePageContent() {
             )}
           </div>
           <div className="scientific-card grid gap-4 p-5 sm:grid-cols-2">
-            <ProfileField
-              label="ORCID"
-              value={scienceForm.orcid ?? ""}
-              editing={editingScience}
-              onChange={(v) => setScienceForm((p) => ({ ...p, orcid: v }))}
-            />
-            <ProfileField
-              label="Google Scholar"
-              value={scienceForm.google_scholar ?? ""}
-              editing={editingScience}
-              onChange={(v) => setScienceForm((p) => ({ ...p, google_scholar: v }))}
-            />
-            <ProfileField
-              label="ResearchGate"
-              value={scienceForm.researchgate ?? ""}
-              editing={editingScience}
-              onChange={(v) => setScienceForm((p) => ({ ...p, researchgate: v }))}
-            />
-            <ProfileField
-              label="Affiliation"
-              value={scienceForm.affiliation ?? ""}
-              editing={editingScience}
-              onChange={(v) => setScienceForm((p) => ({ ...p, affiliation: v }))}
-            />
+            <ProfileField fieldId="orcid" label="ORCID" value={scienceForm.orcid ?? ""} editing={editingScience} onChange={(v) => setScienceForm((p) => ({ ...p, orcid: v }))} />
+            <ProfileField fieldId="google_scholar" label="Google Scholar" value={scienceForm.google_scholar ?? ""} editing={editingScience} onChange={(v) => setScienceForm((p) => ({ ...p, google_scholar: v }))} />
+            <ProfileField fieldId="researchgate" label="ResearchGate" value={scienceForm.researchgate ?? ""} editing={editingScience} onChange={(v) => setScienceForm((p) => ({ ...p, researchgate: v }))} />
+            <ProfileField fieldId="scopus_id" label="Scopus ID" value={scienceForm.scopus_id ?? ""} editing={editingScience} onChange={(v) => setScienceForm((p) => ({ ...p, scopus_id: v }))} />
+            <ProfileField fieldId="wos_id" label="Web of Science ID" value={scienceForm.wos_id ?? ""} editing={editingScience} onChange={(v) => setScienceForm((p) => ({ ...p, wos_id: v }))} />
+            <ProfileField fieldId="affiliation" label="Affiliation" value={scienceForm.affiliation ?? ""} editing={editingScience} onChange={(v) => setScienceForm((p) => ({ ...p, affiliation: v }))} />
             <div className="sm:col-span-2">
-              <ProfileField
-                label="Tadqiqot yo'nalishi"
-                value={scienceForm.research_direction ?? ""}
-                editing={editingScience}
-                onChange={(v) => setScienceForm((p) => ({ ...p, research_direction: v }))}
-              />
+              <ProfileField fieldId="research_direction" label="Tadqiqot yo'nalishi" value={scienceForm.research_direction ?? ""} editing={editingScience} onChange={(v) => setScienceForm((p) => ({ ...p, research_direction: v }))} />
             </div>
           </div>
         </Tabs.Content>

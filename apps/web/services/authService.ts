@@ -1,5 +1,5 @@
 import { apiFetch } from "@/lib/api";
-import { clearTokens, getRefreshToken, setTokens, syncSessionCookie } from "@/lib/auth-storage";
+import { clearTokens, getAccessToken, getRefreshToken, setTokens, syncSessionCookie } from "@/lib/auth-storage";
 import type { UserProfileData } from "@/lib/user-profile";
 import { detailFromBody, toUserFacingNetworkError } from "@/lib/network-errors";
 
@@ -114,5 +114,26 @@ export const authService = {
       method: "POST",
       body: JSON.stringify(data),
     }).then(() => undefined);
+  },
+
+  async uploadAvatar(file: File): Promise<AuthUser> {
+    const formData = new FormData();
+    formData.append("file", file);
+    const accessToken = getAccessToken();
+    const res = await fetch("/api/backend/auth/me/avatar", {
+      method: "POST",
+      headers: accessToken ? { Authorization: `Bearer ${accessToken}` } : {},
+      body: formData,
+      credentials: "include",
+    });
+    if (!res.ok) {
+      const body = (await res.json().catch(() => ({}))) as Record<string, unknown>;
+      throw new Error(detailFromBody(body, "Avatar yuklash muvaffaqiyatsiz"));
+    }
+    return res.json() as Promise<AuthUser>;
+  },
+
+  deleteAvatar(): Promise<AuthUser> {
+    return apiFetch<AuthUser>("/api/auth/me/avatar", { method: "DELETE" });
   },
 };

@@ -3,7 +3,7 @@ import secrets
 import uuid
 from datetime import datetime, timedelta, timezone
 
-from fastapi import HTTPException, status
+from fastapi import HTTPException, UploadFile, status
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -19,8 +19,13 @@ from app.core.security import (
 from app.models.refresh_token import RefreshToken
 from app.models.user import User, UserRole
 from app.schemas.auth import LoginRequest, ProfileUpdateRequest, RegisterRequest
+from app.services.storage import StorageService
+from app.utils.file_utils import detect_mime_type, validate_extension
+from app.utils.media_urls import resolve_public_url
 
 logger = logging.getLogger(__name__)
+
+_PROFILE_SERVER_KEYS = frozenset({"avatar_url", "avatar_storage_key"})
 
 
 class AuthService:
@@ -30,6 +35,14 @@ class AuthService:
 
     def _email_verification_required(self) -> bool:
         return self.settings.email_verification_required
+
+    async def _user_in_session(self, user: User) -> User:
+        """Reload user in this service session (auth deps use a separate DB session)."""
+        result = await self.db.execute(select(User).where(User.id == user.id))
+        db_user = result.scalar_one_or_none()
+        if db_user is None:
+            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="User not found")
+        return db_user
 
     async def register(self, data: RegisterRequest) -> tuple[User, str, str]:
         existing = await self.db.execute(select(User).where(User.email == data.email.lower()))
@@ -168,33 +181,85 @@ class AuthService:
         await self.db.flush()
 
     async def complete_onboarding(self, user: User) -> User:
-        user.onboarding_completed_at = datetime.now(timezone.utc)
+        db_user = await self._user_in_session(user)
+        db_user.onboarding_completed_at = datetime.now(timezone.utc)
         await self.db.flush()
-        return user
+        return db_user
 
     async def update_profile(self, user: User, data: ProfileUpdateRequest) -> User:
+        db_user = await self._user_in_session(user)
         if data.name is not None:
-            user.name = data.name.strip() or None
+            db_user.name = data.name.strip() or None
         if data.profile is not None:
-            current = dict(user.profile_data or {})
+            current = dict(db_user.profile_data or {})
             patch = data.profile.model_dump(exclude_unset=True)
             for key, value in patch.items():
+                if key in _PROFILE_SERVER_KEYS:
+                    continue
                 if value is None or (isinstance(value, str) and not value.strip()):
                     current.pop(key, None)
                 else:
                     current[key] = value.strip() if isinstance(value, str) else value
-            user.profile_data = current or None
+            db_user.profile_data = current or None
         await self.db.flush()
-        return user
+        return db_user
 
     async def change_password(self, user: User, current_password: str, new_password: str) -> None:
-        if not verify_password(current_password, user.password_hash):
+        db_user = await self._user_in_session(user)
+        if not verify_password(current_password, db_user.password_hash):
             raise HTTPException(
                 status_code=status.HTTP_400_BAD_REQUEST,
                 detail="Joriy parol noto'g'ri",
             )
-        user.password_hash = hash_password(new_password)
+        db_user.password_hash = hash_password(new_password)
         await self.db.flush()
+
+    async def upload_avatar(self, user: User, file: UploadFile) -> User:
+        db_user = await self._user_in_session(user)
+        if not file.filename or not validate_extension(file.filename):
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="Ruxsat etilgan formatlar: JPG, PNG, WebP",
+            )
+
+        content = await file.read()
+        if len(content) > 2 * 1024 * 1024:
+            raise HTTPException(status_code=status.HTTP_413_REQUEST_ENTITY_TOO_LARGE, detail="Maksimal hajm 2MB")
+
+        ext = file.filename.rsplit(".", 1)[-1].lower()
+        storage = StorageService(self.settings)
+        storage_key = storage.generate_storage_key("uploads/avatars", ext, str(db_user.id))
+        content_type = detect_mime_type(content, file.filename) or "image/jpeg"
+        stored = storage.save_bytes(storage_key, content, content_type)
+        public_url = resolve_public_url(
+            storage=storage,
+            settings=self.settings,
+            storage_key=stored.storage_key,
+            public_url=stored.public_url,
+            file_path=None,
+        )
+
+        current = dict(db_user.profile_data or {})
+        old_key = current.get("avatar_storage_key")
+        if isinstance(old_key, str) and old_key:
+            storage.delete_file(old_key)
+
+        current["avatar_storage_key"] = stored.storage_key
+        current["avatar_url"] = public_url
+        db_user.profile_data = current
+        await self.db.flush()
+        return db_user
+
+    async def delete_avatar(self, user: User) -> User:
+        db_user = await self._user_in_session(user)
+        current = dict(db_user.profile_data or {})
+        old_key = current.pop("avatar_storage_key", None)
+        current.pop("avatar_url", None)
+        if isinstance(old_key, str) and old_key:
+            StorageService(self.settings).delete_file(old_key)
+        db_user.profile_data = current or None
+        await self.db.flush()
+        return db_user
 
     async def _issue_tokens(self, user: User) -> tuple[str, str]:
         access_token = create_access_token(str(user.id), self.settings)

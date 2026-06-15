@@ -26,6 +26,8 @@ interface AuthContextValue {
   refreshUser: () => Promise<void>;
   updateProfile: (data: ProfileUpdatePayload) => Promise<AuthUser>;
   changePassword: (currentPassword: string, newPassword: string) => Promise<void>;
+  uploadAvatar: (file: File) => Promise<AuthUser>;
+  deleteAvatar: () => Promise<AuthUser>;
 }
 
 const AuthContext = createContext<AuthContextValue | null>(null);
@@ -119,6 +121,18 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     await authService.changePassword({ current_password: currentPassword, new_password: newPassword });
   }, []);
 
+  const uploadAvatar = useCallback(async (file: File) => {
+    const updated = await authService.uploadAvatar(file);
+    setUser(updated);
+    return updated;
+  }, []);
+
+  const deleteAvatar = useCallback(async () => {
+    const updated = await authService.deleteAvatar();
+    setUser(updated);
+    return updated;
+  }, []);
+
   const value = useMemo(
     () => ({
       user,
@@ -129,8 +143,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       refreshUser,
       updateProfile,
       changePassword,
+      uploadAvatar,
+      deleteAvatar,
     }),
-    [user, loading, login, register, logout, refreshUser, updateProfile, changePassword],
+    [user, loading, login, register, logout, refreshUser, updateProfile, changePassword, uploadAvatar, deleteAvatar],
   );
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

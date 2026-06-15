@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends, Request
+from fastapi import APIRouter, Depends, File, Request, UploadFile
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.config import Settings, get_settings
@@ -116,6 +116,33 @@ async def change_password(
     service = AuthService(db, settings)
     await service.change_password(current_user, data.current_password, data.new_password)
     return {"message": "Parol muvaffaqiyatli yangilandi"}
+
+
+@router.post("/me/avatar", response_model=UserResponse)
+@limiter.limit("20/hour")
+async def upload_avatar(
+    request: Request,
+    file: UploadFile = File(...),
+    db: AsyncSession = Depends(get_db),
+    settings: Settings = Depends(get_settings),
+    current_user: User = Depends(get_current_active_user),
+):
+    service = AuthService(db, settings)
+    user = await service.upload_avatar(current_user, file)
+    return UserResponse.model_validate(user)
+
+
+@router.delete("/me/avatar", response_model=UserResponse)
+@limiter.limit("20/hour")
+async def delete_avatar(
+    request: Request,
+    db: AsyncSession = Depends(get_db),
+    settings: Settings = Depends(get_settings),
+    current_user: User = Depends(get_current_active_user),
+):
+    service = AuthService(db, settings)
+    user = await service.delete_avatar(current_user)
+    return UserResponse.model_validate(user)
 
 
 @router.post("/verify-email")

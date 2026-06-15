@@ -7,11 +7,25 @@ export type UserProfileData = {
   organization?: string | null;
   degree?: string | null;
   specialty?: string | null;
+  birth_date?: string | null;
+  gender?: string | null;
+  country?: string | null;
+  region?: string | null;
+  city?: string | null;
+  bio?: string | null;
+  telegram?: string | null;
+  linkedin?: string | null;
+  github?: string | null;
+  website?: string | null;
   orcid?: string | null;
   google_scholar?: string | null;
   researchgate?: string | null;
+  scopus_id?: string | null;
+  wos_id?: string | null;
   affiliation?: string | null;
   research_direction?: string | null;
+  avatar_url?: string | null;
+  avatar_storage_key?: string | null;
 };
 
 export const EMPTY_PROFILE: UserProfileData = {
@@ -23,11 +37,25 @@ export const EMPTY_PROFILE: UserProfileData = {
   organization: "",
   degree: "",
   specialty: "",
+  birth_date: "",
+  gender: "",
+  country: "",
+  region: "",
+  city: "",
+  bio: "",
+  telegram: "",
+  linkedin: "",
+  github: "",
+  website: "",
   orcid: "",
   google_scholar: "",
   researchgate: "",
+  scopus_id: "",
+  wos_id: "",
   affiliation: "",
   research_direction: "",
+  avatar_url: "",
+  avatar_storage_key: "",
 };
 
 export const ROLE_LABELS: Record<string, string> = {
@@ -65,10 +93,21 @@ export function getUserInitials(
   return (email?.slice(0, 2) ?? "U").toUpperCase();
 }
 
+export function getUserAvatarUrl(profile?: UserProfileData | null): string | null {
+  const url = profile?.avatar_url?.trim();
+  return url || null;
+}
+
 export function getAccountStatusLabel(isActive: boolean): string {
   return isActive ? "Faol" : "Nofaol";
 }
 
 export function getEmailVerificationLabel(verified?: boolean): string {
   return verified ? "Tasdiqlangan" : "Tasdiqlanmagan";
+}
+
+export function getRoleBadgeVariant(role: string): "default" | "success" | "secondary" {
+  if (role === "admin") return "default";
+  if (role === "researcher") return "success";
+  return "secondary";
 }
