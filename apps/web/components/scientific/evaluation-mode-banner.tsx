@@ -11,9 +11,15 @@ import {
 interface EvaluationModeBannerProps {
   mode: EvaluationMode;
   hasGroundTruth: boolean;
+  /** When true, shows the heuristic disclaimer inline (default). Set false if parent renders it. */
+  showDisclaimer?: boolean;
 }
 
-export function EvaluationModeBanner({ mode, hasGroundTruth }: EvaluationModeBannerProps) {
+export function EvaluationModeBanner({
+  mode,
+  hasGroundTruth,
+  showDisclaimer = true,
+}: EvaluationModeBannerProps) {
   const isSupervised = mode === "supervised" && hasGroundTruth;
 
   return (
@@ -31,7 +37,7 @@ export function EvaluationModeBanner({ mode, hasGroundTruth }: EvaluationModeBan
             : EVALUATION_MODE_DESCRIPTIONS.heuristic}
         </span>
       </div>
-      {!isSupervised && <ScientificDisclaimer />}
+      {!isSupervised && showDisclaimer && <ScientificDisclaimer />}
     </div>
   );
 }

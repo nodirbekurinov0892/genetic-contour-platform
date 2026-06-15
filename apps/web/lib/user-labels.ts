@@ -28,12 +28,26 @@ export const COMPARISON_WORKFLOW_LABEL =
 
 export const FAIR_PROTOCOL_LABEL = "Adolatli taqqoslash protokoli (bir xil preprocessing)";
 
+export const COMPARISON_PROTOCOL_LABELS: Record<string, string> = {
+  fair_v1: "Adolatli taqqoslash protokoli v1",
+};
+
 export const EXPERIMENT_STATUS_MESSAGES: Record<string, string> = {
+  pending: "Kutilmoqda — ishga tushirish kerak",
   queued: "Navbatda — tez orada ishga tushadi",
   running: "Ishlamoqda — natijalar tayyorlanmoqda",
   failed: "Muvaffaqiyatsiz — qayta urinib ko'ring",
   cancelled: "Bekor qilindi",
   completed: "Yakunlandi — hisobot va taqqoslash mavjud",
+};
+
+export const EXPERIMENT_STATUS_LABELS: Record<string, string> = {
+  pending: "Kutilmoqda",
+  queued: "Navbatda",
+  running: "Ishlamoqda",
+  failed: "Muvaffaqiyatsiz",
+  cancelled: "Bekor qilindi",
+  completed: "Yakunlandi",
 };
 
 export const ALGORITHM_USER_LABELS: Record<string, string> = {
@@ -49,7 +63,17 @@ export function formatAlgorithmLabel(algorithm: string | null | undefined): stri
   return ALGORITHM_USER_LABELS[algorithm] ?? algorithm;
 }
 
+export function formatComparisonProtocol(protocol: string | null | undefined): string {
+  if (!protocol) return "—";
+  return COMPARISON_PROTOCOL_LABELS[protocol] ?? "Adolatli taqqoslash protokoli";
+}
+
 export function formatGtValidationStatus(status: string | null | undefined): string {
   if (!status) return "Tekshirilmagan";
   return GT_VALIDATION_LABELS[status] ?? status;
+}
+
+export function formatExperimentStatus(status: string | null | undefined): string {
+  if (!status) return "—";
+  return EXPERIMENT_STATUS_LABELS[status] ?? status;
 }

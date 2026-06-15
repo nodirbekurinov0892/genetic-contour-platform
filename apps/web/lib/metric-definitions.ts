@@ -32,31 +32,31 @@ export const METRIC_DEFINITIONS: Record<string, MetricDefinition> = {
   },
   recall: {
     label: "Recall",
-    measures: "GT chekka piksellari qancha foizi bashoratda topilgan.",
-    doesNotMeasure: "Ortiqcha chekkalar (FP) yoki kontur uzluksizligi.",
+    measures: "GT chekka piksellari qancha foizi topilgan.",
+    doesNotMeasure: "False positive yoki kontur uzluksizligi.",
     group: "supervised",
   },
-  continuity_score: {
-    label: "Continuity",
-    measures: "Kontur fragmentatsiyasi va eng katta komponent ulushi (heuristik).",
-    doesNotMeasure: "GT bilan moslik yoki algoritm aniqligi.",
+  edge_density: {
+    label: "Chekka zichligi",
+    measures: "Chekka piksellari ulushi — kontur qalinligi indikatori.",
+    doesNotMeasure: "Chekka to'g'riligi yoki GT overlap.",
     group: "heuristic",
   },
-  noise_score: {
-    label: "Noise",
-    measures: "Izolyatsiya qilingan chekka piksellari ulushi (penalty — past yaxshi).",
-    doesNotMeasure: "GT asosidagi FP/FN yoki ilmiy aniqlik.",
+  gradient_magnitude: {
+    label: "Gradient kuchi",
+    measures: "Gradient amplitudasi bo'yicha o'rtacha chekka kuchliligi.",
+    doesNotMeasure: "GT overlap yoki algoritm tezligi.",
+    group: "heuristic",
+  },
+  contour_count: {
+    label: "Konturlar soni",
+    measures: "Aniqlangan alohida konturlar soni.",
+    doesNotMeasure: "Chekka to'g'riligi yoki GT overlap.",
     group: "heuristic",
   },
   fitness_score: {
-    label: "GA ichki fitness",
-    measures: "Genetik algoritm evolyutsiyasi uchun ichki optimallashtirish balli.",
-    doesNotMeasure: "Algoritmlararo taqqoslash yoki GT aniqligi. Faqat GA uchun.",
-    group: "heuristic",
-  },
-  edge_density: {
-    label: "Edge density",
-    measures: "Rasmdagi chekka piksellari ulushi.",
+    label: "Fitness",
+    measures: "Genetik algoritmning moslik bahosi (GA ichki ko'rsatkichi).",
     doesNotMeasure: "Chekka to'g'riligi yoki GT overlap.",
     group: "heuristic",
   },
@@ -66,4 +66,4 @@ export const HEURISTIC_DISCLAIMER =
   "These results are heuristic observations only. Algorithm superiority cannot be scientifically established without Ground Truth.";
 
 export const HEURISTIC_DISCLAIMER_UZ =
-  "Ushbu natijalar faqat heuristik kuzatuvlar. Ground Truth bo'lmagan holda algoritm ustunligini ilmiy jihatdan isbotlab bo'lmaydi.";
+  "Ushbu natijalar faqat evristik kuzatuvlar. Ground Truth bo'lmagan holda algoritm ustunligini ilmiy jihatdan isbotlab bo'lmaydi.";

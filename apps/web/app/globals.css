@@ -58,7 +58,7 @@
     @apply border-border;
   }
   body {
-    @apply bg-background text-foreground;
+    @apply bg-background text-foreground antialiased;
     background-image:
       linear-gradient(hsl(var(--scientific-grid) / 0.35) 1px, transparent 1px),
       linear-gradient(90deg, hsl(var(--scientific-grid) / 0.35) 1px, transparent 1px);
@@ -68,7 +68,7 @@
 
 @layer components {
   .scientific-card {
-    @apply rounded-xl border bg-card shadow-sm transition-shadow hover:shadow-md;
+    @apply rounded-xl border border-border/80 bg-card text-card-foreground shadow-sm transition-shadow hover:shadow-md;
   }
 
   .scientific-section-title {
@@ -76,7 +76,7 @@
   }
 
   .scientific-section-desc {
-    @apply text-sm text-muted-foreground;
+    @apply text-sm leading-relaxed text-muted-foreground;
   }
 
   .scientific-badge {
@@ -84,7 +84,7 @@
   }
 
   .drop-zone {
-    @apply relative flex cursor-pointer flex-col items-center justify-center rounded-xl border-2 border-dashed border-border bg-card/50 p-12 transition-all;
+    @apply relative flex cursor-pointer flex-col items-center justify-center rounded-xl border-2 border-dashed border-border/80 bg-card/50 p-12 transition-all hover:border-primary/40 hover:bg-primary/5;
   }
 
   .drop-zone-active {
@@ -96,7 +96,7 @@
   }
 
   .metrics-table td {
-    @apply border-t px-4 py-3 text-sm;
+    @apply border-t border-border/60 px-4 py-3 text-sm;
   }
 
   .metrics-table tr:hover td {

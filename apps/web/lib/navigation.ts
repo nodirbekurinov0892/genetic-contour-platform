@@ -1,6 +1,5 @@
 import type { LucideIcon } from "lucide-react";
 import {
-  BarChart3,
   FlaskConical,
   GitCompare,
   HelpCircle,
@@ -21,42 +20,78 @@ export type NavItem = {
   showOnMobile?: boolean;
 };
 
-/** Enterprise scientific workflow — primary journey order. */
-export const enterpriseNav: NavItem[] = [
-  { href: "/", label: "Boshqaruv paneli", icon: Home, mobileLabel: "Panel", showOnMobile: true },
+export type NavCategory = {
+  id: string;
+  label: string;
+  items: NavItem[];
+};
+
+export const enterpriseNavCategories: NavCategory[] = [
   {
-    href: "/experiments/new",
-    label: "Yangi tajriba",
-    icon: PlusCircle,
-    mobileLabel: "Yangi",
-    showOnMobile: true,
+    id: "main",
+    label: "Asosiy",
+    items: [
+      { href: "/", label: "Boshqaruv paneli", icon: Home, mobileLabel: "Panel", showOnMobile: true },
+      {
+        href: "/experiments/new",
+        label: "Yangi tajriba",
+        icon: PlusCircle,
+        mobileLabel: "Yangi",
+        showOnMobile: true,
+      },
+    ],
   },
-  { href: "/experiments", label: "Tajribalar", icon: FlaskConical, mobileLabel: "Tajribalar" },
   {
-    href: "/comparison",
-    label: "Taqqoslash markazi",
-    icon: GitCompare,
-    mobileLabel: "Taqqoslash",
-    showOnMobile: true,
+    id: "workflow",
+    label: "Tajriba jarayoni",
+    items: [
+      { href: "/experiments", label: "Tajribalar", icon: FlaskConical, mobileLabel: "Tajribalar" },
+      {
+        href: "/comparison",
+        label: "Natijalarni taqqoslash",
+        icon: GitCompare,
+        mobileLabel: "Taqqoslash",
+        showOnMobile: true,
+      },
+      { href: "/reports", label: "Hisobotlar", icon: FileText, mobileLabel: "Hisobot" },
+    ],
   },
-  { href: "/ground-truth", label: "Ground Truth", icon: Target, mobileLabel: "GT" },
-  { href: "/benchmarks", label: "Benchmarklar", icon: Trophy, mobileLabel: "Bench" },
   {
-    href: "/analytics",
-    label: "Analitika markazi",
-    icon: LineChart,
-    mobileLabel: "Analitika",
+    id: "data",
+    label: "Ma'lumotlar",
+    items: [
+      {
+        href: "/library",
+        label: "Rasm kutubxonasi",
+        icon: ImageIcon,
+        mobileLabel: "Kutubxona",
+        showOnMobile: true,
+      },
+      { href: "/ground-truth", label: "Ground Truth boshqaruvi", icon: Target, mobileLabel: "GT" },
+      { href: "/benchmarks", label: "Benchmark to'plamlari", icon: Trophy, mobileLabel: "Bench" },
+    ],
   },
-  { href: "/reports", label: "Hisobotlar", icon: FileText, mobileLabel: "Hisobot" },
   {
-    href: "/library",
-    label: "Rasm kutubxonasi",
-    icon: ImageIcon,
-    mobileLabel: "Kutubxona",
-    showOnMobile: true,
+    id: "analysis",
+    label: "Tahlil",
+    items: [
+      {
+        href: "/analytics",
+        label: "Analitika markazi",
+        icon: LineChart,
+        mobileLabel: "Analitika",
+      },
+    ],
   },
-  { href: "/help", label: "Yordam", icon: HelpCircle, mobileLabel: "Yordam", showOnMobile: true },
+  {
+    id: "system",
+    label: "Tizim",
+    items: [{ href: "/help", label: "Yordam", icon: HelpCircle, mobileLabel: "Yordam", showOnMobile: true }],
+  },
 ];
+
+/** Flat list for mobile nav and legacy consumers. */
+export const enterpriseNav: NavItem[] = enterpriseNavCategories.flatMap((c) => c.items);
 
 export const mobileNav = enterpriseNav.filter((item) => item.showOnMobile);
 

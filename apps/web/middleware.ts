@@ -4,6 +4,7 @@ import type { NextRequest } from "next/server";
 import { AUTH_SESSION_COOKIE } from "@/lib/auth-storage";
 
 const PROTECTED_PREFIXES = [
+  "/",
   "/upload",
   "/library",
   "/ground-truth",
@@ -12,11 +13,14 @@ const PROTECTED_PREFIXES = [
   "/comparison",
   "/analytics",
   "/reports",
+  "/help",
+  "/onboarding",
 ];
 
 function isProtectedPath(pathname: string): boolean {
+  if (pathname === "/") return true;
   return PROTECTED_PREFIXES.some(
-    (prefix) => pathname === prefix || pathname.startsWith(`${prefix}/`),
+    (prefix) => prefix !== "/" && (pathname === prefix || pathname.startsWith(`${prefix}/`)),
   );
 }
 
@@ -40,6 +44,7 @@ export function middleware(request: NextRequest) {
 
 export const config = {
   matcher: [
+    "/",
     "/upload",
     "/upload/:path*",
     "/library",
@@ -56,5 +61,9 @@ export const config = {
     "/analytics/:path*",
     "/reports",
     "/reports/:path*",
+    "/help",
+    "/help/:path*",
+    "/onboarding",
+    "/onboarding/:path*",
   ],
 };

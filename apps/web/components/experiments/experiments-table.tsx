@@ -4,18 +4,11 @@ import Link from "next/link";
 import { ExperimentStatusBadge } from "@/components/experiments/experiment-status-badge";
 import type { ExperimentBrowseItem } from "@shared/types";
 import { formatDate } from "@/lib/utils";
+import { formatAlgorithmLabel } from "@/lib/user-labels";
 
 interface ExperimentsTableProps {
   items: ExperimentBrowseItem[];
 }
-
-const ALGO_LABELS: Record<string, string> = {
-  sobel: "Sobel",
-  prewitt: "Prewitt",
-  canny: "Canny",
-  genetic: "GA",
-  compare_all: "Hammasi",
-};
 
 function formatDuration(ms: number | null): string {
   if (ms == null) return "—";
@@ -33,7 +26,7 @@ export function ExperimentsTable({ items }: ExperimentsTableProps) {
   }
 
   return (
-    <div className="overflow-x-auto rounded-lg border">
+    <div className="overflow-x-auto rounded-lg border border-border/80">
       <table className="w-full text-sm">
         <thead className="bg-muted/50 text-left">
           <tr>
@@ -47,7 +40,7 @@ export function ExperimentsTable({ items }: ExperimentsTableProps) {
         </thead>
         <tbody>
           {items.map((item) => (
-            <tr key={item.id} className="border-t hover:bg-muted/20">
+            <tr key={item.id} className="border-t border-border/60 hover:bg-muted/20">
               <td className="px-3 py-2">
                 <Link
                   href={`/experiments/${item.id}`}
@@ -60,17 +53,11 @@ export function ExperimentsTable({ items }: ExperimentsTableProps) {
                 <ExperimentStatusBadge status={item.status} />
               </td>
               <td className="px-3 py-2">
-                {item.algorithm ? ALGO_LABELS[item.algorithm] ?? item.algorithm : "—"}
+                {formatAlgorithmLabel(item.algorithm)}
               </td>
-              <td className="px-3 py-2 text-muted-foreground">
-                {item.image_name ?? "—"}
-              </td>
-              <td className="px-3 py-2 text-muted-foreground">
-                {formatDate(item.created_at)}
-              </td>
-              <td className="px-3 py-2 font-mono text-xs">
-                {formatDuration(item.duration_ms)}
-              </td>
+              <td className="px-3 py-2 text-muted-foreground">{item.image_name ?? "—"}</td>
+              <td className="px-3 py-2 text-muted-foreground">{formatDate(item.created_at)}</td>
+              <td className="px-3 py-2 font-mono text-xs">{formatDuration(item.duration_ms)}</td>
             </tr>
           ))}
         </tbody>
