@@ -1,18 +1,14 @@
 "use client";
 
-import { BarChart3, LogOut, Layers } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { PLATFORM_NAME, PLATFORM_VERSION } from "@shared/constants";
+import { Layers } from "lucide-react";
+import { PLATFORM_NAME } from "@shared/constants";
 import { cn } from "@/lib/utils";
-import { ThemeToggle } from "@/components/layout/theme-toggle";
-import { useAuth } from "@/components/providers/auth-provider";
-import { Button } from "@/components/ui/button";
 import { enterpriseNavCategories, isNavItemActive } from "@/lib/navigation";
 
 export function Sidebar() {
   const pathname = usePathname();
-  const { user, logout } = useAuth();
 
   return (
     <aside className="hidden h-screen w-64 shrink-0 flex-col border-r border-border/80 bg-sidebar text-sidebar-foreground md:flex">
@@ -54,25 +50,6 @@ export function Sidebar() {
           </div>
         ))}
       </nav>
-
-      <div className="space-y-3 border-t border-border/80 p-4">
-        {user && (
-          <div className="space-y-2">
-            <p className="truncate text-xs text-muted-foreground">{user.email}</p>
-            <Button variant="outline" size="sm" className="w-full gap-2" onClick={() => logout()}>
-              <LogOut className="h-3.5 w-3.5" />
-              Chiqish
-            </Button>
-          </div>
-        )}
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-2 text-xs text-muted-foreground">
-            <BarChart3 className="h-3.5 w-3.5" />
-            v{PLATFORM_VERSION}
-          </div>
-          <ThemeToggle />
-        </div>
-      </div>
     </aside>
   );
 }

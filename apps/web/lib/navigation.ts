@@ -10,6 +10,7 @@ import {
   PlusCircle,
   Target,
   Trophy,
+  User,
 } from "lucide-react";
 
 export type NavItem = {
@@ -86,7 +87,10 @@ export const enterpriseNavCategories: NavCategory[] = [
   {
     id: "system",
     label: "Tizim",
-    items: [{ href: "/help", label: "Yordam", icon: HelpCircle, mobileLabel: "Yordam", showOnMobile: true }],
+    items: [
+      { href: "/profile", label: "Profil", icon: User, mobileLabel: "Profil" },
+      { href: "/help", label: "Yordam", icon: HelpCircle, mobileLabel: "Yordam", showOnMobile: true },
+    ],
   },
 ];
 

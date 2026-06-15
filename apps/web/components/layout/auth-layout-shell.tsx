@@ -4,6 +4,7 @@ import Link from "next/link";
 import { Layers } from "lucide-react";
 import { PLATFORM_NAME, PLATFORM_SUBTITLE } from "@shared/constants";
 import { ThemeToggle } from "@/components/layout/theme-toggle";
+import { AuthFooter } from "@/components/layout/auth-footer";
 
 export function AuthLayoutShell({ children }: { children: React.ReactNode }) {
   return (
@@ -24,9 +25,10 @@ export function AuthLayoutShell({ children }: { children: React.ReactNode }) {
         </Link>
         <ThemeToggle />
       </header>
-      <main className="relative z-10 flex flex-1 items-center justify-center px-4 pb-10">
+      <main className="relative z-10 flex flex-1 items-center justify-center px-4 pb-6">
         <div className="w-full max-w-md">{children}</div>
       </main>
+      <AuthFooter />
     </div>
   );
 }

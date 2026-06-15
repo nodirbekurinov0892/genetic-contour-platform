@@ -1,5 +1,6 @@
 import { apiFetch } from "@/lib/api";
 import { clearTokens, getRefreshToken, setTokens, syncSessionCookie } from "@/lib/auth-storage";
+import type { UserProfileData } from "@/lib/user-profile";
 import { detailFromBody, toUserFacingNetworkError } from "@/lib/network-errors";
 
 function syncSessionCookieFromBff(): void {
@@ -14,6 +15,8 @@ export interface AuthUser {
   is_active: boolean;
   email_verified?: boolean;
   onboarding_completed_at?: string | null;
+  profile_data?: UserProfileData | null;
+  last_login_at?: string | null;
   created_at: string;
   updated_at: string;
 }
@@ -22,6 +25,16 @@ export interface TokenResponse {
   access_token: string;
   refresh_token: string;
   token_type: string;
+}
+
+export interface ProfileUpdatePayload {
+  name?: string | null;
+  profile?: UserProfileData;
+}
+
+export interface PasswordChangePayload {
+  current_password: string;
+  new_password: string;
 }
 
 async function authBffFetch(
@@ -87,5 +100,19 @@ export const authService = {
 
   me(): Promise<AuthUser> {
     return apiFetch<AuthUser>("/api/auth/me");
+  },
+
+  updateProfile(data: ProfileUpdatePayload): Promise<AuthUser> {
+    return apiFetch<AuthUser>("/api/auth/me", {
+      method: "PATCH",
+      body: JSON.stringify(data),
+    });
+  },
+
+  changePassword(data: PasswordChangePayload): Promise<void> {
+    return apiFetch<{ message: string }>("/api/auth/me/password", {
+      method: "POST",
+      body: JSON.stringify(data),
+    }).then(() => undefined);
   },
 };

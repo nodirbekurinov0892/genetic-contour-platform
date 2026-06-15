@@ -18,7 +18,7 @@ from app.core.security import (
 )
 from app.models.refresh_token import RefreshToken
 from app.models.user import User, UserRole
-from app.schemas.auth import LoginRequest, RegisterRequest
+from app.schemas.auth import LoginRequest, ProfileUpdateRequest, RegisterRequest
 
 logger = logging.getLogger(__name__)
 
@@ -79,6 +79,8 @@ class AuthService:
             )
 
         access_token, refresh_token = await self._issue_tokens(user)
+        user.last_login_at = datetime.now(timezone.utc)
+        await self.db.flush()
         logger.info("User logged in: %s", user.id)
         return user, access_token, refresh_token
 
@@ -169,6 +171,30 @@ class AuthService:
         user.onboarding_completed_at = datetime.now(timezone.utc)
         await self.db.flush()
         return user
+
+    async def update_profile(self, user: User, data: ProfileUpdateRequest) -> User:
+        if data.name is not None:
+            user.name = data.name.strip() or None
+        if data.profile is not None:
+            current = dict(user.profile_data or {})
+            patch = data.profile.model_dump(exclude_unset=True)
+            for key, value in patch.items():
+                if value is None or (isinstance(value, str) and not value.strip()):
+                    current.pop(key, None)
+                else:
+                    current[key] = value.strip() if isinstance(value, str) else value
+            user.profile_data = current or None
+        await self.db.flush()
+        return user
+
+    async def change_password(self, user: User, current_password: str, new_password: str) -> None:
+        if not verify_password(current_password, user.password_hash):
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="Joriy parol noto'g'ri",
+            )
+        user.password_hash = hash_password(new_password)
+        await self.db.flush()
 
     async def _issue_tokens(self, user: User) -> tuple[str, str]:
         access_token = create_access_token(str(user.id), self.settings)

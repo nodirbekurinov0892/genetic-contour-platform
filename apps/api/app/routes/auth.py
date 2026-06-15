@@ -10,6 +10,8 @@ from app.schemas.auth import (
     LogoutRequest,
     PasswordResetConfirm,
     PasswordResetRequest,
+    PasswordChangeRequest,
+    ProfileUpdateRequest,
     RefreshRequest,
     RegisterRequest,
     TokenResponse,
@@ -86,6 +88,34 @@ async def logout(
 @router.get("/me", response_model=UserResponse)
 async def get_me(current_user: User = Depends(get_current_active_user)):
     return UserResponse.model_validate(current_user)
+
+
+@router.patch("/me", response_model=UserResponse)
+@limiter.limit("30/minute")
+async def update_me(
+    request: Request,
+    data: ProfileUpdateRequest,
+    db: AsyncSession = Depends(get_db),
+    settings: Settings = Depends(get_settings),
+    current_user: User = Depends(get_current_active_user),
+):
+    service = AuthService(db, settings)
+    user = await service.update_profile(current_user, data)
+    return UserResponse.model_validate(user)
+
+
+@router.post("/me/password")
+@limiter.limit("10/hour")
+async def change_password(
+    request: Request,
+    data: PasswordChangeRequest,
+    db: AsyncSession = Depends(get_db),
+    settings: Settings = Depends(get_settings),
+    current_user: User = Depends(get_current_active_user),
+):
+    service = AuthService(db, settings)
+    await service.change_password(current_user, data.current_password, data.new_password)
+    return {"message": "Parol muvaffaqiyatli yangilandi"}
 
 
 @router.post("/verify-email")
