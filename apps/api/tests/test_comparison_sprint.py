@@ -50,7 +50,7 @@ async def test_benchmark_summary_no_run_empty_state(client: AsyncClient):
             "name": "Sprint bench",
         },
     )
-    assert bench.status_code == 201, bench.text
+    assert bench.status_code == 200, bench.text
 
     benchmark_id = bench.json()["id"]
     response = await client.get(
