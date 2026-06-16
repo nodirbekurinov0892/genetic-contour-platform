@@ -16,6 +16,9 @@ class Benchmark(Base):
     name: Mapped[str] = mapped_column(String(512), nullable=False)
     description: Mapped[str | None] = mapped_column(Text, nullable=True)
     category: Mapped[str | None] = mapped_column(String(128), nullable=True)
+    created_by: Mapped[uuid.UUID | None] = mapped_column(
+        UUID(as_uuid=True), ForeignKey("users.id", ondelete="SET NULL"), nullable=True
+    )
     methodology_version: Mapped[str] = mapped_column(String(32), nullable=False, default="fair_v1")
     comparison_protocol: Mapped[str] = mapped_column(String(32), nullable=False, default="fair_v1")
     is_public: Mapped[bool] = mapped_column(Boolean, nullable=False, default=True)
@@ -59,6 +62,7 @@ class BenchmarkRun(Base):
     )
     status: Mapped[str] = mapped_column(String(32), nullable=False, default="pending")
     cohort_size: Mapped[int] = mapped_column(Integer, nullable=False, default=0)
+    batch_size: Mapped[int | None] = mapped_column(Integer, nullable=True)
     completed_count: Mapped[int] = mapped_column(Integer, nullable=False, default=0)
     aggregate_metrics_json: Mapped[dict | None] = mapped_column(JSONB, nullable=True)
     report_storage_key: Mapped[str | None] = mapped_column(String(1024), nullable=True)

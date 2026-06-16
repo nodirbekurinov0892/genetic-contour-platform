@@ -26,12 +26,35 @@ from app.services.experiment_service import ExperimentService
 logger = logging.getLogger(__name__)
 
 _EDGE_ALGORITHMS = ("sobel", "prewitt", "canny", "genetic")
+_BATCH_SIZES = (10, 50, 100, 500, 1000)
 
 
 class BenchmarkService:
     def __init__(self, db: AsyncSession, settings: Settings):
         self.db = db
         self.settings = settings
+
+    async def _require_valid_benchmark_image(self, image: Image) -> None:
+        if not image.ground_truth_storage_key:
+            raise HTTPException(
+                status_code=400,
+                detail="Ground truth is required for benchmark dataset images",
+            )
+        if image.gt_validation_status == "invalid":
+            raise HTTPException(
+                status_code=400,
+                detail=f"Image {image.original_name} has invalid ground truth",
+            )
+        if image.gt_validation_status not in ("valid", "warning", None):
+            raise HTTPException(
+                status_code=400,
+                detail=f"Image {image.original_name} ground truth must be validated before benchmark use",
+            )
+        if image.gt_validation_status is None and image.ground_truth_storage_key:
+            raise HTTPException(
+                status_code=400,
+                detail=f"Image {image.original_name} ground truth must be validated before benchmark use",
+            )
 
     async def list_benchmarks(self, *, public_only: bool = True) -> list[Benchmark]:
         query = select(Benchmark).options(selectinload(Benchmark.datasets))
@@ -82,6 +105,7 @@ class BenchmarkService:
             methodology_version=METHODOLOGY_VERSION,
             comparison_protocol=DEFAULT_PROTOCOL,
             is_public=True,
+            created_by=user.id,
         )
         self.db.add(benchmark)
         await self.db.flush()
@@ -91,6 +115,7 @@ class BenchmarkService:
                 img = await self.db.get(Image, image_id)
                 if not img or img.user_id != user.id:
                     raise HTTPException(status_code=400, detail=f"Invalid image {image_id}")
+                await self._require_valid_benchmark_image(img)
                 self.db.add(
                     BenchmarkDataset(
                         id=uuid.uuid4(),
@@ -109,6 +134,7 @@ class BenchmarkService:
         img = await self.db.get(Image, image_id)
         if not img or img.user_id != user.id:
             raise HTTPException(status_code=404, detail="Image not found")
+        await self._require_valid_benchmark_image(img)
         count = await self.db.scalar(
             select(func.count()).select_from(BenchmarkDataset).where(
                 BenchmarkDataset.benchmark_id == benchmark_id
@@ -138,12 +164,17 @@ class BenchmarkService:
             raise HTTPException(status_code=400, detail="Benchmark has no dataset images")
 
         if batch_size is not None:
-            if batch_size not in (10, 50, 100, 1000):
+            if batch_size not in _BATCH_SIZES:
                 raise HTTPException(
                     status_code=400,
-                    detail="batch_size must be one of 10, 50, 100, 1000",
+                    detail=f"batch_size must be one of {', '.join(map(str, _BATCH_SIZES))}",
                 )
             datasets = datasets[:batch_size]
+
+        for ds in datasets:
+            img = await self.db.get(Image, ds.image_id)
+            if img:
+                await self._require_valid_benchmark_image(img)
 
         gt_count = 0
         for ds in datasets:
@@ -157,6 +188,7 @@ class BenchmarkService:
             user_id=user.id,
             status="running",
             cohort_size=len(datasets),
+            batch_size=batch_size or len(datasets),
             completed_count=0,
             started_at=datetime.now(timezone.utc),
         )
@@ -242,11 +274,31 @@ class BenchmarkService:
         await self.db.flush()
         return run
 
+    async def get_run_progress(self, run_id: uuid.UUID, user: User) -> dict:
+        run = await self.refresh_run_status(run_id, user)
+        total = run.cohort_size or 0
+        done = run.completed_count or 0
+        percent = round(100.0 * done / total, 2) if total else 0.0
+        return {
+            "benchmark_run_id": str(run.id),
+            "benchmark_id": str(run.benchmark_id),
+            "status": run.status,
+            "cohort_size": total,
+            "completed_count": done,
+            "progress_percent": percent,
+            "batch_size": run.batch_size,
+        }
+
     async def _compute_aggregate_metrics(
         self, run: BenchmarkRun, experiments: list[Experiment]
     ) -> None:
         algo_metrics: dict[str, list[dict]] = {a: [] for a in _EDGE_ALGORITHMS}
+        algo_success: dict[str, int] = {a: 0 for a in _EDGE_ALGORITHMS}
+        algo_failure: dict[str, int] = {a: 0 for a in _EDGE_ALGORITHMS}
         for exp in experiments:
+            if exp.status == ExperimentStatus.FAILED.value:
+                for algo in _EDGE_ALGORITHMS:
+                    algo_failure[algo] += 1
             exp_result = await self.db.execute(
                 select(Experiment)
                 .where(Experiment.id == exp.id)
@@ -256,48 +308,70 @@ class BenchmarkService:
             )
             loaded = exp_result.scalar_one()
             for ar in loaded.algorithm_runs:
-                if ar.algorithm_name not in algo_metrics or not ar.metrics:
+                if ar.algorithm_name not in algo_metrics:
+                    continue
+                if not ar.metrics:
+                    algo_failure[ar.algorithm_name] += 1
                     continue
                 m = ar.metrics[0]
+                if m.iou is None:
+                    algo_failure[ar.algorithm_name] += 1
+                    continue
+                algo_success[ar.algorithm_name] += 1
                 algo_metrics[ar.algorithm_name].append({
                     "iou": m.iou,
                     "f1_score": m.f1_score,
                     "dice_coefficient": m.dice_coefficient,
+                    "precision": m.precision,
+                    "recall": m.recall,
                     "runtime_ms": m.runtime_ms,
                 })
 
         aggregate: dict[str, dict] = {}
         leaderboard_rows: list[tuple[str, float | None]] = []
-        for algo, rows in algo_metrics.items():
-            if not rows:
-                continue
-            ious = [r["iou"] for r in rows if r["iou"] is not None]
-            f1s = [r["f1_score"] for r in rows if r["f1_score"] is not None]
-            dices = [r["dice_coefficient"] for r in rows if r["dice_coefficient"] is not None]
-            runtimes = [r["runtime_ms"] for r in rows if r["runtime_ms"] is not None]
-            avg_iou = mean(ious) if ious else None
 
-            def _stats(vals: list[float]) -> dict:
-                if not vals:
-                    return {"mean": None, "median": None, "std": None, "variance": None, "min": None, "max": None}
-                return {
-                    "mean": round(mean(vals), 4),
-                    "median": round(median(vals), 4),
-                    "std": round(pstdev(vals), 4) if len(vals) > 1 else 0.0,
-                    "variance": round(pvariance(vals), 6) if len(vals) > 1 else 0.0,
-                    "min": round(min(vals), 4),
-                    "max": round(max(vals), 4),
-                }
+        def _stats(vals: list[float]) -> dict:
+            if not vals:
+                return {"mean": None, "median": None, "std": None, "variance": None, "min": None, "max": None}
+            return {
+                "mean": round(mean(vals), 4),
+                "median": round(median(vals), 4),
+                "std": round(pstdev(vals), 4) if len(vals) > 1 else 0.0,
+                "variance": round(pvariance(vals), 6) if len(vals) > 1 else 0.0,
+                "min": round(min(vals), 4),
+                "max": round(max(vals), 4),
+            }
+
+        for algo, rows in algo_metrics.items():
+            if not rows and algo_success[algo] == 0:
+                continue
+            ious = [float(r["iou"]) for r in rows if r["iou"] is not None]
+            f1s = [float(r["f1_score"]) for r in rows if r["f1_score"] is not None]
+            dices = [float(r["dice_coefficient"]) for r in rows if r["dice_coefficient"] is not None]
+            precisions = [float(r["precision"]) for r in rows if r["precision"] is not None]
+            recalls = [float(r["recall"]) for r in rows if r["recall"] is not None]
+            runtimes = [float(r["runtime_ms"]) for r in rows if r["runtime_ms"] is not None]
+            avg_iou = mean(ious) if ious else None
+            total_attempts = algo_success[algo] + algo_failure[algo]
+            success_rate = round(algo_success[algo] / total_attempts, 4) if total_attempts else None
+            failure_rate = round(algo_failure[algo] / total_attempts, 4) if total_attempts else None
 
             aggregate[algo] = {
                 "avg_iou": round(avg_iou, 4) if avg_iou is not None else None,
                 "avg_f1": round(mean(f1s), 4) if f1s else None,
                 "avg_dice": round(mean(dices), 4) if dices else None,
+                "avg_precision": round(mean(precisions), 4) if precisions else None,
+                "avg_recall": round(mean(recalls), 4) if recalls else None,
                 "avg_runtime_ms": round(mean(runtimes), 1) if runtimes else None,
                 "sample_count": len(rows),
-                "iou_statistics": _stats([float(x) for x in ious]),
-                "f1_statistics": _stats([float(x) for x in f1s]),
-                "dice_statistics": _stats([float(x) for x in dices]),
+                "success_rate": success_rate,
+                "failure_rate": failure_rate,
+                "iou_statistics": _stats(ious),
+                "f1_statistics": _stats(f1s),
+                "dice_statistics": _stats(dices),
+                "precision_statistics": _stats(precisions),
+                "recall_statistics": _stats(recalls),
+                "runtime_statistics": _stats(runtimes),
             }
             leaderboard_rows.append((algo, avg_iou))
 
@@ -367,44 +441,23 @@ class BenchmarkService:
                 gt_count += 1
         return {
             "id": str(benchmark.id),
+            "title": benchmark.name,
             "name": benchmark.name,
             "description": benchmark.description,
             "category": benchmark.category,
             "image_count": len(benchmark.datasets),
             "gt_count": gt_count,
+            "created_by": str(benchmark.created_by) if benchmark.created_by else None,
+            "created_at": benchmark.created_at.isoformat() if benchmark.created_at else None,
             "methodology_version": benchmark.methodology_version,
             "comparison_protocol": benchmark.comparison_protocol,
         }
 
     async def get_dataset_ranking(
         self, benchmark_id: uuid.UUID, run_id: uuid.UUID, user: User
-    ) -> list[dict]:
-        from sqlalchemy.orm import selectinload
+    ) -> dict:
+        from app.services.dataset_ranking_service import DatasetRankingService
 
-        benchmark = await self.get_benchmark(benchmark_id)
-        exp_result = await self.db.execute(
-            select(Experiment)
-            .where(Experiment.benchmark_run_id == run_id, Experiment.user_id == user.id)
-            .options(selectinload(Experiment.algorithm_runs).selectinload(AlgorithmRun.metrics))
+        return await DatasetRankingService(self.db, self.settings).rank_benchmark_run(
+            benchmark_id, run_id, user
         )
-        experiments = list(exp_result.scalars().all())
-        by_image: dict[uuid.UUID, Experiment] = {e.image_id: e for e in experiments}
-        rankings = []
-        for ds in sorted(benchmark.datasets, key=lambda d: d.sort_order):
-            exp = by_image.get(ds.image_id)
-            winner = None
-            best_iou = None
-            if exp:
-                for ar in exp.algorithm_runs:
-                    if ar.algorithm_name not in _EDGE_ALGORITHMS or not ar.metrics:
-                        continue
-                    iou = ar.metrics[0].iou
-                    if iou is not None and (best_iou is None or float(iou) > best_iou):
-                        best_iou = float(iou)
-                        winner = ar.algorithm_name
-            rankings.append({
-                "image_id": str(ds.image_id),
-                "winner_algorithm": winner,
-                "best_iou": round(best_iou, 4) if best_iou is not None else None,
-            })
-        return rankings

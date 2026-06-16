@@ -57,3 +57,17 @@ async def compare_datasets(
 ):
     service = ComparisonService(db, settings)
     return await service.compare_datasets(benchmark_id, current_user)
+
+
+@router.get("/experiments/charts")
+async def compare_experiments_charts(
+    experiment_a: uuid.UUID = Query(...),
+    experiment_b: uuid.UUID = Query(...),
+    db: AsyncSession = Depends(get_db),
+    settings: Settings = Depends(get_settings),
+    current_user: User = Depends(get_current_active_user),
+):
+    from app.services.comparison_charts_service import ComparisonChartsService
+
+    service = ComparisonChartsService(db, settings)
+    return await service.experiment_charts(experiment_a, experiment_b, current_user)

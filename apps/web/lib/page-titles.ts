@@ -5,6 +5,8 @@ export const PAGE_TITLES: Record<string, string> = {
   "/comparison": "Natijalarni taqqoslash",
   "/ground-truth": "Ground Truth boshqaruvi",
   "/benchmarks": "Benchmark to'plamlari",
+  "/leaderboard": "Leaderboard Center",
+  "/datasets/ranking": "Dataset reytingi",
   "/analytics": "Analitika markazi",
   "/reports": "Hisobotlar",
   "/library": "Rasm kutubxonasi",

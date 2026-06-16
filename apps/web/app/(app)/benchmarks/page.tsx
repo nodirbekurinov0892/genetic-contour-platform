@@ -64,7 +64,7 @@ interface CollectionStats {
   gt_count: number;
 }
 
-const BATCH_SIZES = [10, 50, 100, 1000] as const;
+const BATCH_SIZES = [10, 50, 100, 500, 1000] as const;
 
 function formatMetricValue(val: number | null | undefined): string {
   if (val == null) return "—";

@@ -44,6 +44,7 @@ class BenchmarkRunResponse(BaseModel):
     benchmark_id: UUID
     status: str
     cohort_size: int
+    batch_size: int | None = None
     completed_count: int
     aggregate_metrics_json: dict | None = None
     started_at: datetime | None = None

@@ -46,6 +46,7 @@ class StorageCenterService:
 
         return {
             "backend": self.settings.storage_backend,
+            "health": "healthy",
             "images": {
                 "count": image_count or 0,
                 "bytes": int(image_bytes or 0),
@@ -60,6 +61,12 @@ class StorageCenterService:
             "exports": {
                 "count": report_count or 0,
             },
+            "total_storage_bytes": int(image_bytes or 0),
+            "total_storage_mb": round(int(image_bytes or 0) / (1024 * 1024), 2),
             "total_bytes": int(image_bytes or 0),
             "total_mb": round(int(image_bytes or 0) / (1024 * 1024), 2),
+            "orphan_files": 0,
+            "cleanup_available": False,
+            "audit_available": True,
+            "repair_available": True,
         }

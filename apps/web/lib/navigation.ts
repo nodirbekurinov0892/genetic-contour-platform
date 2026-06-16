@@ -10,7 +10,9 @@ import {
   Home,
   ImageIcon,
   LineChart,
+  Medal,
   FileText,
+  BarChart3,
   PlusCircle,
   Search,
   Target,
@@ -78,6 +80,8 @@ export const enterpriseNavCategories: NavCategory[] = [
       },
       { href: "/ground-truth", label: "Ground Truth boshqaruvi", icon: Target, mobileLabel: "GT" },
       { href: "/benchmarks", label: "Benchmark to'plamlari", icon: Trophy, mobileLabel: "Bench" },
+      { href: "/leaderboard", label: "Leaderboard Center", icon: Medal, mobileLabel: "Leader" },
+      { href: "/datasets/ranking", label: "Dataset reytingi", icon: BarChart3, mobileLabel: "Dataset" },
     ],
   },
   {

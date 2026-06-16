@@ -1,6 +1,9 @@
+import asyncio
+import json
 import uuid
 
 from fastapi import APIRouter, Depends, Request
+from fastapi.responses import StreamingResponse
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.config import Settings, get_settings
@@ -140,6 +143,39 @@ async def get_dataset_ranking(
 ):
     service = BenchmarkService(db, settings)
     return await service.get_dataset_ranking(benchmark_id, run_id, current_user)
+
+
+@router.get("/{benchmark_id}/runs/{run_id}/progress")
+async def get_benchmark_run_progress(
+    benchmark_id: uuid.UUID,
+    run_id: uuid.UUID,
+    db: AsyncSession = Depends(get_db),
+    settings: Settings = Depends(get_settings),
+    current_user: User = Depends(get_current_active_user),
+):
+    service = BenchmarkService(db, settings)
+    return await service.get_run_progress(run_id, current_user)
+
+
+@router.get("/{benchmark_id}/runs/{run_id}/progress/stream")
+async def stream_benchmark_run_progress(
+    benchmark_id: uuid.UUID,
+    run_id: uuid.UUID,
+    db: AsyncSession = Depends(get_db),
+    settings: Settings = Depends(get_settings),
+    current_user: User = Depends(get_current_active_user),
+):
+    service = BenchmarkService(db, settings)
+
+    async def event_generator():
+        for _ in range(600):
+            progress = await service.get_run_progress(run_id, current_user)
+            yield f"data: {json.dumps(progress)}\n\n"
+            if progress["status"] in ("completed", "failed"):
+                break
+            await asyncio.sleep(2)
+
+    return StreamingResponse(event_generator(), media_type="text/event-stream")
 
 
 @router.get("/{benchmark_id}/runs/{run_id}", response_model=BenchmarkRunResponse)

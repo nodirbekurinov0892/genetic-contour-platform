@@ -24,10 +24,12 @@ from app.routes import (
     auth,
     benchmarks,
     comparison,
+    datasets,
     experiments,
     ground_truth,
     health,
     images,
+    leaderboard,
     lifecycle,
     media,
     notifications,
@@ -105,6 +107,8 @@ app.include_router(admin.router)
 app.include_router(stats.router)
 app.include_router(analytics.router)
 app.include_router(comparison.router)
+app.include_router(datasets.router)
+app.include_router(leaderboard.router)
 app.include_router(search.router)
 app.include_router(notifications.router)
 app.include_router(teams.router)
