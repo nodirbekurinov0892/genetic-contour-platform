@@ -28,7 +28,7 @@ class ComparisonService:
 
     async def _load_experiment_metrics(self, experiment_id: uuid.UUID, user: User) -> list[dict]:
         exp_service = ExperimentService(self.db, self.settings)
-        experiment = await exp_service.get(experiment_id, user)
+        experiment = await exp_service.get_by_id(experiment_id, user)
         if experiment.status != "completed":
             raise HTTPException(status_code=400, detail="Experiment must be completed")
         rows = []
@@ -51,6 +51,9 @@ class ComparisonService:
     async def compare_experiments(
         self, experiment_id_a: uuid.UUID, experiment_id_b: uuid.UUID, user: User
     ) -> dict:
+        if experiment_id_a == experiment_id_b:
+            raise HTTPException(status_code=400, detail="Experiments must be different")
+
         metrics_a = await self._load_experiment_metrics(experiment_id_a, user)
         metrics_b = await self._load_experiment_metrics(experiment_id_b, user)
         by_algo_a = {r["algorithm"]: r for r in metrics_a}
