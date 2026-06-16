@@ -127,9 +127,11 @@ export async function downloadFile(
   filename: string,
 ): Promise<void> {
   const accessToken = getAccessToken();
-  const url = `${API_BASE}${path}`;
+  const apiPath = toBffApiPath(path);
+  const url = `${API_BASE}${apiPath}`;
   const res = await fetch(url, {
     headers: accessToken ? { Authorization: `Bearer ${accessToken}` } : {},
+    credentials: USE_BFF ? "include" : "same-origin",
   });
 
   if (res.status === 401) {

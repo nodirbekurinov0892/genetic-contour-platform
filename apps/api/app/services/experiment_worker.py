@@ -96,6 +96,15 @@ async def _mark_degraded(session, experiment: Experiment, message: str) -> None:
     experiment.finished_at = datetime.now(timezone.utc)
     experiment.error_message = message[:2000]
     clear_cancel(experiment.id)
+    from app.services.notification_service import NotificationService
+
+    await NotificationService(session).create(
+        user_id=experiment.user_id,
+        type="experiment.degraded",
+        title="Tajriba cheklangan rejimda yakunlandi",
+        message=f'"{experiment.title}" GT muammosi bilan yakunlandi.',
+        payload={"experiment_id": str(experiment.id), "warning": message[:500]},
+    )
     await session.commit()
 
 
@@ -410,9 +419,10 @@ async def _execute_job(experiment_id: uuid.UUID, settings) -> None:
             await _mark_failed(session, experiment, "Manba rasm fayli topilmadi")
         except FileNotFoundError:
             await _mark_failed(session, experiment, "Manba rasm fayli topilmadi")
-        except Exception:
+        except Exception as exc:
             logger.exception("Experiment %s failed in worker", experiment_id)
-            await _mark_failed(session, experiment, "Experiment processing failed")
+            detail = f"{type(exc).__name__}: {exc}"
+            await _mark_failed(session, experiment, detail[:2000])
 
 
 class JobCancelled(Exception):

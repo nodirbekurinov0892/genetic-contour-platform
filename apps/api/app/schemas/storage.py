@@ -20,6 +20,7 @@ class StorageAuditResponse(BaseModel):
     missing_originals: int
     missing_ground_truth: int
     missing_results: int
+    storage_check_errors: int = 0
     broken_records: list[BrokenRecord]
     severity: str
     repair_available: bool

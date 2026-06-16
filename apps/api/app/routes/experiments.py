@@ -419,7 +419,7 @@ async def get_experiment_report_pdf(
         )
         raise HTTPException(
             status_code=500,
-            detail=f"PDF report generation failed: {type(exc).__name__}: {exc}",
+            detail="PDF report generation failed",
         ) from exc
 
     filename = f"experiment-{experiment_id}-report.pdf"

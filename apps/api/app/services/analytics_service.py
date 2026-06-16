@@ -98,7 +98,6 @@ class AnalyticsService:
         success_rate = round((completed or 0) / (total or 1) * 100, 1) if total else 0.0
 
         iou_rows = await self._user_metrics(user_id, "iou")
-        f1_rows = await self._user_metrics(user_id, "f1_score")
         dice_rows = await self._user_metrics(user_id, "dice_coefficient")
 
         iou_by_algo: dict[str, list[float]] = {a: [] for a in _EDGE_ALGORITHMS}
@@ -119,12 +118,6 @@ class AnalyticsService:
                     "recall": round(float(rec), 4),
                     "f1_score": round(float(f1), 4) if f1 is not None else None,
                 })
-            if rt is not None:
-                runtime_by_algo.setdefault(algo, []).append(int(rt))
-
-        for algo, _, f1, _, _, rt in f1_rows:
-            if f1 is not None:
-                f1_by_algo.setdefault(algo, []).append(float(f1))
             if rt is not None:
                 runtime_by_algo.setdefault(algo, []).append(int(rt))
 

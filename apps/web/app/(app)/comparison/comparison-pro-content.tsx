@@ -244,6 +244,12 @@ export function ComparisonProContent() {
 
       {loading && <LoadingState message="Natijalar yuklanmoqda..." />}
 
+      {!loading && result && table.length === 0 && (
+        <div className="scientific-card p-6 text-center text-sm text-muted-foreground">
+          Tanlangan benchmark uchun yakunlangan cohort run topilmadi yoki dataset reytingi bo&apos;sh.
+        </div>
+      )}
+
       {!loading && result && table.length > 0 && (
         <>
           {chart.length > 0 && tab !== "datasets" && (

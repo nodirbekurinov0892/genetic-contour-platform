@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import logging
 import uuid
 from typing import Any
 
@@ -17,12 +18,21 @@ from app.models.result_image import ResultImage
 from app.models.user import User
 from app.services.storage import StorageService
 
+logger = logging.getLogger(__name__)
+
 
 class StorageAuditService:
     def __init__(self, db: AsyncSession, settings: Settings):
         self.db = db
         self.settings = settings
         self.storage = StorageService(settings)
+
+    def _safe_exists(self, storage_key: str) -> bool | None:
+        try:
+            return self.storage.exists(storage_key)
+        except Exception:
+            logger.exception("Storage exists check failed for key %s", storage_key)
+            return None
 
     async def audit_for_user(self, user: User) -> dict[str, Any]:
         images = (
@@ -32,6 +42,7 @@ class StorageAuditService:
         missing_originals = 0
         missing_ground_truth = 0
         missing_results = 0
+        storage_check_errors = 0
         broken_records: list[dict[str, Any]] = []
 
         for image in images:
@@ -39,8 +50,10 @@ class StorageAuditService:
                 storage_key=image.storage_key,
                 file_path=image.file_path,
             )
-            original_exists = self.storage.exists(original_key)
-            if not original_exists:
+            original_exists = self._safe_exists(original_key)
+            if original_exists is None:
+                storage_check_errors += 1
+            elif not original_exists:
                 missing_originals += 1
                 broken_records.append(
                     {
@@ -57,8 +70,10 @@ class StorageAuditService:
                     storage_key=gt_key_ref,
                     file_path=image.ground_truth_file_path,
                 )
-                gt_exists = self.storage.exists(gt_key)
-                if not gt_exists:
+                gt_exists = self._safe_exists(gt_key)
+                if gt_exists is None:
+                    storage_check_errors += 1
+                elif not gt_exists:
                     missing_ground_truth += 1
                     broken_records.append(
                         {
@@ -79,7 +94,10 @@ class StorageAuditService:
         for experiment in exp_result.scalars().all():
             for run in experiment.algorithm_runs:
                 for result_image in run.result_images:
-                    if not self.storage.exists(result_image.storage_key):
+                    result_exists = self._safe_exists(result_image.storage_key)
+                    if result_exists is None:
+                        storage_check_errors += 1
+                    elif not result_exists:
                         missing_results += 1
                         broken_records.append(
                             {
@@ -107,6 +125,7 @@ class StorageAuditService:
             "missing_originals": missing_originals,
             "missing_ground_truth": missing_ground_truth,
             "missing_results": missing_results,
+            "storage_check_errors": storage_check_errors,
             "broken_records": broken_records,
             "severity": severity,
             "repair_available": total_issues > 0,

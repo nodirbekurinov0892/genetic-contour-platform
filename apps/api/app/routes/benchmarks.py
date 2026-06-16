@@ -164,5 +164,5 @@ async def get_benchmark_leaderboard(
     current_user: User = Depends(get_current_active_user),
 ):
     service = BenchmarkService(db, settings)
-    entries = await service.get_leaderboard(benchmark_id, run_id)
+    entries = await service.get_leaderboard(benchmark_id, run_id, user_id=current_user.id)
     return [LeaderboardEntry.model_validate(e) for e in entries]

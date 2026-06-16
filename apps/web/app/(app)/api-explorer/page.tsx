@@ -145,7 +145,9 @@ export default function ApiExplorerPage() {
           </table>
         </div>
         <p className="mt-3 text-xs text-muted-foreground">
-          OpenAPI: {explorer.openapi_url} · Docs: {explorer.docs_url}
+          {explorer.docs_enabled === false
+            ? "Production rejimida OpenAPI va /docs o'chirilgan."
+            : `OpenAPI: ${explorer.openapi_url ?? "—"} · Docs: ${explorer.docs_url ?? "—"}`}
         </p>
       </section>
     </div>

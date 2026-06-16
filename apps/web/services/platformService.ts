@@ -32,9 +32,10 @@ export interface SecurityAudit {
 }
 
 export interface ApiExplorer {
-  openapi_url: string;
-  docs_url: string;
-  redoc_url: string;
+  openapi_url: string | null;
+  docs_url: string | null;
+  redoc_url: string | null;
+  docs_enabled?: boolean;
   routes: ApiRouteEntry[];
   version: string;
 }

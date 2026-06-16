@@ -62,9 +62,9 @@ def validate_ground_truth_mask(
     h, w = gt_mask.shape[:2]
     alignment = _alignment_status(w, h, source_width, source_height)
     if alignment == "size_mismatch":
-        warnings.append(
+        issues.append(
             f"GT dimensions ({w}x{h}) differ from source ({source_width}x{source_height}); "
-            "will be resized at evaluation time"
+            "supervised metrics require matching dimensions"
         )
     elif alignment == "near_aligned":
         warnings.append(

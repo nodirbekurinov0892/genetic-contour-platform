@@ -199,6 +199,20 @@ class ComparisonService:
         if not benchmark:
             raise HTTPException(status_code=404, detail="Benchmark not found")
 
+        run_result = await self.db.execute(
+            select(BenchmarkRun)
+            .where(
+                BenchmarkRun.benchmark_id == benchmark_id,
+                BenchmarkRun.user_id == user.id,
+                BenchmarkRun.status == "completed",
+            )
+            .order_by(BenchmarkRun.finished_at.desc())
+            .limit(1)
+        )
+        run = run_result.scalar_one_or_none()
+        if not run:
+            raise HTTPException(status_code=404, detail="Completed benchmark run required")
+
         rankings = []
         for ds in benchmark.datasets:
             exp_result = await self.db.execute(
@@ -206,7 +220,8 @@ class ComparisonService:
                 .where(
                     Experiment.image_id == ds.image_id,
                     Experiment.user_id == user.id,
-                    Experiment.status == "completed",
+                    Experiment.benchmark_run_id == run.id,
+                    Experiment.status.in_(["completed", "degraded"]),
                 )
                 .options(selectinload(Experiment.algorithm_runs).selectinload(AlgorithmRun.metrics))
                 .order_by(Experiment.finished_at.desc())
@@ -233,5 +248,6 @@ class ComparisonService:
             "mode": "dataset_ranking",
             "benchmark_id": str(benchmark_id),
             "benchmark_name": benchmark.name,
+            "benchmark_run_id": str(run.id),
             "table": rankings,
         }

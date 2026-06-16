@@ -61,10 +61,9 @@ export function AnalyticsPanel({ edgeRuns, hasGroundTruth = false }: AnalyticsPa
   }
 
   const gaRun = edgeRuns.find((r) => r.algorithm_name === "genetic");
-  const varianceData =
+  const convergenceData =
     gaRun?.generation_history.map((g) => ({
       generation: g.generation,
-      variance: Math.max(0, g.average_fitness - g.best_fitness * 0.1),
       best: g.best_fitness,
       avg: g.average_fitness,
     })) ?? [];
@@ -132,19 +131,22 @@ export function AnalyticsPanel({ edgeRuns, hasGroundTruth = false }: AnalyticsPa
           </p>
         </div>
       </div>
-      {varianceData.length > 0 && (
+      {convergenceData.length > 0 && (
         <div className="scientific-card p-4">
           <p className="mb-2 text-sm font-semibold">GA ichki optimallashtirish — konvergensiya</p>
+          <p className="mb-2 text-xs text-muted-foreground">
+            Best va average fitness — GA evolyutsiyasi bo&apos;yicha haqiqiy tarix.
+          </p>
           <div className="h-64">
             <ResponsiveContainer width="100%" height="100%">
-              <LineChart data={varianceData}>
+              <LineChart data={convergenceData}>
                 <CartesianGrid strokeDasharray="3 3" opacity={0.3} />
                 <XAxis dataKey="generation" tick={{ fontSize: 11 }} />
                 <YAxis tick={{ fontSize: 11 }} />
                 <Tooltip />
-                <Line type="monotone" dataKey="best" stroke="#2563eb" dot={false} />
-                <Line type="monotone" dataKey="avg" stroke="#94a3b8" dot={false} />
-                <Line type="monotone" dataKey="variance" stroke="#f59e0b" dot={false} />
+                <Legend />
+                <Line type="monotone" dataKey="best" name="Best fitness" stroke="#2563eb" dot={false} />
+                <Line type="monotone" dataKey="avg" name="Average fitness" stroke="#94a3b8" dot={false} />
               </LineChart>
             </ResponsiveContainer>
           </div>

@@ -202,10 +202,18 @@ class BenchmarkService:
             select(Experiment).where(Experiment.benchmark_run_id == run_id)
         )
         experiments = list(exp_result.scalars().all())
-        completed = sum(1 for e in experiments if e.status == ExperimentStatus.COMPLETED.value)
-        run.completed_count = completed
+        terminal_statuses = {
+            ExperimentStatus.COMPLETED.value,
+            ExperimentStatus.DEGRADED.value,
+        }
+        finished = sum(1 for e in experiments if e.status in terminal_statuses)
+        run.completed_count = finished
 
-        if completed == len(experiments) and experiments:
+        if run.status in ("completed", "failed"):
+            await self.db.flush()
+            return run
+
+        if finished == len(experiments) and experiments:
             run.status = "completed"
             run.finished_at = datetime.now(timezone.utc)
             await self._compute_aggregate_metrics(run, experiments)
@@ -221,6 +229,15 @@ class BenchmarkService:
         elif any(e.status == ExperimentStatus.FAILED.value for e in experiments):
             run.status = "failed"
             run.finished_at = datetime.now(timezone.utc)
+            from app.services.notification_service import NotificationService
+
+            await NotificationService(self.db).create(
+                user_id=user.id,
+                type="benchmark.failed",
+                title="Benchmark muvaffaqiyatsiz",
+                message=f"Benchmark cohort run ({run.cohort_size} rasm) ba'zi tajribalar muvaffaqiyatsiz.",
+                payload={"benchmark_run_id": str(run.id), "benchmark_id": str(run.benchmark_id)},
+            )
 
         await self.db.flush()
         return run
@@ -311,7 +328,11 @@ class BenchmarkService:
         await self.db.flush()
 
     async def get_leaderboard(
-        self, benchmark_id: uuid.UUID, run_id: uuid.UUID | None = None
+        self,
+        benchmark_id: uuid.UUID,
+        run_id: uuid.UUID | None = None,
+        *,
+        user_id: uuid.UUID,
     ) -> list[BenchmarkLeaderboard]:
         query = select(BenchmarkLeaderboard).where(
             BenchmarkLeaderboard.benchmark_id == benchmark_id
@@ -323,6 +344,7 @@ class BenchmarkService:
                 select(BenchmarkRun)
                 .where(
                     BenchmarkRun.benchmark_id == benchmark_id,
+                    BenchmarkRun.user_id == user_id,
                     BenchmarkRun.status == "completed",
                 )
                 .order_by(BenchmarkRun.finished_at.desc())

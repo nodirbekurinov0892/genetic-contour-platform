@@ -17,11 +17,11 @@ def test_gt_valid_when_aligned():
     assert result["metrics"]["alignment_status"] == "aligned"
 
 
-def test_gt_warning_on_size_mismatch():
+def test_gt_invalid_on_size_mismatch():
     mask = np.zeros((10, 10), dtype=np.uint8)
     mask[5, 5] = 255
     result = validate_ground_truth_mask(mask, 2, 2)
-    assert result["display_status"] == GT_DISPLAY_WARNING
+    assert result["display_status"] == GT_DISPLAY_INVALID
     assert result["metrics"]["alignment_status"] == "size_mismatch"
 
 

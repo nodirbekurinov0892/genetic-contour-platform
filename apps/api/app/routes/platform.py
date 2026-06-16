@@ -117,7 +117,11 @@ async def security_audit(
 
 
 @router.get("/api-explorer")
-async def api_explorer(request: Request, settings: Settings = Depends(get_settings)):
+async def api_explorer(
+    request: Request,
+    settings: Settings = Depends(get_settings),
+    current_user: User = Depends(get_current_active_user),
+):
     routes = []
     for route in request.app.routes:
         if hasattr(route, "methods") and hasattr(route, "path"):
@@ -125,10 +129,12 @@ async def api_explorer(request: Request, settings: Settings = Depends(get_settin
                 if route.path.startswith("/api/") or route.path.startswith("/health"):
                     routes.append({"method": method, "path": route.path})
     routes.sort(key=lambda r: (r["path"], r["method"]))
+    docs_enabled = settings.api_debug
     return {
-        "openapi_url": "/openapi.json",
-        "docs_url": "/docs",
-        "redoc_url": "/redoc",
+        "openapi_url": "/openapi.json" if docs_enabled else None,
+        "docs_url": "/docs" if docs_enabled else None,
+        "redoc_url": "/redoc" if docs_enabled else None,
+        "docs_enabled": docs_enabled,
         "routes": routes,
         "version": request.app.version,
     }
