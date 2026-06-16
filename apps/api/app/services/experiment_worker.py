@@ -50,15 +50,6 @@ async def _mark_cancelled(session, experiment: Experiment) -> None:
     await session.commit()
 
 
-async def _mark_failed(session, experiment: Experiment, message: str) -> None:
-    experiment.status = ExperimentStatus.FAILED.value
-    experiment.error_message = message[:2000]
-    experiment.finished_at = datetime.now(timezone.utc)
-    experiment.current_generation = None
-    clear_cancel(experiment.id)
-    await session.commit()
-
-
 async def _mark_completed(session, experiment: Experiment) -> None:
     experiment.status = ExperimentStatus.COMPLETED.value
     experiment.progress_percent = 100.0
@@ -67,6 +58,33 @@ async def _mark_completed(session, experiment: Experiment) -> None:
     experiment.finished_at = datetime.now(timezone.utc)
     experiment.error_message = None
     clear_cancel(experiment.id)
+    from app.services.notification_service import NotificationService
+
+    await NotificationService(session).create(
+        user_id=experiment.user_id,
+        type="experiment.completed",
+        title="Tajriba yakunlandi",
+        message=f'"{experiment.title}" muvaffaqiyatli yakunlandi.',
+        payload={"experiment_id": str(experiment.id)},
+    )
+    await session.commit()
+
+
+async def _mark_failed(session, experiment: Experiment, message: str) -> None:
+    experiment.status = ExperimentStatus.FAILED.value
+    experiment.error_message = message[:2000]
+    experiment.finished_at = datetime.now(timezone.utc)
+    experiment.current_generation = None
+    clear_cancel(experiment.id)
+    from app.services.notification_service import NotificationService
+
+    await NotificationService(session).create(
+        user_id=experiment.user_id,
+        type="experiment.failed",
+        title="Tajriba muvaffaqiyatsiz",
+        message=f'"{experiment.title}" xatolik bilan to\'xtadi.',
+        payload={"experiment_id": str(experiment.id), "error": message[:500]},
+    )
     await session.commit()
 
 

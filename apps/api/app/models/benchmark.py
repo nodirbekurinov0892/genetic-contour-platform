@@ -15,6 +15,7 @@ class Benchmark(Base):
     slug: Mapped[str] = mapped_column(String(128), unique=True, nullable=False)
     name: Mapped[str] = mapped_column(String(512), nullable=False)
     description: Mapped[str | None] = mapped_column(Text, nullable=True)
+    category: Mapped[str | None] = mapped_column(String(128), nullable=True)
     methodology_version: Mapped[str] = mapped_column(String(32), nullable=False, default="fair_v1")
     comparison_protocol: Mapped[str] = mapped_column(String(32), nullable=False, default="fair_v1")
     is_public: Mapped[bool] = mapped_column(Boolean, nullable=False, default=True)

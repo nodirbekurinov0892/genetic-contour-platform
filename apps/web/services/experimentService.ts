@@ -101,16 +101,36 @@ export const experimentService = {
     return apiFetch<ExperimentResults>(`/api/experiments/${id}/results`);
   },
 
-  getReport(id: string): Promise<Record<string, unknown>> {
-    return apiFetch<Record<string, unknown>>(`/api/experiments/${id}/report`);
+  getReport(
+    id: string,
+    reportType: "scientific" | "executive" | "technical" | "benchmark" = "scientific",
+  ): Promise<Record<string, unknown>> {
+    return apiFetch<Record<string, unknown>>(
+      `/api/experiments/${id}/report?report_type=${reportType}`,
+    );
   },
 
   downloadPdf(id: string): Promise<void> {
     return downloadFile(`/api/experiments/${id}/report/pdf`, `experiment-${id}-report.pdf`);
   },
 
-  async downloadJson(id: string): Promise<void> {
-    const report = await apiFetch<Record<string, unknown>>(`/api/experiments/${id}/report`);
+  downloadXlsx(
+    id: string,
+    reportType: "scientific" | "executive" | "technical" | "benchmark" = "scientific",
+  ): Promise<void> {
+    return downloadFile(
+      `/api/experiments/${id}/report/xlsx?report_type=${reportType}`,
+      `experiment-${id}-${reportType}-report.xlsx`,
+    );
+  },
+
+  async downloadJson(
+    id: string,
+    reportType: "scientific" | "executive" | "technical" | "benchmark" = "scientific",
+  ): Promise<void> {
+    const report = await apiFetch<Record<string, unknown>>(
+      `/api/experiments/${id}/report?report_type=${reportType}`,
+    );
     const blob = new Blob([JSON.stringify(report, null, 2)], { type: "application/json" });
     const url = URL.createObjectURL(blob);
     const a = document.createElement("a");

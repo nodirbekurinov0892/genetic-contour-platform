@@ -11,9 +11,20 @@ from app.schemas.image import ImageResponse
 from app.schemas.storage import MarkMissingResponse, RepairMessageResponse, StorageAuditResponse
 from app.services.storage_audit_service import StorageAuditService
 from app.services.storage_repair_service import StorageRepairService
+from app.services.storage_center_service import StorageCenterService
 from app.utils.image_response import to_image_response
 
 router = APIRouter(prefix="/api/storage", tags=["storage"])
+
+
+@router.get("/center")
+async def storage_center(
+    db: AsyncSession = Depends(get_db),
+    settings: Settings = Depends(get_settings),
+    current_user: User = Depends(get_current_active_user),
+):
+    service = StorageCenterService(db, settings)
+    return await service.get_summary(current_user)
 
 
 @router.get("/audit", response_model=StorageAuditResponse)

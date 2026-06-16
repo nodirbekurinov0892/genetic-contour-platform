@@ -861,3 +861,55 @@ class ReportService:
 
         logger.info("PDF report generated: %s", stored.storage_key)
         return pdf_bytes
+
+    def shape_report_by_type(self, report_data: dict[str, Any], report_type: str) -> dict[str, Any]:
+        valid_types = ("scientific", "executive", "technical", "benchmark")
+        if report_type not in valid_types:
+            report_type = "scientific"
+        base = {
+            "report_type": report_type,
+            "meta": report_data.get("meta", {}),
+            "experiment": report_data.get("experiment", {}),
+        }
+        if report_type == "executive":
+            sci = report_data.get("scientific_evaluation", {})
+            return {
+                **base,
+                "summary": report_data.get("conclusion"),
+                "winner": sci.get("winner"),
+                "evaluation_mode": sci.get("evaluation_mode"),
+                "top_metrics": (report_data.get("metrics") or [])[:4],
+            }
+        if report_type == "technical":
+            return {
+                **base,
+                "image": report_data.get("image"),
+                "metrics": report_data.get("metrics"),
+                "reproducibility": report_data.get("reproducibility"),
+                "pipeline_run_id": report_data.get("pipeline_run_id"),
+                "algorithm_run_ids": report_data.get("algorithm_run_ids"),
+            }
+        if report_type == "benchmark":
+            return {
+                **base,
+                "metrics": report_data.get("metrics"),
+                "scientific_evaluation": report_data.get("scientific_evaluation"),
+                "experiment_lineage": report_data.get("experiment", {}).get("experiment_lineage_json"),
+                "conclusion": report_data.get("conclusion"),
+            }
+        return report_data
+
+    def build_xlsx(self, report_data: dict[str, Any]) -> bytes:
+        from openpyxl import Workbook
+
+        wb = Workbook()
+        ws = wb.active
+        ws.title = "Report"
+        csv_text = self.build_csv(report_data)
+        for row_idx, line in enumerate(csv_text.splitlines(), start=1):
+            cells = next(csv.reader([line]))
+            for col_idx, value in enumerate(cells, start=1):
+                ws.cell(row=row_idx, column=col_idx, value=value)
+        buffer = io.BytesIO()
+        wb.save(buffer)
+        return buffer.getvalue()

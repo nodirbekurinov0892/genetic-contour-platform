@@ -34,6 +34,7 @@ def _to_benchmark_response(benchmark, *, include_datasets: bool = False) -> Benc
         slug=benchmark.slug,
         name=benchmark.name,
         description=benchmark.description,
+        category=benchmark.category,
         methodology_version=benchmark.methodology_version,
         comparison_protocol=benchmark.comparison_protocol,
         is_public=benchmark.is_public,
@@ -68,6 +69,7 @@ async def create_benchmark(
         slug=data.slug,
         name=data.name,
         description=data.description,
+        category=data.category,
         user=current_user,
         image_ids=data.image_ids,
     )
@@ -105,13 +107,39 @@ async def start_benchmark_run(
     request: Request,
     benchmark_id: uuid.UUID,
     body: ExperimentRunRequest,
+    batch_size: int | None = None,
     db: AsyncSession = Depends(get_db),
     settings: Settings = Depends(get_settings),
     current_user: User = Depends(get_current_active_user),
 ):
     service = BenchmarkService(db, settings)
-    run = await service.start_cohort_run(benchmark_id, current_user, body)
+    run = await service.start_cohort_run(
+        benchmark_id, current_user, body, batch_size=batch_size
+    )
     return BenchmarkRunResponse.model_validate(run)
+
+
+@router.get("/{benchmark_id}/collection")
+async def get_benchmark_collection(
+    benchmark_id: uuid.UUID,
+    db: AsyncSession = Depends(get_db),
+    settings: Settings = Depends(get_settings),
+    current_user: User = Depends(get_current_active_user),
+):
+    service = BenchmarkService(db, settings)
+    return await service.get_collection_stats(benchmark_id)
+
+
+@router.get("/{benchmark_id}/runs/{run_id}/dataset-ranking")
+async def get_dataset_ranking(
+    benchmark_id: uuid.UUID,
+    run_id: uuid.UUID,
+    db: AsyncSession = Depends(get_db),
+    settings: Settings = Depends(get_settings),
+    current_user: User = Depends(get_current_active_user),
+):
+    service = BenchmarkService(db, settings)
+    return await service.get_dataset_ranking(benchmark_id, run_id, current_user)
 
 
 @router.get("/{benchmark_id}/runs/{run_id}", response_model=BenchmarkRunResponse)

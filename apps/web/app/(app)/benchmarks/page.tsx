@@ -25,6 +25,7 @@ interface Benchmark {
   slug: string;
   name: string;
   description: string | null;
+  category: string | null;
   dataset_count: number;
   comparison_protocol: string;
   datasets?: BenchmarkDataset[];
@@ -44,7 +45,30 @@ interface LeaderboardEntry {
   rank: number;
   avg_iou: number | null;
   avg_f1: number | null;
+  avg_dice: number | null;
+  avg_runtime_ms: number | null;
   sample_count: number;
+}
+
+interface DatasetRankingEntry {
+  image_id: string;
+  winner_algorithm: string | null;
+  best_iou: number | null;
+}
+
+interface CollectionStats {
+  id: string;
+  name: string;
+  category: string | null;
+  image_count: number;
+  gt_count: number;
+}
+
+const BATCH_SIZES = [10, 50, 100, 1000] as const;
+
+function formatMetricValue(val: number | null | undefined): string {
+  if (val == null) return "—";
+  return typeof val === "number" ? val.toFixed(4) : String(val);
 }
 
 export default function BenchmarksPage() {
@@ -52,14 +76,18 @@ export default function BenchmarksPage() {
   const [images, setImages] = useState<ImageRecord[]>([]);
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [selected, setSelected] = useState<Benchmark | null>(null);
+  const [collection, setCollection] = useState<CollectionStats | null>(null);
   const [activeRun, setActiveRun] = useState<BenchmarkRun | null>(null);
   const [leaderboard, setLeaderboard] = useState<LeaderboardEntry[]>([]);
+  const [datasetRanking, setDatasetRanking] = useState<DatasetRankingEntry[]>([]);
+  const [batchSize, setBatchSize] = useState<number>(10);
   const [loading, setLoading] = useState(true);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   const [name, setName] = useState("");
   const [slug, setSlug] = useState("");
+  const [category, setCategory] = useState("");
   const [description, setDescription] = useState("");
   const [pickedImages, setPickedImages] = useState<string[]>([]);
 
@@ -84,10 +112,21 @@ export default function BenchmarksPage() {
   }, [selectedId]);
 
   const loadSelected = useCallback(async (id: string) => {
-    const detail = await apiFetch<Benchmark>(`/api/benchmarks/${id}`);
+    const [detail, lb, coll] = await Promise.all([
+      apiFetch<Benchmark>(`/api/benchmarks/${id}`),
+      apiFetch<LeaderboardEntry[]>(`/api/benchmarks/${id}/leaderboard`),
+      apiFetch<CollectionStats>(`/api/benchmarks/${id}/collection`),
+    ]);
     setSelected(detail);
-    const lb = await apiFetch<LeaderboardEntry[]>(`/api/benchmarks/${id}/leaderboard`);
     setLeaderboard(lb);
+    setCollection(coll);
+  }, []);
+
+  const loadDatasetRanking = useCallback(async (benchmarkId: string, runId: string) => {
+    const ranking = await apiFetch<DatasetRankingEntry[]>(
+      `/api/benchmarks/${benchmarkId}/runs/${runId}/dataset-ranking`,
+    );
+    setDatasetRanking(ranking);
   }, []);
 
   useEffect(() => {
@@ -105,11 +144,14 @@ export default function BenchmarksPage() {
         `/api/benchmarks/${activeRun.benchmark_id}/runs/${activeRun.id}`,
       ).then((run) => {
         setActiveRun(run);
-        if (run.status === "completed" && selectedId) void loadSelected(selectedId);
+        if (run.status === "completed" && selectedId) {
+          void loadSelected(selectedId);
+          void loadDatasetRanking(run.benchmark_id, run.id);
+        }
       });
     }, 3000);
     return () => clearInterval(timer);
-  }, [activeRun, selectedId, loadSelected]);
+  }, [activeRun, selectedId, loadSelected, loadDatasetRanking]);
 
   const toggleImage = (id: string) => {
     setPickedImages((prev) =>
@@ -131,11 +173,13 @@ export default function BenchmarksPage() {
           slug: slug.trim(),
           name: name.trim(),
           description: description.trim() || null,
+          category: category.trim() || null,
           image_ids: pickedImages,
         }),
       });
       setName("");
       setSlug("");
+      setCategory("");
       setDescription("");
       setPickedImages([]);
       setSelectedId(created.id);
@@ -151,16 +195,20 @@ export default function BenchmarksPage() {
     if (!selected) return;
     setBusy(true);
     setError(null);
+    setDatasetRanking([]);
     try {
-      const run = await apiFetch<BenchmarkRun>(`/api/benchmarks/${selected.id}/runs`, {
-        method: "POST",
-        body: JSON.stringify({
-          algorithm: "compare_all",
-          params: DEFAULT_ALGORITHM_PARAMS,
-          ga_params: DEFAULT_GA_PARAMS,
-          comparison_protocol: "fair_v1",
-        }),
-      });
+      const run = await apiFetch<BenchmarkRun>(
+        `/api/benchmarks/${selected.id}/runs?batch_size=${batchSize}`,
+        {
+          method: "POST",
+          body: JSON.stringify({
+            algorithm: "compare_all",
+            params: DEFAULT_ALGORITHM_PARAMS,
+            ga_params: DEFAULT_GA_PARAMS,
+            comparison_protocol: "fair_v1",
+          }),
+        },
+      );
       setActiveRun(run);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Ishga tushirish xatosi");
@@ -188,7 +236,7 @@ export default function BenchmarksPage() {
           <Plus className="h-5 w-5" />
           Benchmark dataset yaratish
         </h2>
-        <div className="grid gap-3 sm:grid-cols-2">
+        <div className="grid gap-3 sm:grid-cols-3">
           <div>
             <Label htmlFor="b-name">Nomi</Label>
             <Input id="b-name" value={name} onChange={(e) => setName(e.target.value)} />
@@ -200,6 +248,15 @@ export default function BenchmarksPage() {
               placeholder="masalan, tanga-konturlar"
               value={slug}
               onChange={(e) => setSlug(e.target.value)}
+            />
+          </div>
+          <div>
+            <Label htmlFor="b-category">Kategoriya</Label>
+            <Input
+              id="b-category"
+              placeholder="masalan, metall, biologiya"
+              value={category}
+              onChange={(e) => setCategory(e.target.value)}
             />
           </div>
         </div>
@@ -251,7 +308,10 @@ export default function BenchmarksPage() {
               >
                 <p className="font-medium">{b.name}</p>
                 <p className="text-xs text-muted-foreground">
-                  {b.dataset_count} rasm · {formatComparisonProtocol(b.comparison_protocol)}
+                  {b.dataset_count} rasm
+                  {b.category ? ` · ${b.category}` : ""}
+                  {" · "}
+                  {formatComparisonProtocol(b.comparison_protocol)}
                 </p>
               </button>
             ))}
@@ -260,7 +320,22 @@ export default function BenchmarksPage() {
           {selected && (
             <div className="scientific-card space-y-4 p-4">
               <h3 className="font-semibold">{selected.name}</h3>
+              {selected.category && (
+                <p className="text-xs text-muted-foreground">Kategoriya: {selected.category}</p>
+              )}
               <p className="text-sm text-muted-foreground">{selected.description}</p>
+              {collection && (
+                <dl className="grid grid-cols-2 gap-2 text-sm">
+                  <div>
+                    <dt className="text-muted-foreground">Rasmlar</dt>
+                    <dd className="font-semibold">{collection.image_count}</dd>
+                  </div>
+                  <div>
+                    <dt className="text-muted-foreground">GT bilan</dt>
+                    <dd className="font-semibold">{collection.gt_count}</dd>
+                  </div>
+                </dl>
+              )}
               <div>
                 <p className="text-xs font-medium text-muted-foreground">Dataset rasmlari</p>
                 <ul className="mt-1 space-y-1 text-sm">
@@ -274,19 +349,49 @@ export default function BenchmarksPage() {
                   })}
                 </ul>
               </div>
+              <div>
+                <p className="mb-2 text-xs font-medium text-muted-foreground">Batch hajmi</p>
+                <div className="flex flex-wrap gap-2">
+                  {BATCH_SIZES.map((size) => (
+                    <Button
+                      key={size}
+                      variant={batchSize === size ? "default" : "outline"}
+                      size="sm"
+                      onClick={() => setBatchSize(size)}
+                    >
+                      {size}
+                    </Button>
+                  ))}
+                </div>
+              </div>
               <Button onClick={() => void startRun()} disabled={busy || selected.dataset_count === 0}>
                 <Play className="mr-2 h-4 w-4" />
-                Cohort ishga tushirish
+                Cohort ishga tushirish ({batchSize})
               </Button>
-              {activeRun && (
+              {activeRun && activeRun.benchmark_id === selected.id && (
                 <div className="rounded border p-3 text-sm">
                   <p>
                     Holat: {activeRun.status} ({activeRun.completed_count}/{activeRun.cohort_size})
                   </p>
                   {activeRun.aggregate_metrics_json && (
-                    <pre className="mt-2 max-h-40 overflow-auto text-xs">
-                      {JSON.stringify(activeRun.aggregate_metrics_json, null, 2)}
-                    </pre>
+                    <div className="mt-3 space-y-2">
+                      <p className="text-xs font-semibold uppercase text-muted-foreground">
+                        Statistik xulosa
+                      </p>
+                      {Object.entries(activeRun.aggregate_metrics_json).map(([algo, metrics]) => (
+                        <div key={algo} className="rounded border border-border/60 p-2">
+                          <p className="font-medium">{formatAlgorithmLabel(algo)}</p>
+                          <dl className="mt-1 grid grid-cols-2 gap-1 text-xs">
+                            {Object.entries(metrics).map(([key, val]) => (
+                              <div key={key}>
+                                <dt className="text-muted-foreground">{key}</dt>
+                                <dd>{formatMetricValue(val)}</dd>
+                              </div>
+                            ))}
+                          </dl>
+                        </div>
+                      ))}
+                    </div>
                   )}
                 </div>
               )}
@@ -305,6 +410,8 @@ export default function BenchmarksPage() {
                 <th className="p-2">Algoritm</th>
                 <th className="p-2">Avg IoU</th>
                 <th className="p-2">Avg F1</th>
+                <th className="p-2">Avg Dice</th>
+                <th className="p-2">Runtime (ms)</th>
                 <th className="p-2">N</th>
               </tr>
             </thead>
@@ -315,9 +422,38 @@ export default function BenchmarksPage() {
                   <td className="p-2">{formatAlgorithmLabel(e.algorithm_name)}</td>
                   <td className="p-2">{e.avg_iou?.toFixed(4) ?? "—"}</td>
                   <td className="p-2">{e.avg_f1?.toFixed(4) ?? "—"}</td>
+                  <td className="p-2">{e.avg_dice?.toFixed(4) ?? "—"}</td>
+                  <td className="p-2">{e.avg_runtime_ms?.toFixed(1) ?? "—"}</td>
                   <td className="p-2">{e.sample_count}</td>
                 </tr>
               ))}
+            </tbody>
+          </table>
+        </div>
+      )}
+
+      {datasetRanking.length > 0 && (
+        <div className="scientific-card overflow-x-auto p-4">
+          <h3 className="mb-3 font-semibold">Dataset reytingi</h3>
+          <table className="w-full text-sm">
+            <thead>
+              <tr className="border-b text-left text-muted-foreground">
+                <th className="p-2">Rasm ID</th>
+                <th className="p-2">G&apos;olib algoritm</th>
+                <th className="p-2">Eng yaxshi IoU</th>
+              </tr>
+            </thead>
+            <tbody>
+              {datasetRanking.map((row) => {
+                const img = images.find((i) => i.id === row.image_id);
+                return (
+                  <tr key={row.image_id} className="border-b">
+                    <td className="p-2">{img?.original_name ?? row.image_id.slice(0, 8)}</td>
+                    <td className="p-2">{formatAlgorithmLabel(row.winner_algorithm)}</td>
+                    <td className="p-2">{row.best_iou?.toFixed(4) ?? "—"}</td>
+                  </tr>
+                );
+              })}
             </tbody>
           </table>
         </div>

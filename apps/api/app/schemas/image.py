@@ -26,6 +26,7 @@ class ImageResponse(BaseModel):
     content_checksum: str | None = None
     gt_checksum: str | None = None
     gt_validation_status: str | None = None
+    gt_display_status: str | None = None
     gt_validation_metadata: dict | None = None
     gt_provenance_json: dict | None = None
     gt_validated_at: datetime | None = None

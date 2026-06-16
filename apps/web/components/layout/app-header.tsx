@@ -13,7 +13,7 @@ import {
   Settings,
   User,
 } from "lucide-react";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { ThemeToggle } from "@/components/layout/theme-toggle";
 import { UserAvatar } from "@/components/profile/user-avatar";
 import { Badge } from "@/components/ui/badge";
@@ -27,6 +27,7 @@ import {
   getRoleBadgeVariant,
   getUserDisplayName,
 } from "@/lib/user-profile";
+import { notificationService } from "@/services/notificationService";
 import { cn } from "@/lib/utils";
 
 export function AppHeader() {
@@ -35,15 +36,27 @@ export function AppHeader() {
   const { user, logout } = useAuth();
   const { dateLabel, weekday, syncLabel, apiStatus, refresh } = useHeaderClock();
   const [searchQuery, setSearchQuery] = useState("");
+  const [unreadCount, setUnreadCount] = useState(0);
   const pageTitle = getPageTitle(pathname);
   const breadcrumbs = getBreadcrumbs(pathname);
   const profile = user?.profile_data ?? null;
+
+  useEffect(() => {
+    if (!user) {
+      setUnreadCount(0);
+      return;
+    }
+    notificationService
+      .unreadCount()
+      .then((res) => setUnreadCount(res.count))
+      .catch(() => setUnreadCount(0));
+  }, [user, pathname]);
 
   const handleSearch = (event: React.FormEvent) => {
     event.preventDefault();
     const query = searchQuery.trim();
     if (!query) return;
-    router.push(`/library?search=${encodeURIComponent(query)}`);
+    router.push(`/search?q=${encodeURIComponent(query)}`);
   };
 
   return (
@@ -125,8 +138,15 @@ export function AppHeader() {
 
           <ThemeToggle />
 
-          <Button variant="ghost" size="sm" className="h-9 w-9 p-0" aria-label="Bildirishnomalar">
-            <Bell className="h-4 w-4" />
+          <Button variant="ghost" size="sm" className="relative h-9 w-9 p-0" asChild>
+            <Link href="/notifications" aria-label="Bildirishnomalar">
+              <Bell className="h-4 w-4" />
+              {unreadCount > 0 && (
+                <span className="absolute -right-0.5 -top-0.5 flex h-4 min-w-4 items-center justify-center rounded-full bg-destructive px-1 text-[10px] font-bold text-destructive-foreground">
+                  {unreadCount > 99 ? "99+" : unreadCount}
+                </span>
+              )}
+            </Link>
           </Button>
 
           {user && (

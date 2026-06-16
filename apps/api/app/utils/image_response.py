@@ -24,6 +24,11 @@ def _resolve_key(storage: StorageService, image: Image, *, ground_truth: bool = 
 def to_image_response(image: Image, settings: Settings) -> ImageResponse:
     storage = StorageService(settings)
     data = ImageResponse.model_validate(image)
+    meta = image.gt_validation_metadata or {}
+    data.gt_display_status = meta.get("display_status")
+    if not data.gt_display_status and image.gt_validation_status:
+        status_map = {"valid": "VALID", "invalid": "INVALID", "stale": "WARNING", "pending": "WARNING"}
+        data.gt_display_status = status_map.get(image.gt_validation_status, image.gt_validation_status.upper())
 
     original_key = _resolve_key(storage, image)
     original_exists = storage.exists(original_key) if original_key else False

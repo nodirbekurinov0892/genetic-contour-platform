@@ -12,6 +12,11 @@ export const PAGE_TITLES: Record<string, string> = {
   "/profile": "Profil",
   "/status": "Tizim holati",
   "/onboarding": "Boshlang'ich yo'riqnoma",
+  "/notifications": "Bildirishnomalar",
+  "/storage": "Saqlash markazi",
+  "/search": "Global qidiruv",
+  "/api-explorer": "API Explorer",
+  "/team": "Jamoa boshqaruvi",
 };
 
 export function getPageTitle(pathname: string): string {

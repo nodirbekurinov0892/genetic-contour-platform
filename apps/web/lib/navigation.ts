@@ -1,17 +1,22 @@
 import type { LucideIcon } from "lucide-react";
 import {
   Activity,
+  Bell,
+  Code2,
   FlaskConical,
   GitCompare,
+  HardDrive,
   HelpCircle,
   Home,
   ImageIcon,
   LineChart,
   FileText,
   PlusCircle,
+  Search,
   Target,
   Trophy,
   User,
+  Users,
 } from "lucide-react";
 
 export type NavItem = {
@@ -73,6 +78,17 @@ export const enterpriseNavCategories: NavCategory[] = [
       },
       { href: "/ground-truth", label: "Ground Truth boshqaruvi", icon: Target, mobileLabel: "GT" },
       { href: "/benchmarks", label: "Benchmark to'plamlari", icon: Trophy, mobileLabel: "Bench" },
+    ],
+  },
+  {
+    id: "professional",
+    label: "Professional",
+    items: [
+      { href: "/notifications", label: "Bildirishnomalar", icon: Bell, mobileLabel: "Xabarlar" },
+      { href: "/storage", label: "Saqlash markazi", icon: HardDrive, mobileLabel: "Storage" },
+      { href: "/search", label: "Global qidiruv", icon: Search, mobileLabel: "Qidiruv" },
+      { href: "/api-explorer", label: "API Explorer", icon: Code2, mobileLabel: "API" },
+      { href: "/team", label: "Jamoa", icon: Users, mobileLabel: "Jamoa" },
     ],
   },
   {

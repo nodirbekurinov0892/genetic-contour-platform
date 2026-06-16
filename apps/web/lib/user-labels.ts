@@ -68,10 +68,37 @@ export function formatComparisonProtocol(protocol: string | null | undefined): s
   return COMPARISON_PROTOCOL_LABELS[protocol] ?? "Adolatli taqqoslash protokoli";
 }
 
+export const GT_DISPLAY_STATUS_LABELS: Record<string, string> = {
+  VALID: "Tasdiqlangan",
+  WARNING: "Ogohlantirish",
+  INVALID: "Noto'g'ri",
+};
+
+export function formatGtDisplayStatus(status: string | null | undefined): string {
+  if (!status) return "Tekshirilmagan";
+  return GT_DISPLAY_STATUS_LABELS[status] ?? status;
+}
+
+export function getGtDisplayStatusVariant(
+  status: string | null | undefined,
+): "success" | "warning" | "destructive" | "outline" {
+  if (status === "VALID") return "success";
+  if (status === "WARNING") return "warning";
+  if (status === "INVALID") return "destructive";
+  return "outline";
+}
+
 export function formatGtValidationStatus(status: string | null | undefined): string {
   if (!status) return "Tekshirilmagan";
   return GT_VALIDATION_LABELS[status] ?? status;
 }
+
+export const REPORT_TYPE_LABELS: Record<string, string> = {
+  scientific: "Ilmiy",
+  executive: "Rahbariyat",
+  technical: "Texnik",
+  benchmark: "Benchmark",
+};
 
 export function formatExperimentStatus(status: string | null | undefined): string {
   if (!status) return "—";

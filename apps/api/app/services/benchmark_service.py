@@ -5,7 +5,7 @@ from __future__ import annotations
 import logging
 import uuid
 from datetime import datetime, timezone
-from statistics import mean
+from statistics import mean, median, pstdev, pvariance
 
 from fastapi import HTTPException
 from sqlalchemy import func, select
@@ -65,6 +65,7 @@ class BenchmarkService:
         slug: str,
         name: str,
         description: str | None,
+        category: str | None = None,
         user: User,
         image_ids: list[uuid.UUID] | None = None,
     ) -> Benchmark:
@@ -77,6 +78,7 @@ class BenchmarkService:
             slug=slug,
             name=name,
             description=description,
+            category=category,
             methodology_version=METHODOLOGY_VERSION,
             comparison_protocol=DEFAULT_PROTOCOL,
             is_public=True,
@@ -127,11 +129,27 @@ class BenchmarkService:
         benchmark_id: uuid.UUID,
         user: User,
         run_request: ExperimentRunRequest,
+        *,
+        batch_size: int | None = None,
     ) -> BenchmarkRun:
         benchmark = await self.get_benchmark(benchmark_id)
         datasets = sorted(benchmark.datasets, key=lambda d: d.sort_order)
         if not datasets:
             raise HTTPException(status_code=400, detail="Benchmark has no dataset images")
+
+        if batch_size is not None:
+            if batch_size not in (10, 50, 100, 1000):
+                raise HTTPException(
+                    status_code=400,
+                    detail="batch_size must be one of 10, 50, 100, 1000",
+                )
+            datasets = datasets[:batch_size]
+
+        gt_count = 0
+        for ds in datasets:
+            img = await self.db.get(Image, ds.image_id)
+            if img and img.ground_truth_storage_key:
+                gt_count += 1
 
         run = BenchmarkRun(
             id=uuid.uuid4(),
@@ -191,6 +209,15 @@ class BenchmarkService:
             run.status = "completed"
             run.finished_at = datetime.now(timezone.utc)
             await self._compute_aggregate_metrics(run, experiments)
+            from app.services.notification_service import NotificationService
+
+            await NotificationService(self.db).create(
+                user_id=user.id,
+                type="benchmark.completed",
+                title="Benchmark yakunlandi",
+                message=f"Benchmark cohort run ({run.cohort_size} rasm) yakunlandi.",
+                payload={"benchmark_run_id": str(run.id), "benchmark_id": str(run.benchmark_id)},
+            )
         elif any(e.status == ExperimentStatus.FAILED.value for e in experiments):
             run.status = "failed"
             run.finished_at = datetime.now(timezone.utc)
@@ -232,12 +259,28 @@ class BenchmarkService:
             dices = [r["dice_coefficient"] for r in rows if r["dice_coefficient"] is not None]
             runtimes = [r["runtime_ms"] for r in rows if r["runtime_ms"] is not None]
             avg_iou = mean(ious) if ious else None
+
+            def _stats(vals: list[float]) -> dict:
+                if not vals:
+                    return {"mean": None, "median": None, "std": None, "variance": None, "min": None, "max": None}
+                return {
+                    "mean": round(mean(vals), 4),
+                    "median": round(median(vals), 4),
+                    "std": round(pstdev(vals), 4) if len(vals) > 1 else 0.0,
+                    "variance": round(pvariance(vals), 6) if len(vals) > 1 else 0.0,
+                    "min": round(min(vals), 4),
+                    "max": round(max(vals), 4),
+                }
+
             aggregate[algo] = {
                 "avg_iou": round(avg_iou, 4) if avg_iou is not None else None,
                 "avg_f1": round(mean(f1s), 4) if f1s else None,
                 "avg_dice": round(mean(dices), 4) if dices else None,
                 "avg_runtime_ms": round(mean(runtimes), 1) if runtimes else None,
                 "sample_count": len(rows),
+                "iou_statistics": _stats([float(x) for x in ious]),
+                "f1_statistics": _stats([float(x) for x in f1s]),
+                "dice_statistics": _stats([float(x) for x in dices]),
             }
             leaderboard_rows.append((algo, avg_iou))
 
@@ -292,3 +335,54 @@ class BenchmarkService:
 
         result = await self.db.execute(query.order_by(BenchmarkLeaderboard.rank))
         return list(result.scalars().all())
+
+    async def get_collection_stats(self, benchmark_id: uuid.UUID) -> dict:
+        benchmark = await self.get_benchmark(benchmark_id)
+        gt_count = 0
+        for ds in benchmark.datasets:
+            img = await self.db.get(Image, ds.image_id)
+            if img and img.ground_truth_storage_key:
+                gt_count += 1
+        return {
+            "id": str(benchmark.id),
+            "name": benchmark.name,
+            "description": benchmark.description,
+            "category": benchmark.category,
+            "image_count": len(benchmark.datasets),
+            "gt_count": gt_count,
+            "methodology_version": benchmark.methodology_version,
+            "comparison_protocol": benchmark.comparison_protocol,
+        }
+
+    async def get_dataset_ranking(
+        self, benchmark_id: uuid.UUID, run_id: uuid.UUID, user: User
+    ) -> list[dict]:
+        from sqlalchemy.orm import selectinload
+
+        benchmark = await self.get_benchmark(benchmark_id)
+        exp_result = await self.db.execute(
+            select(Experiment)
+            .where(Experiment.benchmark_run_id == run_id, Experiment.user_id == user.id)
+            .options(selectinload(Experiment.algorithm_runs).selectinload(AlgorithmRun.metrics))
+        )
+        experiments = list(exp_result.scalars().all())
+        by_image: dict[uuid.UUID, Experiment] = {e.image_id: e for e in experiments}
+        rankings = []
+        for ds in sorted(benchmark.datasets, key=lambda d: d.sort_order):
+            exp = by_image.get(ds.image_id)
+            winner = None
+            best_iou = None
+            if exp:
+                for ar in exp.algorithm_runs:
+                    if ar.algorithm_name not in _EDGE_ALGORITHMS or not ar.metrics:
+                        continue
+                    iou = ar.metrics[0].iou
+                    if iou is not None and (best_iou is None or float(iou) > best_iou):
+                        best_iou = float(iou)
+                        winner = ar.algorithm_name
+            rankings.append({
+                "image_id": str(ds.image_id),
+                "winner_algorithm": winner,
+                "best_iou": round(best_iou, 4) if best_iou is not None else None,
+            })
+        return rankings

@@ -10,7 +10,7 @@ import { Badge } from "@/components/ui/badge";
 import { StoredImage } from "@/components/ui/stored-image";
 import { EmptyState, ErrorState, LoadingState } from "@/components/ui/state-panel";
 import { imageService } from "@/services/imageService";
-import { formatGtValidationStatus, GT_PAIRING_LABELS } from "@/lib/user-labels";
+import { formatGtValidationStatus, formatGtDisplayStatus, getGtDisplayStatusVariant, GT_PAIRING_LABELS } from "@/lib/user-labels";
 import type { ImageRecord } from "@shared/types";
 
 export default function GroundTruthPage() {
@@ -192,6 +192,11 @@ export default function GroundTruthPage() {
                     <p className="font-semibold">{img.original_name}</p>
                     <div className="flex flex-wrap gap-2">
                       <Badge variant="default">{GT_PAIRING_LABELS.paired}</Badge>
+                      {img.gt_display_status && (
+                        <Badge variant={getGtDisplayStatusVariant(img.gt_display_status)}>
+                          {formatGtDisplayStatus(img.gt_display_status)}
+                        </Badge>
+                      )}
                       <Badge variant="outline">
                         {formatGtValidationStatus(img.gt_validation_status)}
                       </Badge>

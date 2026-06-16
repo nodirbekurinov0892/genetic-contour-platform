@@ -17,10 +17,14 @@ import type {
 } from "@shared/types";
 import { API_BASE } from "@/lib/api";
 import { WorkflowNextStep } from "@/components/layout/workflow-next-step";
+import { ComparisonProContent } from "./comparison-pro-content";
+
+type ViewMode = "single" | "pro";
 
 export default function ComparisonPageContent() {
   const searchParams = useSearchParams();
   const initialId = searchParams.get("experiment") ?? "";
+  const [viewMode, setViewMode] = useState<ViewMode>("single");
 
   const [experiments, setExperiments] = useState<ExperimentBrowseItem[]>([]);
   const [selectedId, setSelectedId] = useState("");
@@ -107,6 +111,27 @@ export default function ComparisonPageContent() {
         description="Sobel, Prewitt, Canny va Genetik algoritm natijalarini yonma-yon tahlil qiling"
       />
 
+      <div className="flex flex-wrap gap-2">
+        <Button
+          variant={viewMode === "single" ? "default" : "outline"}
+          size="sm"
+          onClick={() => setViewMode("single")}
+        >
+          Yagona tajriba
+        </Button>
+        <Button
+          variant={viewMode === "pro" ? "default" : "outline"}
+          size="sm"
+          onClick={() => setViewMode("pro")}
+        >
+          Professional taqqoslash
+        </Button>
+      </div>
+
+      {viewMode === "pro" ? (
+        <ComparisonProContent />
+      ) : (
+        <>
       <div className="flex flex-wrap items-center gap-3">
         <label className="text-sm font-medium" htmlFor="exp-select">
           Tajriba:
@@ -159,6 +184,8 @@ export default function ComparisonPageContent() {
           />
         </>
       ) : null}
+        </>
+      )}
     </div>
   );
 }

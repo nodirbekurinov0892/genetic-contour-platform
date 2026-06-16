@@ -8,6 +8,7 @@ class BenchmarkCreate(BaseModel):
     slug: str = Field(min_length=2, max_length=128)
     name: str = Field(min_length=1, max_length=512)
     description: str | None = None
+    category: str | None = Field(default=None, max_length=128)
     image_ids: list[UUID] | None = None
 
 
@@ -27,6 +28,7 @@ class BenchmarkResponse(BaseModel):
     slug: str
     name: str
     description: str | None
+    category: str | None = None
     methodology_version: str
     comparison_protocol: str
     is_public: bool

@@ -349,13 +349,15 @@ async def get_experiment_results(
 async def get_experiment_report(
     request: Request,
     experiment_id: uuid.UUID,
+    report_type: str = "scientific",
     db: AsyncSession = Depends(get_db),
     settings: Settings = Depends(get_settings),
     current_user: User = Depends(get_current_active_user),
 ):
     report_service = ReportService(db, settings)
     report_data = await report_service.build_report_data(experiment_id, current_user)
-    return JSONResponse(content=report_data)
+    shaped = report_service.shape_report_by_type(report_data, report_type)
+    return JSONResponse(content=shaped)
 
 
 @router.get("/{experiment_id}/report/csv")
@@ -372,6 +374,26 @@ async def get_experiment_report_csv(
     return Response(
         content=csv_content,
         media_type="text/csv; charset=utf-8",
+        headers={"Content-Disposition": f'attachment; filename="{filename}"'},
+    )
+
+
+@router.get("/{experiment_id}/report/xlsx")
+async def get_experiment_report_xlsx(
+    experiment_id: uuid.UUID,
+    report_type: str = "scientific",
+    db: AsyncSession = Depends(get_db),
+    settings: Settings = Depends(get_settings),
+    current_user: User = Depends(get_current_active_user),
+):
+    report_service = ReportService(db, settings)
+    report_data = await report_service.build_report_data(experiment_id, current_user)
+    shaped = report_service.shape_report_by_type(report_data, report_type)
+    xlsx_bytes = report_service.build_xlsx(shaped if report_type != "scientific" else report_data)
+    filename = f"experiment-{experiment_id}-{report_type}-report.xlsx"
+    return Response(
+        content=xlsx_bytes,
+        media_type="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
         headers={"Content-Disposition": f'attachment; filename="{filename}"'},
     )
 

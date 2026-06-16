@@ -102,7 +102,7 @@ export default function ReportsPageContent() {
     <div className="space-y-8">
       <SectionHeader
         title="Ilmiy hisobotlar"
-        description="Yakunlangan tajribalar uchun PDF, JSON va CSV eksport markazi"
+        description="Yakunlangan tajribalar uchun PDF, JSON, CSV va XLSX eksport markazi"
       />
 
       <Input
@@ -135,7 +135,7 @@ export default function ReportsPageContent() {
                 Yakunlanmagan tajribalar
               </h2>
               <p className="text-sm text-muted-foreground">
-                PDF, CSV va JSON faqat yakunlangan tajribalar uchun mavjud.
+                PDF, CSV, JSON va XLSX faqat yakunlangan tajribalar uchun mavjud.
               </p>
               {incomplete.map((exp) => (
                 <div key={exp.id} className="scientific-card p-5">
