@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import { SectionHeader } from "@/components/ui/section-header";
 import { ErrorState, LoadingState } from "@/components/ui/state-panel";
-import { leaderboardService, type LeaderboardCenter } from "@/services/leaderboardService";
+import { leaderboardService, type LeaderboardCenter, type LeaderboardRow } from "@/services/leaderboardService";
 import { formatAlgorithmLabel } from "@/lib/user-labels";
 
 function RankTable({
@@ -12,7 +12,7 @@ function RankTable({
   columns,
 }: {
   title: string;
-  rows: Record<string, unknown>[];
+  rows: LeaderboardRow[];
   columns: { key: string; label: string; format?: (v: unknown) => string }[];
 }) {
   if (rows.length === 0) {
@@ -41,7 +41,7 @@ function RankTable({
             <tr key={idx} className="border-b">
               {columns.map((c) => (
                 <td key={c.key} className="p-2 font-mono">
-                  {c.format ? c.format(row[c.key]) : String(row[c.key] ?? "—")}
+                  {c.format ? c.format(row[c.key as keyof LeaderboardRow]) : String(row[c.key as keyof LeaderboardRow] ?? "—")}
                 </td>
               ))}
             </tr>
@@ -83,7 +83,7 @@ export default function LeaderboardPage() {
       />
       <div className="grid gap-4 xl:grid-cols-2">
         <RankTable
-          title="Top Algorithms (Avg IoU)"
+          title="Global Algorithm Leaderboard"
           rows={data.top_algorithms}
           columns={[
             { key: "rank", label: "#" },
@@ -94,7 +94,7 @@ export default function LeaderboardPage() {
           ]}
         />
         <RankTable
-          title="Top Datasets"
+          title="Dataset Leaderboard"
           rows={data.top_datasets}
           columns={[
             { key: "rank", label: "#" },
@@ -104,7 +104,7 @@ export default function LeaderboardPage() {
           ]}
         />
         <RankTable
-          title="Top Benchmarks"
+          title="Benchmark Leaderboard"
           rows={data.top_benchmarks}
           columns={[
             { key: "rank", label: "#" },
@@ -124,12 +124,24 @@ export default function LeaderboardPage() {
           ]}
         />
         <RankTable
-          title="Top Speed"
+          title="Runtime Leaderboard"
           rows={data.top_speed}
           columns={[
             { key: "rank", label: "#" },
             { key: "algorithm", label: "Algoritm", format: (v) => formatAlgorithmLabel(String(v ?? "")) },
             { key: "avg_runtime_ms", label: "Avg ms", format: (v) => (typeof v === "number" ? v.toFixed(1) : "—") },
+            { key: "sample_count", label: "Samples" },
+          ]}
+        />
+        <RankTable
+          title="Robustness Leaderboard (Avg F1)"
+          rows={data.top_robustness}
+          columns={[
+            { key: "rank", label: "#" },
+            { key: "algorithm", label: "Algoritm", format: (v) => formatAlgorithmLabel(String(v ?? "")) },
+            metricCol("avg_f1", "Avg F1"),
+            metricCol("avg_iou", "Avg IoU"),
+            { key: "sample_count", label: "Samples" },
           ]}
         />
         <RankTable

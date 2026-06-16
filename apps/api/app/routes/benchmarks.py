@@ -3,7 +3,7 @@ import json
 import uuid
 
 from fastapi import APIRouter, Depends, Request
-from fastapi.responses import StreamingResponse
+from fastapi.responses import Response, StreamingResponse
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.config import Settings, get_settings
@@ -202,3 +202,90 @@ async def get_benchmark_leaderboard(
     service = BenchmarkService(db, settings)
     entries = await service.get_leaderboard(benchmark_id, run_id, user_id=current_user.id)
     return [LeaderboardEntry.model_validate(e) for e in entries]
+
+
+@router.get("/{benchmark_id}/runs/{run_id}/summary")
+async def get_benchmark_run_summary(
+    benchmark_id: uuid.UUID,
+    run_id: uuid.UUID,
+    db: AsyncSession = Depends(get_db),
+    settings: Settings = Depends(get_settings),
+    current_user: User = Depends(get_current_active_user),
+):
+    service = BenchmarkService(db, settings)
+    return await service.get_run_summary(benchmark_id, run_id, current_user)
+
+
+@router.post("/{benchmark_id}/runs/{run_id}/retry-failed")
+async def retry_failed_benchmark_experiments(
+    benchmark_id: uuid.UUID,
+    run_id: uuid.UUID,
+    db: AsyncSession = Depends(get_db),
+    settings: Settings = Depends(get_settings),
+    current_user: User = Depends(get_current_active_user),
+):
+    service = BenchmarkService(db, settings)
+    return await service.retry_failed_experiments(benchmark_id, run_id, current_user)
+
+
+@router.post("/{benchmark_id}/runs/{run_id}/cancel")
+async def cancel_benchmark_run(
+    benchmark_id: uuid.UUID,
+    run_id: uuid.UUID,
+    db: AsyncSession = Depends(get_db),
+    settings: Settings = Depends(get_settings),
+    current_user: User = Depends(get_current_active_user),
+):
+    service = BenchmarkService(db, settings)
+    return await service.cancel_run(benchmark_id, run_id, current_user)
+
+
+@router.get("/{benchmark_id}/runs/{run_id}/report/csv")
+async def export_benchmark_run_csv(
+    benchmark_id: uuid.UUID,
+    run_id: uuid.UUID,
+    db: AsyncSession = Depends(get_db),
+    settings: Settings = Depends(get_settings),
+    current_user: User = Depends(get_current_active_user),
+):
+    service = BenchmarkService(db, settings)
+    csv_text = await service.export_run_csv(benchmark_id, run_id, current_user)
+    return Response(
+        content=csv_text,
+        media_type="text/csv",
+        headers={"Content-Disposition": f'attachment; filename="benchmark-{benchmark_id}-run-{run_id}.csv"'},
+    )
+
+
+@router.get("/{benchmark_id}/runs/{run_id}/report/xlsx")
+async def export_benchmark_run_xlsx(
+    benchmark_id: uuid.UUID,
+    run_id: uuid.UUID,
+    db: AsyncSession = Depends(get_db),
+    settings: Settings = Depends(get_settings),
+    current_user: User = Depends(get_current_active_user),
+):
+    service = BenchmarkService(db, settings)
+    xlsx_bytes = await service.export_run_xlsx(benchmark_id, run_id, current_user)
+    return Response(
+        content=xlsx_bytes,
+        media_type="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+        headers={"Content-Disposition": f'attachment; filename="benchmark-{benchmark_id}-run-{run_id}.xlsx"'},
+    )
+
+
+@router.get("/{benchmark_id}/runs/{run_id}/report/pdf")
+async def export_benchmark_run_pdf(
+    benchmark_id: uuid.UUID,
+    run_id: uuid.UUID,
+    db: AsyncSession = Depends(get_db),
+    settings: Settings = Depends(get_settings),
+    current_user: User = Depends(get_current_active_user),
+):
+    service = BenchmarkService(db, settings)
+    pdf_bytes = await service.export_run_pdf(benchmark_id, run_id, current_user)
+    return Response(
+        content=pdf_bytes,
+        media_type="application/pdf",
+        headers={"Content-Disposition": f'attachment; filename="benchmark-{benchmark_id}-run-{run_id}.pdf"'},
+    )

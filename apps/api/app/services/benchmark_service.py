@@ -461,3 +461,170 @@ class BenchmarkService:
         return await DatasetRankingService(self.db, self.settings).rank_benchmark_run(
             benchmark_id, run_id, user
         )
+
+    async def get_run_summary(self, benchmark_id: uuid.UUID, run_id: uuid.UUID, user: User) -> dict:
+        from app.services.comparison_center_service import ComparisonCenterService
+
+        run = await self.refresh_run_status(run_id, user)
+        if run.benchmark_id != benchmark_id or run.user_id != user.id:
+            from fastapi import HTTPException
+            raise HTTPException(status_code=404, detail="Benchmark run not found")
+        summary = await ComparisonCenterService(self.db, self.settings).benchmark_summary(
+            benchmark_id, user, run_id=run.id
+        )
+        summary["run_id"] = str(run.id)
+        return summary
+
+    async def retry_failed_experiments(self, benchmark_id: uuid.UUID, run_id: uuid.UUID, user: User) -> dict:
+        run = await self.refresh_run_status(run_id, user)
+        if run.benchmark_id != benchmark_id or run.user_id != user.id:
+            raise HTTPException(status_code=404, detail="Benchmark run not found")
+        if run.status not in ("failed", "completed"):
+            raise HTTPException(status_code=409, detail="Run must be completed or failed to retry failed experiments")
+
+        exp_result = await self.db.execute(
+            select(Experiment).where(
+                Experiment.benchmark_run_id == run_id,
+                Experiment.user_id == user.id,
+                Experiment.status == ExperimentStatus.FAILED.value,
+            )
+        )
+        failed = list(exp_result.scalars().all())
+        if not failed:
+            return {"retried_count": 0, "message": "No failed experiments to retry"}
+
+        exp_service = ExperimentService(self.db, self.settings)
+        retried = 0
+        for exp in failed:
+            if not exp.job_params:
+                continue
+            from app.schemas.experiment import ExperimentRunRequest
+
+            body = ExperimentRunRequest.model_validate(exp.job_params)
+            exp.status = ExperimentStatus.PENDING.value
+            exp.error_message = None
+            await self.db.flush()
+            await exp_service.enqueue_run(exp.id, body, user)
+            retried += 1
+
+        run.status = "running"
+        run.finished_at = None
+        await self.db.flush()
+        return {"retried_count": retried, "message": f"Retried {retried} failed experiment(s)"}
+
+    async def cancel_run(self, benchmark_id: uuid.UUID, run_id: uuid.UUID, user: User) -> dict:
+        run = await self.refresh_run_status(run_id, user)
+        if run.benchmark_id != benchmark_id or run.user_id != user.id:
+            raise HTTPException(status_code=404, detail="Benchmark run not found")
+        if run.status in ("completed", "failed"):
+            raise HTTPException(status_code=409, detail="Run already finished")
+
+        exp_service = ExperimentService(self.db, self.settings)
+        exp_result = await self.db.execute(
+            select(Experiment).where(Experiment.benchmark_run_id == run_id, Experiment.user_id == user.id)
+        )
+        cancelled = 0
+        for exp in exp_result.scalars().all():
+            if exp.status in (ExperimentStatus.QUEUED.value, ExperimentStatus.RUNNING.value):
+                await exp_service.cancel(exp.id, user)
+                cancelled += 1
+
+        run.status = "failed"
+        run.finished_at = datetime.now(timezone.utc)
+        await self.db.flush()
+        return {"cancelled_count": cancelled, "message": "Benchmark run cancelled"}
+
+    async def export_run_csv(self, benchmark_id: uuid.UUID, run_id: uuid.UUID, user: User) -> str:
+        summary = await self.get_run_summary(benchmark_id, run_id, user)
+        lines = ["algorithm,rank,avg_iou,avg_f1,avg_dice,avg_runtime_ms,sample_count,success_rate,failure_rate"]
+        for row in summary.get("table", []):
+            lines.append(
+                ",".join(
+                    str(row.get(k, ""))
+                    for k in (
+                        "algorithm",
+                        "rank",
+                        "avg_iou",
+                        "avg_f1",
+                        "avg_dice",
+                        "avg_runtime_ms",
+                        "sample_count",
+                        "success_rate",
+                        "failure_rate",
+                    )
+                )
+            )
+        return "\n".join(lines) + "\n"
+
+    async def export_run_xlsx(self, benchmark_id: uuid.UUID, run_id: uuid.UUID, user: User) -> bytes:
+        summary = await self.get_run_summary(benchmark_id, run_id, user)
+        from openpyxl import Workbook
+
+        wb = Workbook()
+        ws = wb.active
+        ws.title = "Benchmark Summary"
+        headers = [
+            "algorithm",
+            "rank",
+            "avg_iou",
+            "avg_f1",
+            "avg_dice",
+            "avg_runtime_ms",
+            "sample_count",
+            "success_rate",
+            "failure_rate",
+        ]
+        ws.append(headers)
+        for row in summary.get("table", []):
+            ws.append([row.get(h) for h in headers])
+        import io
+
+        buffer = io.BytesIO()
+        wb.save(buffer)
+        return buffer.getvalue()
+
+    async def export_run_pdf(self, benchmark_id: uuid.UUID, run_id: uuid.UUID, user: User) -> bytes:
+        summary = await self.get_run_summary(benchmark_id, run_id, user)
+        import io
+
+        from reportlab.lib import colors
+        from reportlab.lib.pagesizes import A4
+        from reportlab.lib.styles import getSampleStyleSheet
+        from reportlab.lib.units import cm
+        from reportlab.platypus import Paragraph, SimpleDocTemplate, Spacer, Table, TableStyle
+
+        buffer = io.BytesIO()
+        doc = SimpleDocTemplate(buffer, pagesize=A4, rightMargin=1.5 * cm, leftMargin=1.5 * cm)
+        styles = getSampleStyleSheet()
+        story = [
+            Paragraph(f"Benchmark Summary: {summary.get('benchmark_name', '')}", styles["Heading2"]),
+            Paragraph(
+                f"Run {summary.get('run_id')} · Status {summary.get('run_status')} · "
+                f"Completed {summary.get('completed_count')}/{summary.get('cohort_size')}",
+                styles["Normal"],
+            ),
+            Spacer(1, 0.4 * cm),
+        ]
+        table_data = [["Algorithm", "Rank", "Avg IoU", "Avg F1", "Avg Dice", "Runtime ms", "N"]]
+        for row in summary.get("table", []):
+            table_data.append([
+                str(row.get("algorithm", "")),
+                str(row.get("rank", "")),
+                f"{row.get('avg_iou'):.4f}" if row.get("avg_iou") is not None else "—",
+                f"{row.get('avg_f1'):.4f}" if row.get("avg_f1") is not None else "—",
+                f"{row.get('avg_dice'):.4f}" if row.get("avg_dice") is not None else "—",
+                f"{row.get('avg_runtime_ms'):.1f}" if row.get("avg_runtime_ms") is not None else "—",
+                str(row.get("sample_count", "")),
+            ])
+        tbl = Table(table_data, repeatRows=1)
+        tbl.setStyle(
+            TableStyle([
+                ("BACKGROUND", (0, 0), (-1, 0), colors.HexColor("#1e293b")),
+                ("TEXTCOLOR", (0, 0), (-1, 0), colors.whitesmoke),
+                ("GRID", (0, 0), (-1, -1), 0.25, colors.grey),
+                ("FONTSIZE", (0, 0), (-1, -1), 8),
+            ])
+        )
+        story.append(tbl)
+        doc.build(story)
+        return buffer.getvalue()

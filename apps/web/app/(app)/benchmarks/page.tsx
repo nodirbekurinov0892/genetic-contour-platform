@@ -123,10 +123,10 @@ export default function BenchmarksPage() {
   }, []);
 
   const loadDatasetRanking = useCallback(async (benchmarkId: string, runId: string) => {
-    const ranking = await apiFetch<DatasetRankingEntry[]>(
+    const ranking = await apiFetch<{ table: DatasetRankingEntry[] }>(
       `/api/benchmarks/${benchmarkId}/runs/${runId}/dataset-ranking`,
     );
-    setDatasetRanking(ranking);
+    setDatasetRanking(ranking.table ?? []);
   }, []);
 
   useEffect(() => {
@@ -373,6 +373,51 @@ export default function BenchmarksPage() {
                   <p>
                     Holat: {activeRun.status} ({activeRun.completed_count}/{activeRun.cohort_size})
                   </p>
+                  <div className="mt-2 flex flex-wrap gap-2">
+                    {activeRun.status === "running" && (
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        disabled={busy}
+                        onClick={() =>
+                          void apiFetch(
+                            `/api/benchmarks/${selected.id}/runs/${activeRun.id}/cancel`,
+                            { method: "POST" },
+                          ).then((res) => {
+                            setActiveRun({ ...activeRun, status: "failed" });
+                            setError(null);
+                            return res;
+                          })
+                        }
+                      >
+                        Bekor qilish
+                      </Button>
+                    )}
+                    {(activeRun.status === "failed" || activeRun.status === "completed") && (
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        disabled={busy}
+                        onClick={() =>
+                          void apiFetch(
+                            `/api/benchmarks/${selected.id}/runs/${activeRun.id}/retry-failed`,
+                            { method: "POST" },
+                          ).then(() => setActiveRun({ ...activeRun, status: "running" }))
+                        }
+                      >
+                        Failed qayta urinish
+                      </Button>
+                    )}
+                    {activeRun.status === "completed" && (
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        asChild
+                      >
+                        <Link href={`/comparison`}>Summary (Comparison)</Link>
+                      </Button>
+                    )}
+                  </div>
                   {activeRun.aggregate_metrics_json && (
                     <div className="mt-3 space-y-2">
                       <p className="text-xs font-semibold uppercase text-muted-foreground">

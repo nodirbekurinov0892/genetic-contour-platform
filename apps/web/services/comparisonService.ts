@@ -1,4 +1,5 @@
 import { apiFetch } from "@/lib/api";
+import { formatAlgorithmLabel } from "@/lib/user-labels";
 
 export interface ExperimentComparison {
   mode: "experiment_vs_experiment";
@@ -60,10 +61,81 @@ export interface DatasetRankingComparison {
   }>;
 }
 
+export interface MultiExperimentComparison {
+  mode: "multi_experiment";
+  status: "empty" | "ready";
+  message?: string;
+  experiment_count: number;
+  included_count: number;
+  excluded_experiments: Array<{
+    experiment_id: string;
+    title: string | null;
+    reason: string;
+  }>;
+  table: Array<{
+    algorithm: string;
+    rank: number;
+    avg_iou: number | null;
+    avg_f1: number | null;
+    avg_dice: number | null;
+    avg_precision: number | null;
+    avg_recall: number | null;
+    avg_runtime_ms: number | null;
+    std_iou: number | null;
+    std_f1: number | null;
+    sample_count: number;
+  }>;
+  charts: Record<string, Array<{ algorithm: string; value: number | null }>>;
+}
+
+export interface BenchmarkSummary {
+  mode: "benchmark_summary";
+  status: "no_run" | "running" | "ready" | "failed" | "empty";
+  message: string;
+  benchmark_id: string;
+  benchmark_name: string;
+  run_id: string | null;
+  run_status?: string;
+  image_count: number;
+  gt_count: number;
+  cohort_size?: number;
+  completed_count?: number;
+  failed_count?: number;
+  algorithm_run_count?: number;
+  progress_percent?: number;
+  table: Array<Record<string, unknown>>;
+  leaderboard: Array<Record<string, unknown>>;
+  charts: Record<string, Array<{ algorithm: string; value: number | null }>>;
+  actions?: string[];
+}
+
+export interface GlobalDatasetRanking {
+  mode: "dataset_ranking";
+  status: "empty" | "ready";
+  message: string;
+  run_count: number;
+  table: Array<Record<string, unknown>>;
+  actions?: string[];
+}
+
+function chartPoints(
+  rows: Array<{ algorithm: string; value: number | null }> | undefined,
+): Array<{ algorithm: string; value: number | null }> {
+  return (rows ?? []).map((r) => ({
+    algorithm: formatAlgorithmLabel(r.algorithm),
+    value: r.value,
+  }));
+}
+
 export const comparisonService = {
   compareExperiments(experimentA: string, experimentB: string): Promise<ExperimentComparison> {
     const q = new URLSearchParams({ experiment_a: experimentA, experiment_b: experimentB });
     return apiFetch<ExperimentComparison>(`/api/comparison/experiments?${q}`);
+  },
+
+  compareMultiExperiments(experimentIds: string[]): Promise<MultiExperimentComparison> {
+    const q = new URLSearchParams({ ids: experimentIds.join(",") });
+    return apiFetch<MultiExperimentComparison>(`/api/comparison/multi-experiments?${q}`);
   },
 
   compareAlgorithms(algorithmA: string, algorithmB: string): Promise<AlgorithmComparison> {
@@ -76,7 +148,17 @@ export const comparisonService = {
     return apiFetch<BenchmarkComparison>(`/api/comparison/benchmarks?${q}`);
   },
 
+  getBenchmarkSummary(benchmarkId: string): Promise<BenchmarkSummary> {
+    return apiFetch<BenchmarkSummary>(`/api/comparison/benchmark-summary/${benchmarkId}`);
+  },
+
+  getGlobalDatasetRanking(): Promise<GlobalDatasetRanking> {
+    return apiFetch<GlobalDatasetRanking>("/api/comparison/dataset-ranking");
+  },
+
   compareDatasets(benchmarkId: string): Promise<DatasetRankingComparison> {
     return apiFetch<DatasetRankingComparison>(`/api/comparison/datasets/${benchmarkId}`);
   },
+
+  formatChartPoints: chartPoints,
 };
