@@ -2,24 +2,29 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
-import { CheckCircle2, Loader2, RefreshCw, Trash2, Upload, AlertTriangle } from "lucide-react";
+import { CheckCircle2, ExternalLink, Loader2, RefreshCw, Trash2, Upload, AlertTriangle } from "lucide-react";
 import { apiFetch } from "@/lib/api";
 import { SectionHeader } from "@/components/ui/section-header";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 import { StoredImage } from "@/components/ui/stored-image";
 import { EmptyState, ErrorState, LoadingState } from "@/components/ui/state-panel";
+import { useToast } from "@/components/providers/toast-provider";
 import { imageService } from "@/services/imageService";
 import { formatGtValidationStatus, formatGtDisplayStatus, getGtDisplayStatusVariant, GT_PAIRING_LABELS } from "@/lib/user-labels";
 import type { ImageRecord } from "@shared/types";
 
 export default function GroundTruthPage() {
+  const { toast } = useToast();
   const [items, setItems] = useState<ImageRecord[]>([]);
   const [coverage, setCoverage] = useState<Record<string, number | string> | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [actionId, setActionId] = useState<string | null>(null);
   const [actionType, setActionType] = useState<"validate" | "delete" | "upload" | null>(null);
+  const [deleteTarget, setDeleteTarget] = useState<ImageRecord | null>(null);
+  const [usageCounts, setUsageCounts] = useState<Record<string, number>>({});
 
   const load = async () => {
     setLoading(true);
@@ -31,6 +36,18 @@ export default function GroundTruthPage() {
       ]);
       setItems(gt);
       setCoverage(cov);
+      const counts: Record<string, number> = {};
+      await Promise.all(
+        gt.slice(0, 20).map(async (img) => {
+          try {
+            const usage = await imageService.getUsage(img.id);
+            counts[img.id] = usage.experiment_count;
+          } catch {
+            counts[img.id] = 0;
+          }
+        }),
+      );
+      setUsageCounts(counts);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Yuklash xatosi");
     } finally {
@@ -56,20 +73,19 @@ export default function GroundTruthPage() {
     }
   };
 
-  const deleteGt = async (id: string, name: string) => {
-    if (!window.confirm(`"${name}" uchun Ground Truth o'chirilsinmi? Bu amalni qaytarib bo'lmaydi.`)) {
-      return;
-    }
+  const deleteGt = async (id: string) => {
     setActionId(id);
     setActionType("delete");
     try {
-      await apiFetch(`/api/lifecycle/images/${id}/ground-truth`, { method: "DELETE" });
+      await imageService.detachGroundTruth(id);
+      toast("Ground Truth o'chirildi. Eski metrikalar eskirgan — tajribalarni qayta ishga tushiring.", "success");
       await load();
     } catch (err) {
-      setError(err instanceof Error ? err.message : "O'chirish xatosi");
+      toast(err instanceof Error ? err.message : "O'chirish xatosi", "error");
     } finally {
       setActionId(null);
       setActionType(null);
+      setDeleteTarget(null);
     }
   };
 
@@ -92,6 +108,7 @@ export default function GroundTruthPage() {
     setActionType("upload");
     try {
       await imageService.uploadGroundTruth(id, file);
+      toast("GT almashtirildi. Eski supervised metrikalar eskirgan — tajribalarni qayta ishga tushiring.", "success");
       await load();
     } catch (err) {
       setError(err instanceof Error ? err.message : "Qayta yuklash xatosi");
@@ -220,7 +237,18 @@ export default function GroundTruthPage() {
                       {img.gt_validated_at
                         ? `Tekshirildi: ${new Date(img.gt_validated_at).toLocaleString("uz-UZ")}`
                         : "Validatsiya kutilmoqda"}
+                      {(usageCounts[img.id] ?? 0) > 0 && (
+                        <> · {usageCounts[img.id]} ta tajribada ishlatilgan</>
+                      )}
                     </p>
+                    {(usageCounts[img.id] ?? 0) > 0 && (
+                      <Button size="sm" variant="link" className="h-auto p-0 text-xs" asChild>
+                        <Link href={`/experiments?image=${img.id}`}>
+                          <ExternalLink className="mr-1 inline h-3 w-3" />
+                          Bog&apos;liq tajribalar
+                        </Link>
+                      </Button>
+                    )}
                   </div>
 
                   <div className="flex flex-col gap-2 sm:flex-row lg:flex-col">
@@ -275,7 +303,7 @@ export default function GroundTruthPage() {
                       size="sm"
                       variant="destructive"
                       disabled={busy}
-                      onClick={() => deleteGt(img.id, img.original_name)}
+                      onClick={() => setDeleteTarget(img)}
                       className="gap-2"
                     >
                       {busy && actionType === "delete" ? (
@@ -298,6 +326,17 @@ export default function GroundTruthPage() {
           })}
         </div>
       )}
+
+      <ConfirmDialog
+        open={!!deleteTarget}
+        title="Ground Truth o'chirish?"
+        description={`"${deleteTarget?.original_name}" uchun GT fayli va bog'lanish o'chiriladi. Supervised metrikalar eskiradi — tajribalarni qayta ishga tushiring.`}
+        confirmLabel="O'chirish"
+        destructive
+        loading={actionId === deleteTarget?.id}
+        onCancel={() => setDeleteTarget(null)}
+        onConfirm={() => deleteTarget && void deleteGt(deleteTarget.id)}
+      />
     </div>
   );
 }

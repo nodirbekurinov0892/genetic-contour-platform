@@ -12,6 +12,7 @@ from app.config import Settings, get_settings
 from app.database import get_db
 from app.dependencies.auth import get_current_active_user
 from app.models.user import User
+from app.schemas.data_management import ExperimentUpdateRequest
 from app.schemas.experiment import (
     AlgorithmRunResponse,
     ExperimentBrowseResponse,
@@ -111,6 +112,7 @@ async def browse_experiments(
     sort: str = "created_at_desc",
     limit: int = 20,
     offset: int = 0,
+    include_archived: bool = False,
     db: AsyncSession = Depends(get_db),
     settings: Settings = Depends(get_settings),
     current_user: User = Depends(get_current_active_user),
@@ -126,6 +128,7 @@ async def browse_experiments(
         sort=sort,
         limit=limit,
         offset=offset,
+        include_archived=include_archived,
     )
     return ExperimentBrowseResponse(
         items=items,
@@ -430,13 +433,63 @@ async def get_experiment_report_pdf(
     )
 
 
-@router.delete("/{experiment_id}")
-async def delete_experiment(
+@router.patch("/{experiment_id}", response_model=ExperimentResponse)
+@limiter.limit("60/hour")
+async def update_experiment(
+    request: Request,
+    experiment_id: uuid.UUID,
+    body: ExperimentUpdateRequest,
+    db: AsyncSession = Depends(get_db),
+    settings: Settings = Depends(get_settings),
+    current_user: User = Depends(get_current_active_user),
+):
+    service = ExperimentService(db, settings)
+    experiment = await service.update(
+        experiment_id,
+        current_user,
+        title=body.title,
+        description=body.description,
+    )
+    return ExperimentResponse.model_validate(experiment)
+
+
+@router.post("/{experiment_id}/archive", response_model=ExperimentResponse)
+@limiter.limit("30/hour")
+async def archive_experiment(
+    request: Request,
     experiment_id: uuid.UUID,
     db: AsyncSession = Depends(get_db),
     settings: Settings = Depends(get_settings),
     current_user: User = Depends(get_current_active_user),
 ):
     service = ExperimentService(db, settings)
-    await service.delete(experiment_id, current_user)
-    return {"message": "Experiment deleted"}
+    experiment = await service.archive(experiment_id, current_user)
+    return ExperimentResponse.model_validate(experiment)
+
+
+@router.post("/{experiment_id}/restore", response_model=ExperimentResponse)
+@limiter.limit("30/hour")
+async def restore_experiment(
+    request: Request,
+    experiment_id: uuid.UUID,
+    db: AsyncSession = Depends(get_db),
+    settings: Settings = Depends(get_settings),
+    current_user: User = Depends(get_current_active_user),
+):
+    service = ExperimentService(db, settings)
+    experiment = await service.restore(experiment_id, current_user)
+    return ExperimentResponse.model_validate(experiment)
+
+
+@router.delete("/{experiment_id}")
+@limiter.limit("30/hour")
+async def delete_experiment(
+    request: Request,
+    experiment_id: uuid.UUID,
+    permanent: bool = False,
+    db: AsyncSession = Depends(get_db),
+    settings: Settings = Depends(get_settings),
+    current_user: User = Depends(get_current_active_user),
+):
+    service = ExperimentService(db, settings)
+    return await service.delete(experiment_id, current_user, permanent=permanent)

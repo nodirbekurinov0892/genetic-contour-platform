@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { ExperimentActionsMenu } from "@/components/experiments/experiment-actions-menu";
 import { ExperimentStatusBadge } from "@/components/experiments/experiment-status-badge";
 import type { ExperimentBrowseItem } from "@shared/types";
 import { formatDate } from "@/lib/utils";
@@ -8,6 +9,7 @@ import { formatAlgorithmLabel } from "@/lib/user-labels";
 
 interface ExperimentsTableProps {
   items: ExperimentBrowseItem[];
+  onChanged?: () => void;
 }
 
 function formatDuration(ms: number | null): string {
@@ -16,7 +18,7 @@ function formatDuration(ms: number | null): string {
   return `${(ms / 1000).toFixed(1)} s`;
 }
 
-export function ExperimentsTable({ items }: ExperimentsTableProps) {
+export function ExperimentsTable({ items, onChanged }: ExperimentsTableProps) {
   if (items.length === 0) {
     return (
       <p className="rounded-lg border border-dashed p-6 text-center text-sm text-muted-foreground">
@@ -36,6 +38,7 @@ export function ExperimentsTable({ items }: ExperimentsTableProps) {
             <th className="px-3 py-2">Rasm</th>
             <th className="px-3 py-2">Yaratilgan</th>
             <th className="px-3 py-2">Davomiylik</th>
+            <th className="px-3 py-2">Amallar</th>
           </tr>
         </thead>
         <tbody>
@@ -58,6 +61,9 @@ export function ExperimentsTable({ items }: ExperimentsTableProps) {
               <td className="px-3 py-2 text-muted-foreground">{item.image_name ?? "—"}</td>
               <td className="px-3 py-2 text-muted-foreground">{formatDate(item.created_at)}</td>
               <td className="px-3 py-2 font-mono text-xs">{formatDuration(item.duration_ms)}</td>
+              <td className="px-3 py-2">
+                <ExperimentActionsMenu experiment={item} onChanged={() => onChanged?.()} />
+              </td>
             </tr>
           ))}
         </tbody>

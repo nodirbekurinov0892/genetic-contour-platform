@@ -37,6 +37,7 @@ export const experimentService = {
     sort?: string;
     limit?: number;
     offset?: number;
+    include_archived?: boolean;
   }): Promise<ExperimentBrowseResponse> {
     const query = new URLSearchParams();
     if (params?.search) query.set("search", params.search);
@@ -47,6 +48,7 @@ export const experimentService = {
     if (params?.sort) query.set("sort", params.sort);
     if (params?.limit != null) query.set("limit", String(params.limit));
     if (params?.offset != null) query.set("offset", String(params.offset));
+    if (params?.include_archived) query.set("include_archived", "true");
     const suffix = query.toString() ? `?${query.toString()}` : "";
     return apiFetch<ExperimentBrowseResponse>(`/api/experiments/browse${suffix}`);
   },
@@ -144,10 +146,26 @@ export const experimentService = {
     return downloadFile(`/api/experiments/${id}/report/csv`, `experiment-${id}-report.csv`);
   },
 
-  delete(id: string): Promise<{ message: string }> {
-    return apiFetch<{ message: string }>(`/api/experiments/${id}`, {
+  delete(id: string, permanent = false): Promise<{ message: string; mode?: string }> {
+    const q = permanent ? "?permanent=true" : "";
+    return apiFetch<{ message: string; mode?: string }>(`/api/experiments/${id}${q}`, {
       method: "DELETE",
     });
+  },
+
+  update(id: string, data: { title?: string; description?: string }): Promise<ExperimentRecord> {
+    return apiFetch<ExperimentRecord>(`/api/experiments/${id}`, {
+      method: "PATCH",
+      body: JSON.stringify(data),
+    });
+  },
+
+  archive(id: string): Promise<ExperimentRecord> {
+    return apiFetch<ExperimentRecord>(`/api/experiments/${id}/archive`, { method: "POST" });
+  },
+
+  restore(id: string): Promise<ExperimentRecord> {
+    return apiFetch<ExperimentRecord>(`/api/experiments/${id}/restore`, { method: "POST" });
   },
 
   streamUrl(id: string): string {

@@ -29,6 +29,7 @@ export default function ExperimentsPage() {
   const [dateFrom, setDateFrom] = useState("");
   const [dateTo, setDateTo] = useState("");
   const [sort, setSort] = useState("created_at_desc");
+  const [includeArchived, setIncludeArchived] = useState(false);
 
   const loadData = useCallback(async () => {
     setLoading(true);
@@ -43,6 +44,7 @@ export default function ExperimentsPage() {
         sort,
         limit: PAGE_SIZE,
         offset: browseOffset,
+        include_archived: includeArchived,
       });
       setBrowseItems(browse.items);
       setBrowseTotal(browse.total);
@@ -51,7 +53,7 @@ export default function ExperimentsPage() {
     } finally {
       setLoading(false);
     }
-  }, [search, statusFilter, algorithmFilter, dateFrom, dateTo, sort, browseOffset]);
+  }, [search, statusFilter, algorithmFilter, dateFrom, dateTo, sort, browseOffset, includeArchived]);
 
   useEffect(() => {
     const timer = setTimeout(() => {
@@ -151,18 +153,31 @@ export default function ExperimentsPage() {
             }}
           />
         </div>
-        <select
-          className="h-10 max-w-xs rounded-md border border-border/80 bg-background px-3 text-sm"
-          value={sort}
-          onChange={(e) => setSort(e.target.value)}
-        >
-          <option value="created_at_desc">Eng yangi</option>
-          <option value="created_at_asc">Eng eski</option>
-          <option value="title_asc">Sarlavha A-Z</option>
-          <option value="title_desc">Sarlavha Z-A</option>
-        </select>
+        <div className="flex flex-wrap items-center gap-3">
+          <select
+            className="h-10 max-w-xs rounded-md border border-border/80 bg-background px-3 text-sm"
+            value={sort}
+            onChange={(e) => setSort(e.target.value)}
+          >
+            <option value="created_at_desc">Eng yangi</option>
+            <option value="created_at_asc">Eng eski</option>
+            <option value="title_asc">Sarlavha A-Z</option>
+            <option value="title_desc">Sarlavha Z-A</option>
+          </select>
+          <label className="flex cursor-pointer items-center gap-2 text-sm text-muted-foreground">
+            <input
+              type="checkbox"
+              checked={includeArchived}
+              onChange={(e) => {
+                setBrowseOffset(0);
+                setIncludeArchived(e.target.checked);
+              }}
+            />
+            Arxivlanganlarni ko&apos;rsatish
+          </label>
+        </div>
 
-        <ExperimentsTable items={browseItems} />
+        <ExperimentsTable items={browseItems} onChanged={() => void loadData()} />
 
         <div className="flex items-center justify-between text-sm">
           <p className="text-muted-foreground">

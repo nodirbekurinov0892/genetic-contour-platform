@@ -56,10 +56,14 @@ class BenchmarkService:
                 detail=f"Image {image.original_name} ground truth must be validated before benchmark use",
             )
 
-    async def list_benchmarks(self, *, public_only: bool = True) -> list[Benchmark]:
-        query = select(Benchmark).options(selectinload(Benchmark.datasets))
+    async def list_benchmarks(self, *, public_only: bool = True, user_id: uuid.UUID | None = None) -> list[Benchmark]:
+        query = select(Benchmark).options(selectinload(Benchmark.datasets)).where(
+            Benchmark.deleted_at.is_(None)
+        )
         if public_only:
             query = query.where(Benchmark.is_public.is_(True))
+        if user_id:
+            query = query.where(Benchmark.created_by == user_id)
         result = await self.db.execute(query.order_by(Benchmark.name))
         return list(result.scalars().all())
 

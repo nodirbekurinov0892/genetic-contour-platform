@@ -53,6 +53,41 @@ export const imageService = {
   },
 
   async deleteBrokenRecord(imageId: string): Promise<{ message: string; image_id: string }> {
-    return apiFetch(`/api/storage/repair/images/${imageId}`, { method: "DELETE" });
+    return apiFetch(`/api/images/${imageId}/cleanup-broken`, { method: "POST" });
+  },
+
+  getUsage(imageId: string): Promise<{ experiment_count: number; experiments: Array<{ id: string; title: string }> }> {
+    return apiFetch(`/api/images/${imageId}/usage`);
+  },
+
+  update(imageId: string, data: { original_name?: string; description?: string }): Promise<ImageRecord> {
+    return apiFetch<ImageRecord>(`/api/images/${imageId}`, {
+      method: "PATCH",
+      body: JSON.stringify(data),
+    });
+  },
+
+  async replaceFile(imageId: string, file: File): Promise<ImageRecord> {
+    const form = new FormData();
+    form.append("file", file);
+    return apiFetch<ImageRecord>(`/api/images/${imageId}/replace`, {
+      method: "POST",
+      body: form,
+    });
+  },
+
+  detachGroundTruth(imageId: string): Promise<ImageRecord> {
+    return apiFetch<ImageRecord>(`/api/images/${imageId}/gt`, { method: "DELETE" });
+  },
+
+  delete(
+    imageId: string,
+    options?: { cascadeExperiments?: boolean; permanent?: boolean },
+  ): Promise<{ message: string; mode?: string }> {
+    const q = new URLSearchParams();
+    if (options?.cascadeExperiments) q.set("cascade_experiments", "true");
+    if (options?.permanent) q.set("permanent", "true");
+    const suffix = q.toString() ? `?${q.toString()}` : "";
+    return apiFetch(`/api/images/${imageId}${suffix}`, { method: "DELETE" });
   },
 };

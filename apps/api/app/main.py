@@ -23,6 +23,7 @@ from app.routes import (
     analytics,
     auth,
     benchmarks,
+    bulk,
     comparison,
     datasets,
     experiments,
@@ -34,6 +35,7 @@ from app.routes import (
     media,
     notifications,
     platform,
+    reports,
     search,
     stats,
     storage,
@@ -120,6 +122,8 @@ app.include_router(benchmarks.router)
 app.include_router(media.router)
 app.include_router(storage.router)
 app.include_router(experiments.router)
+app.include_router(reports.router)
+app.include_router(bulk.router)
 
 
 @app.exception_handler(Exception)

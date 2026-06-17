@@ -74,6 +74,8 @@ class Experiment(Base):
         UUID(as_uuid=True), ForeignKey("benchmark_runs.id", ondelete="SET NULL"), nullable=True
     )
     experiment_lineage_json: Mapped[dict | None] = mapped_column(JSONB, nullable=True)
+    archived_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
+    deleted_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
 
     image: Mapped["Image"] = relationship(back_populates="experiments")  # noqa: F821
     user: Mapped["User"] = relationship(back_populates="experiments")  # noqa: F821

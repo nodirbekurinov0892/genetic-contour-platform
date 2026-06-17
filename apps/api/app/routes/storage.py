@@ -1,6 +1,6 @@
 import uuid
 
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Depends, Request
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.config import Settings, get_settings
@@ -13,6 +13,7 @@ from app.services.storage_audit_service import StorageAuditService
 from app.services.storage_repair_service import StorageRepairService
 from app.services.storage_center_service import StorageCenterService
 from app.utils.image_response import to_image_response
+from app.utils.rate_limit import limiter
 
 router = APIRouter(prefix="/api/storage", tags=["storage"])
 
@@ -69,3 +70,43 @@ async def delete_broken_image_record(
     service = StorageRepairService(db, settings)
     result = await service.delete_image_record(image_id, current_user)
     return RepairMessageResponse(message=result["message"], image_id=result["image_id"])
+
+
+@router.get("/health-dashboard")
+async def storage_health_dashboard(
+    db: AsyncSession = Depends(get_db),
+    settings: Settings = Depends(get_settings),
+    current_user: User = Depends(get_current_active_user),
+):
+    from app.services.data_management_service import StorageCleanupService
+
+    service = StorageCleanupService(db, settings)
+    return await service.health_dashboard(current_user)
+
+
+@router.post("/cleanup/broken-records")
+@limiter.limit("10/hour")
+async def cleanup_all_broken_records(
+    request: Request,
+    db: AsyncSession = Depends(get_db),
+    settings: Settings = Depends(get_settings),
+    current_user: User = Depends(get_current_active_user),
+):
+    from app.services.data_management_service import StorageCleanupService
+
+    service = StorageCleanupService(db, settings)
+    return await service.cleanup_broken_records(current_user)
+
+
+@router.post("/cleanup/orphans")
+@limiter.limit("10/hour")
+async def cleanup_orphan_files(
+    request: Request,
+    db: AsyncSession = Depends(get_db),
+    settings: Settings = Depends(get_settings),
+    current_user: User = Depends(get_current_active_user),
+):
+    from app.services.data_management_service import StorageCleanupService
+
+    service = StorageCleanupService(db, settings)
+    return await service.cleanup_orphans(current_user)

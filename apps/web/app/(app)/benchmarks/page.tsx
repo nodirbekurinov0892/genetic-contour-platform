@@ -2,16 +2,19 @@
 
 import { useCallback, useEffect, useState } from "react";
 import Link from "next/link";
-import { Play, Plus } from "lucide-react";
+import { Play, Plus, Pencil, Trash2, Archive } from "lucide-react";
 import { DEFAULT_ALGORITHM_PARAMS, DEFAULT_GA_PARAMS } from "@shared/constants";
 import type { ImageRecord } from "@shared/types";
 import { apiFetch } from "@/lib/api";
 import { imageService } from "@/services/imageService";
+import { benchmarkManagementService } from "@/services/benchmarkManagementService";
 import { formatAlgorithmLabel, formatComparisonProtocol } from "@/lib/user-labels";
 import { SectionHeader } from "@/components/ui/section-header";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { ConfirmDialog } from "@/components/ui/confirm-dialog";
+import { useToast } from "@/components/providers/toast-provider";
 import { EmptyState, ErrorState, LoadingState } from "@/components/ui/state-panel";
 
 interface BenchmarkDataset {
@@ -72,6 +75,7 @@ function formatMetricValue(val: number | null | undefined): string {
 }
 
 export default function BenchmarksPage() {
+  const { toast } = useToast();
   const [benchmarks, setBenchmarks] = useState<Benchmark[]>([]);
   const [images, setImages] = useState<ImageRecord[]>([]);
   const [selectedId, setSelectedId] = useState<string | null>(null);
@@ -90,6 +94,13 @@ export default function BenchmarksPage() {
   const [category, setCategory] = useState("");
   const [description, setDescription] = useState("");
   const [pickedImages, setPickedImages] = useState<string[]>([]);
+  const [editOpen, setEditOpen] = useState(false);
+  const [editName, setEditName] = useState("");
+  const [editDesc, setEditDesc] = useState("");
+  const [editCategory, setEditCategory] = useState("");
+  const [deleteOpen, setDeleteOpen] = useState(false);
+  const [deleteImpact, setDeleteImpact] = useState<{ run_count: number; linked_experiments: number } | null>(null);
+  const [hardDeleteBenchmark, setHardDeleteBenchmark] = useState(false);
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -186,6 +197,77 @@ export default function BenchmarksPage() {
       await load();
     } catch (err) {
       setError(err instanceof Error ? err.message : "Yaratish xatosi");
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  const openEdit = () => {
+    if (!selected) return;
+    setEditName(selected.name);
+    setEditDesc(selected.description ?? "");
+    setEditCategory(selected.category ?? "");
+    setEditOpen(true);
+  };
+
+  const saveEdit = async () => {
+    if (!selected) return;
+    setBusy(true);
+    try {
+      await benchmarkManagementService.update(selected.id, {
+        name: editName.trim(),
+        description: editDesc.trim() || null,
+        category: editCategory.trim() || null,
+      });
+      toast("Benchmark yangilandi", "success");
+      setEditOpen(false);
+      await loadSelected(selected.id);
+      await load();
+    } catch (err) {
+      toast(err instanceof Error ? err.message : "Xato", "error");
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  const openDelete = async () => {
+    if (!selected) return;
+    try {
+      const impact = await benchmarkManagementService.deleteImpact(selected.id);
+      setDeleteImpact(impact);
+      setHardDeleteBenchmark((impact.run_count ?? 0) > 0);
+      setDeleteOpen(true);
+    } catch (err) {
+      toast(err instanceof Error ? err.message : "Xato", "error");
+    }
+  };
+
+  const confirmDeleteBenchmark = async () => {
+    if (!selected) return;
+    setBusy(true);
+    try {
+      await benchmarkManagementService.delete(selected.id, hardDeleteBenchmark);
+      toast(hardDeleteBenchmark ? "Benchmark butunlay o'chirildi" : "Benchmark arxivlandi", "success");
+      setDeleteOpen(false);
+      setSelectedId(null);
+      setSelected(null);
+      await load();
+    } catch (err) {
+      toast(err instanceof Error ? err.message : "O'chirish xatosi", "error");
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  const removeDatasetImage = async (imageId: string) => {
+    if (!selected) return;
+    setBusy(true);
+    try {
+      await benchmarkManagementService.removeDatasetImage(selected.id, imageId);
+      toast("Rasm datasetdan olib tashlandi", "success");
+      await loadSelected(selected.id);
+    } catch (err) {
+      toast(err instanceof Error ? err.message : "Xato", "error");
     } finally {
       setBusy(false);
     }
@@ -319,7 +401,30 @@ export default function BenchmarksPage() {
 
           {selected && (
             <div className="scientific-card space-y-4 p-4">
-              <h3 className="font-semibold">{selected.name}</h3>
+              <div className="flex flex-wrap items-start justify-between gap-2">
+                <h3 className="font-semibold">{selected.name}</h3>
+                <div className="flex flex-wrap gap-2">
+                  <Button size="sm" variant="outline" onClick={openEdit} disabled={busy}>
+                    <Pencil className="mr-1 h-3.5 w-3.5" /> Tahrirlash
+                  </Button>
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    disabled={busy}
+                    onClick={() =>
+                      void benchmarkManagementService.archive(selected.id).then(() => {
+                        toast("Arxivlandi", "success");
+                        return load();
+                      })
+                    }
+                  >
+                    <Archive className="mr-1 h-3.5 w-3.5" /> Arxiv
+                  </Button>
+                  <Button size="sm" variant="destructive" onClick={() => void openDelete()} disabled={busy}>
+                    <Trash2 className="mr-1 h-3.5 w-3.5" /> O&apos;chirish
+                  </Button>
+                </div>
+              </div>
               {selected.category && (
                 <p className="text-xs text-muted-foreground">Kategoriya: {selected.category}</p>
               )}
@@ -342,8 +447,20 @@ export default function BenchmarksPage() {
                   {(selected.datasets ?? []).map((ds) => {
                     const img = images.find((i) => i.id === ds.image_id);
                     return (
-                      <li key={ds.id} className="rounded border border-border/60 px-2 py-1">
-                        {img?.original_name ?? "Rasm"}
+                      <li
+                        key={ds.id}
+                        className="flex items-center justify-between rounded border border-border/60 px-2 py-1"
+                      >
+                        <span>{img?.original_name ?? "Rasm"}</span>
+                        <Button
+                          size="sm"
+                          variant="ghost"
+                          className="h-7 text-xs text-destructive"
+                          disabled={busy || (selected.datasets?.length ?? 0) <= 1}
+                          onClick={() => void removeDatasetImage(ds.image_id)}
+                        >
+                          Olib tashlash
+                        </Button>
                       </li>
                     );
                   })}
@@ -501,6 +618,60 @@ export default function BenchmarksPage() {
               })}
             </tbody>
           </table>
+        </div>
+      )}
+
+      {editOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4">
+          <div className="w-full max-w-md rounded-lg border bg-background p-6">
+            <h3 className="font-semibold">Benchmark tahrirlash</h3>
+            <div className="mt-3 space-y-3">
+              <div>
+                <Label>Nomi</Label>
+                <Input value={editName} onChange={(e) => setEditName(e.target.value)} />
+              </div>
+              <div>
+                <Label>Kategoriya</Label>
+                <Input value={editCategory} onChange={(e) => setEditCategory(e.target.value)} />
+              </div>
+              <div>
+                <Label>Tavsif</Label>
+                <Input value={editDesc} onChange={(e) => setEditDesc(e.target.value)} />
+              </div>
+            </div>
+            <div className="mt-4 flex justify-end gap-2">
+              <Button variant="outline" onClick={() => setEditOpen(false)}>Bekor</Button>
+              <Button disabled={busy || !editName.trim()} onClick={() => void saveEdit()}>Saqlash</Button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      <ConfirmDialog
+        open={deleteOpen}
+        title="Benchmark o'chirish?"
+        description={
+          deleteImpact && deleteImpact.run_count > 0
+            ? `${deleteImpact.run_count} ta run va ${deleteImpact.linked_experiments} ta tajriba bog'langan. Butunlay o'chirish uchun tasdiqlang.`
+            : "Benchmark arxivga ko'chiriladi yoki butunlay o'chiriladi."
+        }
+        confirmLabel={hardDeleteBenchmark ? "Butunlay o'chirish" : "Arxivlash"}
+        destructive
+        loading={busy}
+        onCancel={() => setDeleteOpen(false)}
+        onConfirm={() => void confirmDeleteBenchmark()}
+      />
+
+      {deleteOpen && deleteImpact && deleteImpact.run_count > 0 && (
+        <div className="fixed inset-x-0 bottom-6 z-[60] mx-auto flex max-w-md justify-center px-4">
+          <label className="flex cursor-pointer items-center gap-2 rounded-lg border bg-background p-3 text-sm shadow-lg">
+            <input
+              type="checkbox"
+              checked={hardDeleteBenchmark}
+              onChange={(e) => setHardDeleteBenchmark(e.target.checked)}
+            />
+            Completed runlar bilan butunlay o&apos;chirish (permanent)
+          </label>
         </div>
       )}
     </div>

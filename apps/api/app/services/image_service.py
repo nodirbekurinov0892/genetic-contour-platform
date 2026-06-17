@@ -167,7 +167,10 @@ class ImageService:
         search: str | None = None,
         has_ground_truth: bool | None = None,
     ) -> list[Image]:
-        query = select(Image).where(Image.user_id == user.id)
+        query = select(Image).where(
+            Image.user_id == user.id,
+            Image.deleted_at.is_(None),
+        )
         if search and search.strip():
             query = query.where(Image.original_name.ilike(f"%{search.strip()}%"))
         if has_ground_truth is True:

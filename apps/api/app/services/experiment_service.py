@@ -66,17 +66,157 @@ class ExperimentService:
         if not experiment:
             raise HTTPException(status_code=404, detail="Experiment not found")
         ensure_owner(experiment.user_id, user.id, "experiment")
+        if experiment.deleted_at:
+            raise HTTPException(status_code=404, detail="Experiment not found")
         return experiment
 
     async def list_all(self, user: User, limit: int = 50, offset: int = 0) -> list[Experiment]:
         result = await self.db.execute(
             select(Experiment)
-            .where(Experiment.user_id == user.id)
+            .where(
+                Experiment.user_id == user.id,
+                Experiment.deleted_at.is_(None),
+                Experiment.archived_at.is_(None),
+            )
             .order_by(Experiment.created_at.desc())
             .limit(limit)
             .offset(offset)
         )
         return list(result.scalars().all())
+
+    async def update(
+        self,
+        experiment_id: uuid.UUID,
+        user: User,
+        *,
+        title: str | None = None,
+        description: str | None = None,
+    ) -> Experiment:
+        experiment = await self.get_by_id(experiment_id, user)
+        if experiment.deleted_at:
+            raise HTTPException(status_code=404, detail="Experiment not found")
+        if title is not None:
+            t = title.strip()
+            if not t:
+                raise HTTPException(status_code=400, detail="Title cannot be empty")
+            experiment.title = t
+        if description is not None:
+            experiment.description = description.strip() or None
+        await self.db.flush()
+        from app.services.data_management_helpers import audit_action
+
+        await audit_action(
+            self.db,
+            user=user,
+            action="experiment.update",
+            resource_type="experiment",
+            resource_id=experiment_id,
+        )
+        return experiment
+
+    async def archive(self, experiment_id: uuid.UUID, user: User) -> Experiment:
+        experiment = await self.get_by_id(experiment_id, user)
+        if experiment.status in ACTIVE_STATUSES:
+            raise HTTPException(status_code=409, detail="Running experiment cannot be archived")
+        experiment.archived_at = datetime.now(timezone.utc)
+        await self.db.flush()
+        from app.services.data_management_helpers import audit_action
+
+        await audit_action(
+            self.db,
+            user=user,
+            action="experiment.archive",
+            resource_type="experiment",
+            resource_id=experiment_id,
+        )
+        return experiment
+
+    async def restore(self, experiment_id: uuid.UUID, user: User) -> Experiment:
+        result = await self.db.execute(
+            select(Experiment).where(Experiment.id == experiment_id)
+        )
+        experiment = result.scalar_one_or_none()
+        if not experiment:
+            raise HTTPException(status_code=404, detail="Experiment not found")
+        ensure_owner(experiment.user_id, user.id, "experiment")
+        experiment.archived_at = None
+        experiment.deleted_at = None
+        await self.db.flush()
+        from app.services.data_management_helpers import audit_action
+
+        await audit_action(
+            self.db,
+            user=user,
+            action="experiment.restore",
+            resource_type="experiment",
+            resource_id=experiment_id,
+        )
+        return experiment
+
+    async def hard_delete(self, experiment_id: uuid.UUID, user: User) -> None:
+        experiment = await self.get_by_id(experiment_id, user)
+        if experiment.status in ACTIVE_STATUSES:
+            experiment.cancel_requested = True
+            if experiment.celery_task_id:
+                revoke_experiment_task(experiment.celery_task_id)
+
+        storage = StorageService(self.settings)
+        loaded = await self.db.execute(
+            select(Experiment)
+            .where(Experiment.id == experiment_id)
+            .options(
+                selectinload(Experiment.algorithm_runs).selectinload(AlgorithmRun.result_images)
+            )
+        )
+        exp = loaded.scalar_one()
+        for ar in exp.algorithm_runs:
+            for ri in ar.result_images:
+                try:
+                    storage.delete_file(ri.storage_key)
+                except OSError:
+                    logger.warning("Failed to delete result image %s", ri.storage_key)
+
+        from app.models.report import Report
+
+        reports = await self.db.execute(
+            select(Report).where(Report.experiment_id == experiment_id)
+        )
+        for report in reports.scalars().all():
+            try:
+                storage.delete_file(report.storage_key)
+            except OSError:
+                pass
+
+        self.db.delete(experiment)
+        await self.db.flush()
+        await asyncio.to_thread(storage.delete_prefix, f"results/{experiment.id}")
+        from app.services.data_management_helpers import audit_action
+
+        await audit_action(
+            self.db,
+            user=user,
+            action="experiment.hard_delete",
+            resource_type="experiment",
+            resource_id=experiment_id,
+        )
+
+    async def soft_delete(self, experiment_id: uuid.UUID, user: User) -> Experiment:
+        experiment = await self.get_by_id(experiment_id, user)
+        if experiment.status in ACTIVE_STATUSES:
+            raise HTTPException(status_code=409, detail="Running experiment cannot be deleted")
+        experiment.deleted_at = datetime.now(timezone.utc)
+        experiment.archived_at = datetime.now(timezone.utc)
+        await self.db.flush()
+        from app.services.data_management_helpers import audit_action
+
+        await audit_action(
+            self.db,
+            user=user,
+            action="experiment.soft_delete",
+            resource_type="experiment",
+            resource_id=experiment_id,
+        )
+        return experiment
 
     @staticmethod
     def _duration_ms(experiment: Experiment) -> int | None:
@@ -103,15 +243,20 @@ class ExperimentService:
         sort: str = "created_at_desc",
         limit: int = 20,
         offset: int = 0,
+        include_archived: bool = False,
     ) -> tuple[list[ExperimentBrowseItem], int]:
         query = (
             select(Experiment, Image.original_name)
             .join(Image, Experiment.image_id == Image.id)
-            .where(Experiment.user_id == user.id)
+            .where(Experiment.user_id == user.id, Experiment.deleted_at.is_(None))
         )
         count_query = select(func.count()).select_from(Experiment).where(
-            Experiment.user_id == user.id
+            Experiment.user_id == user.id,
+            Experiment.deleted_at.is_(None),
         )
+        if not include_archived:
+            query = query.where(Experiment.archived_at.is_(None))
+            count_query = count_query.where(Experiment.archived_at.is_(None))
 
         if search and search.strip():
             pattern = f"%{search.strip()}%"
@@ -189,16 +334,14 @@ class ExperimentService:
         request = ExperimentRunRequest.model_validate(experiment.job_params)
         return await self.enqueue_run(experiment_id, request, user)
 
-    async def delete(self, experiment_id: uuid.UUID, user: User) -> None:
-        experiment = await self.get_by_id(experiment_id, user)
-        if experiment.status in ACTIVE_STATUSES:
-            experiment.cancel_requested = True
-            if experiment.celery_task_id:
-                revoke_experiment_task(experiment.celery_task_id)
-        storage = StorageService(self.settings)
-        self.db.delete(experiment)
-        await self.db.flush()
-        await asyncio.to_thread(storage.delete_prefix, f"results/{experiment.id}")
+    async def delete(
+        self, experiment_id: uuid.UUID, user: User, *, permanent: bool = False
+    ) -> dict:
+        if permanent:
+            await self.hard_delete(experiment_id, user)
+            return {"message": "Experiment permanently deleted", "mode": "hard"}
+        await self.soft_delete(experiment_id, user)
+        return {"message": "Experiment archived", "mode": "soft"}
 
     async def enqueue_run(
         self, experiment_id: uuid.UUID, request: ExperimentRunRequest, user: User

@@ -17,6 +17,7 @@ from app.schemas.benchmark import (
     BenchmarkRunResponse,
     LeaderboardEntry,
 )
+from app.schemas.data_management import BenchmarkUpdateRequest
 from app.schemas.experiment import ExperimentRunRequest
 from app.services.benchmark_service import BenchmarkService
 from app.utils.rate_limit import limiter
@@ -289,3 +290,104 @@ async def export_benchmark_run_pdf(
         media_type="application/pdf",
         headers={"Content-Disposition": f'attachment; filename="benchmark-{benchmark_id}-run-{run_id}.pdf"'},
     )
+
+
+@router.patch("/{benchmark_id}")
+@limiter.limit("30/hour")
+async def update_benchmark(
+    request: Request,
+    benchmark_id: uuid.UUID,
+    body: BenchmarkUpdateRequest,
+    db: AsyncSession = Depends(get_db),
+    settings: Settings = Depends(get_settings),
+    current_user: User = Depends(get_current_active_user),
+):
+    from app.services.data_management_service import BenchmarkManagementService
+
+    service = BenchmarkManagementService(db, settings)
+    benchmark = await service.update_benchmark(
+        benchmark_id,
+        current_user,
+        name=body.name,
+        description=body.description,
+        category=body.category,
+    )
+    return _to_benchmark_response(benchmark, include_datasets=True)
+
+
+@router.get("/{benchmark_id}/delete-impact")
+async def benchmark_delete_impact(
+    benchmark_id: uuid.UUID,
+    db: AsyncSession = Depends(get_db),
+    settings: Settings = Depends(get_settings),
+    current_user: User = Depends(get_current_active_user),
+):
+    from app.services.data_management_service import BenchmarkManagementService
+
+    service = BenchmarkManagementService(db, settings)
+    return await service.delete_impact(benchmark_id, current_user)
+
+
+@router.post("/{benchmark_id}/archive")
+@limiter.limit("20/hour")
+async def archive_benchmark(
+    request: Request,
+    benchmark_id: uuid.UUID,
+    db: AsyncSession = Depends(get_db),
+    settings: Settings = Depends(get_settings),
+    current_user: User = Depends(get_current_active_user),
+):
+    from app.services.data_management_service import BenchmarkManagementService
+
+    service = BenchmarkManagementService(db, settings)
+    benchmark = await service.archive_benchmark(benchmark_id, current_user)
+    return _to_benchmark_response(benchmark, include_datasets=True)
+
+
+@router.post("/{benchmark_id}/restore")
+@limiter.limit("20/hour")
+async def restore_benchmark(
+    request: Request,
+    benchmark_id: uuid.UUID,
+    db: AsyncSession = Depends(get_db),
+    settings: Settings = Depends(get_settings),
+    current_user: User = Depends(get_current_active_user),
+):
+    from app.services.data_management_service import BenchmarkManagementService
+
+    service = BenchmarkManagementService(db, settings)
+    benchmark = await service.restore_benchmark(benchmark_id, current_user)
+    return _to_benchmark_response(benchmark, include_datasets=True)
+
+
+@router.delete("/{benchmark_id}")
+@limiter.limit("10/hour")
+async def delete_benchmark(
+    request: Request,
+    benchmark_id: uuid.UUID,
+    permanent: bool = False,
+    db: AsyncSession = Depends(get_db),
+    settings: Settings = Depends(get_settings),
+    current_user: User = Depends(get_current_active_user),
+):
+    from app.services.data_management_service import BenchmarkManagementService
+
+    service = BenchmarkManagementService(db, settings)
+    return await service.delete_benchmark(benchmark_id, current_user, permanent=permanent)
+
+
+@router.delete("/{benchmark_id}/datasets/{image_id}")
+@limiter.limit("30/hour")
+async def remove_benchmark_dataset_image(
+    request: Request,
+    benchmark_id: uuid.UUID,
+    image_id: uuid.UUID,
+    db: AsyncSession = Depends(get_db),
+    settings: Settings = Depends(get_settings),
+    current_user: User = Depends(get_current_active_user),
+):
+    from app.services.data_management_service import BenchmarkManagementService
+
+    service = BenchmarkManagementService(db, settings)
+    await service.remove_dataset_image(benchmark_id, image_id, current_user)
+    return {"message": "Dataset image removed"}
