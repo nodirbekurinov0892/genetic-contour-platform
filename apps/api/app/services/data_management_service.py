@@ -161,7 +161,7 @@ class ImageManagementService:
         image = await ImageService(self.db, self.settings).get_by_id(image_id, user)
         exp_count = await count_experiments_for_image(self.db, image_id)
 
-        if exp_count and not cascade_experiments and not archive:
+        if exp_count and not archive and not cascade_experiments:
             raise HTTPException(
                 status_code=409,
                 detail=(
@@ -170,7 +170,7 @@ class ImageManagementService:
                 ),
             )
 
-        if archive or (not permanent and not cascade_experiments):
+        if archive:
             image.archived_at = utcnow()
             image.deleted_at = utcnow()
             await self.db.flush()
@@ -185,18 +185,31 @@ class ImageManagementService:
 
         if cascade_experiments and exp_count:
             exp_service = ExperimentService(self.db, self.settings)
-            exp_result = await self.db.execute(
-                select(Experiment.id).where(
-                    Experiment.image_id == image_id,
-                    Experiment.user_id == user.id,
-                    Experiment.deleted_at.is_(None),
+            exp_ids = (
+                await self.db.execute(
+                    select(Experiment.id).where(
+                        Experiment.image_id == image_id,
+                        Experiment.user_id == user.id,
+                    )
                 )
-            )
-            for (eid,) in exp_result.all():
-                await exp_service.hard_delete(eid, user)
+            ).scalars().all()
+            for eid in exp_ids:
+                await self._hard_delete_experiment_for_image_cascade(eid, user, exp_service)
 
-        lifecycle = LifecycleService(self.db, self.settings)
-        await lifecycle.delete_image(image_id, user)
+        if not permanent and not cascade_experiments:
+            image.archived_at = utcnow()
+            image.deleted_at = utcnow()
+            await self.db.flush()
+            await audit_action(
+                self.db,
+                user=user,
+                action="image.soft_delete",
+                resource_type="image",
+                resource_id=image_id,
+            )
+            return {"message": "Image archived", "mode": "soft"}
+
+        await self._purge_image(image)
         await audit_action(
             self.db,
             user=user,
@@ -206,6 +219,41 @@ class ImageManagementService:
             details={"cascade_experiments": cascade_experiments},
         )
         return {"message": "Image deleted", "mode": "hard"}
+
+    async def _hard_delete_experiment_for_image_cascade(
+        self,
+        experiment_id: uuid.UUID,
+        user: User,
+        exp_service: ExperimentService,
+    ) -> None:
+        try:
+            await exp_service.hard_delete(experiment_id, user)
+        except HTTPException as exc:
+            if exc.status_code != 404:
+                raise
+        remaining = await self.db.scalar(
+            select(Experiment.id).where(Experiment.id == experiment_id)
+        )
+        if remaining:
+            from app.services.research_cleanup_service import ResearchCleanupService
+
+            await ResearchCleanupService(self.db, self.settings)._hard_delete_experiment_unconditional(
+                experiment_id, user, []
+            )
+
+    async def _purge_image(self, image: Image) -> None:
+        keys = [image.storage_key]
+        if image.ground_truth_storage_key:
+            keys.append(image.ground_truth_storage_key)
+        for key in keys:
+            if not key:
+                continue
+            try:
+                self.storage.delete_file(key)
+            except OSError:
+                logger.warning("Failed to delete storage key %s", key, exc_info=True)
+        await self.db.delete(image)
+        await self.db.flush()
 
     async def detach_gt(self, image_id: uuid.UUID, user: User) -> Image:
         lifecycle = LifecycleService(self.db, self.settings)

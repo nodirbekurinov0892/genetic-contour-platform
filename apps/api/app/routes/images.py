@@ -17,6 +17,13 @@ from app.utils.rate_limit import limiter
 router = APIRouter(prefix="/api/images", tags=["images"])
 
 
+def _query_bool(request: Request, name: str, default: bool = False) -> bool:
+    raw = request.query_params.get(name)
+    if raw is None:
+        return default
+    return raw.strip().lower() in ("true", "1", "yes", "on")
+
+
 @router.post("/upload", response_model=ImageUploadResponse)
 @limiter.limit("20/hour")
 async def upload_image(
@@ -157,13 +164,13 @@ async def get_image(
 async def delete_image(
     request: Request,
     image_id: uuid.UUID,
-    cascade_experiments: bool = False,
-    permanent: bool = False,
-    archive: bool = False,
     db: AsyncSession = Depends(get_db),
     settings: Settings = Depends(get_settings),
     current_user: User = Depends(get_current_active_user),
 ):
+    cascade_experiments = _query_bool(request, "cascade_experiments")
+    permanent = _query_bool(request, "permanent")
+    archive = _query_bool(request, "archive")
     service = ImageManagementService(db, settings)
     return await service.delete_image(
         image_id,
