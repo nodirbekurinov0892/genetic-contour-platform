@@ -9,6 +9,7 @@ import zipfile
 from datetime import datetime, timezone
 
 import cv2
+import numpy as np
 from fastapi import HTTPException, UploadFile
 from sqlalchemy import delete, func, select
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -236,28 +237,42 @@ class ReportManagementService:
         self.storage = StorageService(settings)
 
     async def list_reports(self, user: User, *, limit: int = 50) -> list[dict]:
-        result = await self.db.execute(
+        from app.utils.schema_compat import migration_011_applied
+
+        has_soft_delete = await migration_011_applied(self.db)
+        query = (
             select(Report, Experiment.title)
             .join(Experiment, Report.experiment_id == Experiment.id)
-            .where(
-                Experiment.user_id == user.id,
+            .where(Experiment.user_id == user.id)
+        )
+        if has_soft_delete:
+            query = query.where(
                 Report.deleted_at.is_(None),
                 Experiment.deleted_at.is_(None),
             )
-            .order_by(Report.created_at.desc())
-            .limit(limit)
-        )
+        query = query.order_by(Report.created_at.desc()).limit(limit)
+
+        try:
+            result = await self.db.execute(query)
+        except Exception as exc:
+            logger.warning("list_reports query failed (schema mismatch?): %s", exc)
+            return []
+
         rows = []
         for report, exp_title in result.all():
-            exists = self.storage.exists(
-                self.storage.resolve_storage_key(report.storage_key, report.file_path)
-            )
+            try:
+                key = self.storage.resolve_storage_key(report.storage_key, report.file_path)
+                exists = self.storage.exists(key)
+            except Exception:
+                logger.warning("Storage exists check failed for report %s", report.id, exc_info=True)
+                exists = False
+            title = getattr(report, "title", None) or f"{exp_title} ({report.format})"
             rows.append({
                 "id": str(report.id),
                 "experiment_id": str(report.experiment_id),
                 "experiment_title": exp_title,
                 "format": report.format,
-                "title": report.title or f"{exp_title} ({report.format})",
+                "title": title,
                 "storage_status": "available" if exists else "missing",
                 "created_at": report.created_at.isoformat() if report.created_at else None,
             })
@@ -277,6 +292,8 @@ class ReportManagementService:
         return report
 
     async def delete_report(self, report_id: uuid.UUID, user: User) -> None:
+        from app.utils.schema_compat import migration_011_applied
+
         report = await self._get_report(report_id, user)
         try:
             self.storage.delete_file(
@@ -284,7 +301,10 @@ class ReportManagementService:
             )
         except OSError:
             logger.warning("Report storage delete failed for %s", report_id)
-        report.deleted_at = utcnow()
+        if await migration_011_applied(self.db):
+            report.deleted_at = utcnow()
+        else:
+            await self.db.delete(report)
         await self.db.flush()
         await audit_action(
             self.db,
@@ -347,13 +367,17 @@ class ReportManagementService:
         return buffer.getvalue()
 
     async def _get_report(self, report_id: uuid.UUID, user: User) -> Report:
+        from app.utils.schema_compat import migration_011_applied
+
         result = await self.db.execute(
             select(Report)
             .join(Experiment, Report.experiment_id == Experiment.id)
             .where(Report.id == report_id, Experiment.user_id == user.id)
         )
         report = result.scalar_one_or_none()
-        if not report or report.deleted_at:
+        if not report:
+            raise HTTPException(status_code=404, detail="Report not found")
+        if await migration_011_applied(self.db) and report.deleted_at:
             raise HTTPException(status_code=404, detail="Report not found")
         return report
 
@@ -562,6 +586,43 @@ class StorageCleanupService:
             "cleanup_available": missing + ghost + orphan_count > 0,
             "audit_severity": audit["severity"],
         }
+
+    async def cleanup_broken_reports(self, user: User) -> dict:
+        from app.utils.schema_compat import migration_011_applied
+
+        has_soft = await migration_011_applied(self.db)
+        query = (
+            select(Report)
+            .join(Experiment, Report.experiment_id == Experiment.id)
+            .where(Experiment.user_id == user.id)
+        )
+        if has_soft:
+            query = query.where(Report.deleted_at.is_(None))
+        reports = list((await self.db.execute(query)).scalars().all())
+        removed = 0
+        for report in reports:
+            key = self.storage.resolve_storage_key(report.storage_key, report.file_path)
+            try:
+                exists = self.storage.exists(key)
+            except Exception:
+                exists = False
+            if exists:
+                continue
+            if has_soft:
+                report.deleted_at = utcnow()
+            else:
+                await self.db.delete(report)
+            removed += 1
+        await self.db.flush()
+        await audit_action(
+            self.db,
+            user=user,
+            action="storage.cleanup_broken_reports",
+            resource_type="storage",
+            resource_id=user.id,
+            details={"removed": removed},
+        )
+        return {"removed": removed}
 
     async def cleanup_broken_records(self, user: User) -> dict:
         from app.services.storage_repair_service import StorageRepairService

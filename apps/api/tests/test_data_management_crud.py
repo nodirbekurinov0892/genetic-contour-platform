@@ -166,3 +166,117 @@ async def test_reports_list_empty(client: AsyncClient):
     response = await client.get("/api/reports", headers=headers)
     assert response.status_code == 200
     assert response.json()["items"] == []
+
+
+@pytest.mark.asyncio
+async def test_image_archive_linked_experiment(client: AsyncClient):
+    headers = await _register(client)
+    upload = await client.post(
+        "/api/images/upload",
+        headers=headers,
+        files={"file": ("test.png", _png_bytes(), "image/png")},
+    )
+    image_id = upload.json()["image"]["id"]
+    await client.post(
+        "/api/experiments",
+        headers=headers,
+        json={"image_id": image_id, "title": "Linked"},
+    )
+    archive = await client.delete(
+        f"/api/images/{image_id}?archive=true",
+        headers=headers,
+    )
+    assert archive.status_code == 200
+    assert archive.json()["mode"] == "soft"
+
+
+@pytest.mark.asyncio
+async def test_image_cascade_delete_with_experiments(client: AsyncClient):
+    headers = await _register(client)
+    upload = await client.post(
+        "/api/images/upload",
+        headers=headers,
+        files={"file": ("test.png", _png_bytes(), "image/png")},
+    )
+    image_id = upload.json()["image"]["id"]
+    create = await client.post(
+        "/api/experiments",
+        headers=headers,
+        json={"image_id": image_id, "title": "Linked"},
+    )
+    exp_id = create.json()["id"]
+    delete = await client.delete(
+        f"/api/images/{image_id}?cascade_experiments=true&permanent=true",
+        headers=headers,
+    )
+    assert delete.status_code == 200
+    assert delete.json()["mode"] == "hard"
+    exp_get = await client.get(f"/api/experiments/{exp_id}", headers=headers)
+    assert exp_get.status_code == 404
+
+
+@pytest.mark.asyncio
+async def test_cleanup_my_research_data_only_current_user(client: AsyncClient):
+    headers_a = await _register(client)
+    headers_b = await _register(client)
+    upload_a = await client.post(
+        "/api/images/upload",
+        headers=headers_a,
+        files={"file": ("a.png", _png_bytes(), "image/png")},
+    )
+    image_a = upload_a.json()["image"]["id"]
+    await client.post(
+        "/api/experiments",
+        headers=headers_a,
+        json={"image_id": image_a, "title": "User A exp"},
+    )
+    upload_b = await client.post(
+        "/api/images/upload",
+        headers=headers_b,
+        files={"file": ("b.png", _png_bytes(), "image/png")},
+    )
+    image_b = upload_b.json()["image"]["id"]
+
+    cleanup = await client.post(
+        "/api/account/cleanup/my-research-data",
+        headers=headers_a,
+        json={"confirm_phrase": "DELETE MY RESEARCH DATA"},
+    )
+    assert cleanup.status_code == 200
+    assert cleanup.json()["deleted"]["experiments"] >= 1
+    assert cleanup.json()["deleted"]["images"] >= 1
+
+    # User B image must remain.
+    img_b = await client.get(f"/api/images/{image_b}", headers=headers_b)
+    assert img_b.status_code == 200
+
+    # User A has no experiments left.
+    browse_a = await client.get("/api/experiments/browse", headers=headers_a)
+    assert browse_a.status_code == 200
+    assert browse_a.json()["total"] == 0
+
+
+@pytest.mark.asyncio
+async def test_cleanup_wrong_phrase_rejected(client: AsyncClient):
+    headers = await _register(client)
+    response = await client.post(
+        "/api/account/cleanup/my-research-data",
+        headers=headers,
+        json={"confirm_phrase": "wrong phrase"},
+    )
+    assert response.status_code == 400
+
+
+@pytest.mark.asyncio
+async def test_leaderboard_empty_after_cleanup(client: AsyncClient):
+    headers = await _register(client)
+    await client.post(
+        "/api/account/cleanup/my-research-data",
+        headers=headers,
+        json={"confirm_phrase": "DELETE MY RESEARCH DATA"},
+    )
+    lb = await client.get("/api/leaderboard", headers=headers)
+    assert lb.status_code == 200
+    body = lb.json()
+    entries = body if isinstance(body, list) else body.get("entries", body.get("items", []))
+    assert entries == [] or len(entries) == 0

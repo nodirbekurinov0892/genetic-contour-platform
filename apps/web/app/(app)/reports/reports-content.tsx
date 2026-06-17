@@ -56,14 +56,13 @@ export default function ReportsPageContent() {
     setLoading(true);
     setError(null);
     try {
-      const [doneBrowse, reportsRes, ...incompleteBrowses] = await Promise.all([
+      const [doneBrowse, ...incompleteBrowses] = await Promise.all([
         experimentService.browse({
           status: "completed",
           search: search || undefined,
           sort: "created_at_desc",
           limit: 50,
         }),
-        reportService.list(50),
         ...INCOMPLETE_STATUSES.map((status) =>
           experimentService.browse({
             status,
@@ -73,8 +72,17 @@ export default function ReportsPageContent() {
           }),
         ),
       ]);
+
+      let reportsItems: StoredReport[] = [];
+      try {
+        const reportsRes = await reportService.list(50);
+        reportsItems = reportsRes.items ?? [];
+      } catch {
+        reportsItems = [];
+      }
+
       setCompleted(doneBrowse.items);
-      setStoredReports(reportsRes.items);
+      setStoredReports(reportsItems);
       const seen = new Set<string>();
       const merged: ExperimentBrowseItem[] = [];
       for (const browse of incompleteBrowses) {

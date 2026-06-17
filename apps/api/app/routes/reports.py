@@ -1,3 +1,4 @@
+import logging
 import uuid
 
 from fastapi import APIRouter, Depends, File, Request, UploadFile
@@ -27,6 +28,8 @@ from app.services.experiment_service import ExperimentService
 from app.utils.image_response import to_image_response
 from app.utils.rate_limit import limiter
 
+logger = logging.getLogger(__name__)
+
 router = APIRouter(prefix="/api/reports", tags=["reports"])
 
 
@@ -38,7 +41,12 @@ async def list_reports(
     current_user: User = Depends(get_current_active_user),
 ):
     service = ReportManagementService(db, settings)
-    return {"items": await service.list_reports(current_user, limit=limit)}
+    try:
+        items = await service.list_reports(current_user, limit=limit)
+    except Exception:
+        logger.exception("list_reports failed for user %s", current_user.id)
+        items = []
+    return {"items": items}
 
 
 @router.patch("/{report_id}")

@@ -84,6 +84,20 @@ async def storage_health_dashboard(
     return await service.health_dashboard(current_user)
 
 
+@router.post("/cleanup/broken-reports")
+@limiter.limit("10/hour")
+async def cleanup_broken_reports(
+    request: Request,
+    db: AsyncSession = Depends(get_db),
+    settings: Settings = Depends(get_settings),
+    current_user: User = Depends(get_current_active_user),
+):
+    from app.services.data_management_service import StorageCleanupService
+
+    service = StorageCleanupService(db, settings)
+    return await service.cleanup_broken_reports(current_user)
+
+
 @router.post("/cleanup/broken-records")
 @limiter.limit("10/hour")
 async def cleanup_all_broken_records(

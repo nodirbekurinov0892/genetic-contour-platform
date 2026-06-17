@@ -156,9 +156,14 @@ class ExperimentService:
     async def hard_delete(self, experiment_id: uuid.UUID, user: User) -> None:
         experiment = await self.get_by_id(experiment_id, user)
         if experiment.status in ACTIVE_STATUSES:
-            experiment.cancel_requested = True
-            if experiment.celery_task_id:
-                revoke_experiment_task(experiment.celery_task_id)
+            try:
+                await self.cancel(experiment_id, user)
+            except HTTPException:
+                experiment.cancel_requested = True
+                if experiment.celery_task_id:
+                    revoke_experiment_task(experiment.celery_task_id)
+        elif experiment.celery_task_id:
+            revoke_experiment_task(experiment.celery_task_id)
 
         storage = StorageService(self.settings)
         loaded = await self.db.execute(

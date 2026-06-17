@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import Link from "next/link";
-import { Archive, Copy, Eye, MoreHorizontal, Pencil, Play, Trash2, XCircle } from "lucide-react";
+import { Archive, Copy, Eye, MoreHorizontal, Pencil, Play, RotateCcw, Trash2, XCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { ConfirmDialog } from "@/components/ui/confirm-dialog";
@@ -87,6 +87,13 @@ export function ExperimentActionsMenu({ experiment, onChanged }: ExperimentActio
                 <XCircle className="h-3.5 w-3.5" /> Bekor qilish
               </button>
             )}
+            <button
+              type="button"
+              className="flex w-full items-center gap-2 rounded px-2 py-1.5 text-sm hover:bg-muted"
+              onClick={() => void runAction(() => experimentService.restore(experiment.id), "Tiklandi")}
+            >
+              <RotateCcw className="h-3.5 w-3.5" /> Tiklash
+            </button>
             <button
               type="button"
               className="flex w-full items-center gap-2 rounded px-2 py-1.5 text-sm hover:bg-muted"

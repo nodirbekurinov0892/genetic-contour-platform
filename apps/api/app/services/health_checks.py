@@ -253,8 +253,32 @@ def _check_supabase_storage(settings: Settings) -> HealthCheckResult:
     return HealthCheckResult("storage", ok, detail.detail, metadata=detail.as_metadata())
 
 
+async def check_migrations() -> HealthCheckResult:
+    try:
+        async with engine.connect() as conn:
+            result = await conn.execute(
+                text(
+                    "SELECT 1 FROM information_schema.columns "
+                    "WHERE table_schema = 'public' AND table_name = 'reports' "
+                    "AND column_name = 'deleted_at' LIMIT 1"
+                )
+            )
+            applied = result.scalar() is not None
+        if applied:
+            return HealthCheckResult("migrations", True, "011_data_management applied")
+        return HealthCheckResult(
+            "migrations",
+            False,
+            "Migration 011 not applied — run: alembic upgrade head",
+        )
+    except Exception as exc:
+        logger.warning("Migration readiness check failed: %s", exc)
+        return HealthCheckResult("migrations", False, str(exc))
+
+
 async def run_readiness_checks(settings: Settings) -> list[HealthCheckResult]:
     postgres = await check_postgres()
+    migrations = await check_migrations()
     redis_result = check_redis(settings)
     storage = check_storage(settings)
-    return [postgres, redis_result, storage]
+    return [postgres, migrations, redis_result, storage]
