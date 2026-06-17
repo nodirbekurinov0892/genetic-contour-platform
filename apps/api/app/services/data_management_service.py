@@ -152,23 +152,24 @@ class ImageManagementService:
         user: User,
         *,
         cascade_experiments: bool = False,
-        soft: bool = False,
+        archive: bool = False,
+        permanent: bool = False,
     ) -> dict:
         from app.services.image_service import ImageService
 
         image = await ImageService(self.db, self.settings).get_by_id(image_id, user)
         exp_count = await count_experiments_for_image(self.db, image_id)
 
-        if exp_count and not cascade_experiments and not soft:
+        if exp_count and not cascade_experiments and not archive:
             raise HTTPException(
                 status_code=409,
                 detail=(
                     f"Bu rasm {exp_count} ta tajribada ishlatilgan. "
-                    "cascade_experiments=true yoki soft delete ishlating."
+                    "cascade_experiments=true yoki archive=true bilan tasdiqlang."
                 ),
             )
 
-        if soft:
+        if archive or (not permanent and not cascade_experiments):
             image.archived_at = utcnow()
             image.deleted_at = utcnow()
             await self.db.flush()
@@ -540,18 +541,26 @@ class StorageCleanupService:
         summary = await StorageCenterService(self.db, self.settings).get_summary(user)
         audit = await StorageAuditService(self.db, self.settings).audit_for_user(user)
         orphans = await LifecycleService(self.db, self.settings).detect_orphans(user)
-        missing = audit.missing_originals + audit.missing_ground_truth + audit.missing_results
-        ghost = len(audit.broken_records)
-        score = max(0, 100 - missing * 5 - ghost * 3 - len(orphans))
+        missing_originals = int(audit["missing_originals"])
+        missing_ground_truth = int(audit["missing_ground_truth"])
+        missing_results = int(audit["missing_results"])
+        broken_records = audit["broken_records"]
+        missing = missing_originals + missing_ground_truth + missing_results
+        ghost = len(broken_records)
+        orphan_count = len(orphans)
+        score = max(0, 100 - missing * 5 - ghost * 3 - orphan_count)
         return {
             **summary,
+            "missing_originals": missing_originals,
+            "missing_ground_truth": missing_ground_truth,
+            "missing_results": missing_results,
             "missing_files": missing,
             "ghost_records": ghost,
-            "broken_records": len(audit.broken_records),
-            "orphan_files": len(orphans),
+            "broken_records": ghost,
+            "orphan_files": orphan_count,
             "health_score": score,
-            "cleanup_available": missing + ghost + len(orphans) > 0,
-            "audit_severity": audit.severity,
+            "cleanup_available": missing + ghost + orphan_count > 0,
+            "audit_severity": audit["severity"],
         }
 
     async def cleanup_broken_records(self, user: User) -> dict:

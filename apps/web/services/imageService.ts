@@ -82,11 +82,12 @@ export const imageService = {
 
   delete(
     imageId: string,
-    options?: { cascadeExperiments?: boolean; permanent?: boolean },
+    options?: { cascadeExperiments?: boolean; permanent?: boolean; archive?: boolean },
   ): Promise<{ message: string; mode?: string }> {
     const q = new URLSearchParams();
     if (options?.cascadeExperiments) q.set("cascade_experiments", "true");
     if (options?.permanent) q.set("permanent", "true");
+    if (options?.archive) q.set("archive", "true");
     const suffix = q.toString() ? `?${q.toString()}` : "";
     return apiFetch(`/api/images/${imageId}${suffix}`, { method: "DELETE" });
   },

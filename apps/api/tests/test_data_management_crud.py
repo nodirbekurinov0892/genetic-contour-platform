@@ -86,6 +86,7 @@ async def test_image_delete_blocked_with_experiments(client: AsyncClient):
     )
     delete = await client.delete(f"/api/images/{image_id}", headers=headers)
     assert delete.status_code == 409
+    assert "tajribada ishlatilgan" in delete.json()["detail"]
 
 
 @pytest.mark.asyncio
@@ -147,7 +148,16 @@ async def test_storage_health_dashboard(client: AsyncClient):
     headers = await _register(client)
     response = await client.get("/api/storage/health-dashboard", headers=headers)
     assert response.status_code == 200
-    assert "health_score" in response.json()
+    data = response.json()
+    for key in (
+        "health_score",
+        "missing_originals",
+        "missing_ground_truth",
+        "orphan_files",
+        "broken_records",
+    ):
+        assert key in data, f"missing key: {key}"
+    assert isinstance(data["health_score"], int)
 
 
 @pytest.mark.asyncio

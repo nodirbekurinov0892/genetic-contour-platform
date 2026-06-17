@@ -66,7 +66,8 @@ async def bulk_delete_images(
                 iid,
                 current_user,
                 cascade_experiments=body.cascade_experiments,
-                soft=not body.permanent,
+                archive=False,
+                permanent=body.permanent,
             )
         )
     return {"results": results}

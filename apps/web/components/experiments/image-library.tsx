@@ -290,6 +290,8 @@ export function ImageLibrary({ onSelect, refreshKey = 0 }: ImageLibraryProps) {
 
         permanent: cascadeDelete || linked === 0,
 
+        archive: !cascadeDelete && linked > 0,
+
       });
 
       toast(cascadeDelete ? "Rasm va bog'langan tajribalar o'chirildi" : "Rasm o'chirildi", "success");
